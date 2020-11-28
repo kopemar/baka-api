@@ -1,7 +1,7 @@
 class Contract < ApplicationRecord
-  TYPE = {
-    dpp: 1,
-    dpc: 2,
-    pp: 3
-  }
+  belongs_to :employee
+
+  def active?
+    self.end_date.before?(Date.today)
+  end
 end
