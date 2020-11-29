@@ -40,6 +40,7 @@ contract1 = EmploymentContract.create!(
     start_date: "2020-01-01",
     end_date: "2020-10-12",
     work_load: "1",
+    working_days: [1, 2, 3, 5, 6, 7]
 )
 contract1.employee = employee1
 contract1.save!
