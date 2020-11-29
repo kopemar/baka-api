@@ -48,6 +48,7 @@ contract2 = EmploymentContract.create!(
     start_date: "2020-01-01",
     end_date: "2021-10-12",
     work_load: "1",
+    working_days: [1, 2, 3, 5, 6, 7]
 )
 
 contract2.employee = employee2
