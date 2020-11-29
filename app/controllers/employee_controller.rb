@@ -1,5 +1,5 @@
 class EmployeeController < ApplicationController
   def get_all
-    render json: Employee.create!
+    render json: Employee::with_employment_contract
   end
 end

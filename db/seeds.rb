@@ -24,7 +24,7 @@ Employee.find_or_create_by!(username: "john-doe") do |user|
   generate_user_data(user)
 end
 
-Employee.find_or_create_by!(username: "employee") do |user|
+employee2 = Employee.find_or_create_by!(username: "employee") do |user|
   generate_user_data(user)
 end
 
@@ -32,6 +32,23 @@ Employee.find_or_create_by!(username: "employee2") do |user|
   generate_user_data(user)
 end
 
-Employee.find_or_create_by!(username: "employee3") do |user|
+employee1 = Employee.find_or_create_by!(username: "employee3") do |user|
   generate_user_data(user)
 end
+
+contract1 = EmploymentContract.create!(
+    start_date: "2020-01-01",
+    end_date: "2020-10-12",
+    work_load: "1",
+)
+contract1.employee = employee1
+contract1.save!
+
+contract2 = EmploymentContract.create!(
+    start_date: "2020-01-01",
+    end_date: "2021-10-12",
+    work_load: "1",
+)
+
+contract2.employee = employee2
+contract2.save!

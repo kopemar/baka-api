@@ -5,4 +5,6 @@ Rails.application.routes.draw do
   get "schedules", to: "schedule#get_all"
 
   get "employees", to: "employee#get_all"
+
+  get "contracts", to: "contract#get_all"
 end
