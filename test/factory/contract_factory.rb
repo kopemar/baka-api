@@ -9,6 +9,7 @@ FactoryBot.define do
     sequence(:username, 1) { |n|
       "mock.alice#{n}"
     }
+    encrypted_password { "" }
     birth_date { "2000-10-01" }
   end
 

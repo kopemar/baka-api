@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_05_111444) do
+ActiveRecord::Schema.define(version: 2020_12_05_181800) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -34,6 +34,8 @@ ActiveRecord::Schema.define(version: 2020_12_05_111444) do
     t.datetime "end_time", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "year"
+    t.integer "week"
     t.index ["start_time", "end_time", "specialization"], name: "index_demands_on_start_time_and_end_time_and_specialization", unique: true
   end
 
