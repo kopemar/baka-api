@@ -7,7 +7,18 @@ class EmployeeTest < ActiveSupport::TestCase
     assert(e.id != nil)
   end
 
-  # test "the truth" do
-  #   assert true
-  # end
+  test "Employee with one active contract" do
+    employee = employee_with_contracts
+
+    assert employee.contracts.length == 2
+    assert !employee.has_multiple_active_contracts?
+  end
+
+  test "Employee with two active contract" do
+    employee = employee_two_active_contracts
+
+    assert employee.contracts.length == 2
+    assert employee.has_multiple_active_contracts?
+  end
+
 end

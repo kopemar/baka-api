@@ -5,9 +5,15 @@ class Employee < User
 
   has_many :contracts
 
-  # def as_json(options={})
-  #   super(include: :contracts)
-  # end
+  def has_multiple_active_contracts?
+    self.contracts.active_employment_contracts.length > 1
+  end
 
   scope :with_employment_contract, -> { joins(:contracts).merge!(Contract.active_employment_contracts) }
+
+  def as_json(*args)
+    hash = super(*args)
+    hash.merge!(multiple_contracts: self.has_multiple_active_contracts?)
+  end
+
 end
