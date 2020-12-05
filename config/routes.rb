@@ -6,5 +6,7 @@ Rails.application.routes.draw do
 
   get "employees", to: "employee#get_all"
 
-  get "contracts", to: "contract#get_all"
+  get "contracts/all", to: "contract#get_all"
+
+  get "user-contracts", to: "contract#get_current_user_contracts"
 end

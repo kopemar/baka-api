@@ -9,4 +9,9 @@ class Contract < ApplicationRecord
                                                .where("end_date >= ? OR end_date IS NULL", Date::today)
                                                .where("start_date <= ?", Date::today)
   }
+
+  def as_json(*args)
+    hash = super(*args)
+    hash.merge!(active: self.active)
+  end
 end
