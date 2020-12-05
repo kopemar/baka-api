@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_11_29_182044) do
+ActiveRecord::Schema.define(version: 2020_12_03_201837) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -67,6 +67,15 @@ ActiveRecord::Schema.define(version: 2020_11_29_182044) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
     t.index ["username"], name: "index_users_on_username", unique: true
+  end
+
+  create_table "weekly_demands", force: :cascade do |t|
+    t.integer "week", default: 0, null: false
+    t.integer "year", default: 2020, null: false
+    t.string "demand", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index %w[week year], name: "index_weekly_demands_on_week_and_year", unique: true
   end
 
 end

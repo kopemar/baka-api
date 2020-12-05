@@ -54,3 +54,11 @@ contract2 = EmploymentContract.create!(
 
 contract2.employee = employee2
 contract2.save!
+
+demand = Hash.new
+demand[0] = Hash.new
+demand[0][0] = 1
+
+WeeklyDemand.find_or_create_by!(week: 5) do |d|
+  d.demand = demand
+end
