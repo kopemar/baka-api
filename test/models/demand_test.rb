@@ -17,4 +17,12 @@ class DemandTest < ActiveSupport::TestCase
     assert_equal(d1.week, Date.today.cweek)
     assert_not_equal(d2.week, Date.today.cweek)
   end
+
+  test "Demand year and week test" do
+    d1 = demand_this_week
+    d2 = demand_not_this_week
+
+    assert_nil Demand.in_week(Date.today.year, Date.today.cweek).find_by(id: d2.id)
+    assert_not_nil Demand.in_week(Date.today.monday.year, Date.today.cweek).find_by(id: d1.id)
+  end
 end

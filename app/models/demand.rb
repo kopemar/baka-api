@@ -10,4 +10,6 @@ class Demand < ApplicationRecord
   end
 
   scope :in_year, -> (year) { where('year = ?', year) }
+
+  scope :in_week, -> (year, week) { where(year: year, week: week) }
 end
