@@ -44,3 +44,5 @@ gem 'devise_token_auth'
 gem 'ffaker'
 
 gem 'factory_bot_rails'
+
+gem 'seedbank'
