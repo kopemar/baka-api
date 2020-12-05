@@ -1,0 +1,4 @@
+# frozen
+WEEKLY_WORKING_HOURS = 40.freeze
+
+STANDARD_DAILY_WORKING_HOURS = 8.freeze
