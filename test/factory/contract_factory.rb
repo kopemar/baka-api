@@ -41,3 +41,13 @@ def employee_two_active_contracts
     FactoryBot.create_list(:contract, 2, :active, employee: e)
   end
 end
+
+def employee_two_inactive_contracts
+  FactoryBot.create(:employee) do |e|
+    FactoryBot.create_list(:contract, 2, :inactive, employee: e)
+  end
+end
+
+def employee_with_no_contract
+  FactoryBot.create(:employee)
+end

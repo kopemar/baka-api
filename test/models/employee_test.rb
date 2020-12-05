@@ -21,4 +21,22 @@ class EmployeeTest < ActiveSupport::TestCase
     assert employee.has_multiple_active_contracts?
   end
 
+  test "Get employees with active employment contracts" do
+    e1 = employee_two_active_contracts
+    e2 = employee_with_contracts
+    e3 = employee_with_no_contract
+    e4 = employee_two_active_contracts
+    e5 = employee_two_inactive_contracts
+
+    employees = Employee.with_employment_contract
+
+    assert employees.length == 3
+
+    assert_not_nil employees.find_by(id: e1.id)
+    assert_not_nil employees.find_by(id: e2.id)
+    assert_nil employees.find_by(id: e3.id)
+    assert_not_nil employees.find_by(id: e4.id)
+    assert_nil employees.find_by(id: e5.id)
+  end
+
 end

@@ -9,7 +9,7 @@ class Employee < User
     self.contracts.active_employment_contracts.length > 1
   end
 
-  scope :with_employment_contract, -> { joins(:contracts).merge!(Contract.active_employment_contracts) }
+  scope :with_employment_contract, -> { joins(:contracts).merge!(Contract.active_employment_contracts).select("DISTINCT ON (users.id) users.*") }
 
   def as_json(*args)
     hash = super(*args)
