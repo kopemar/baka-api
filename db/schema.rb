@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_03_201837) do
+ActiveRecord::Schema.define(version: 2020_12_05_111444) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -25,6 +25,16 @@ ActiveRecord::Schema.define(version: 2020_12_03_201837) do
     t.integer "maximum_working_hours"
     t.integer "employee_id"
     t.integer "working_days", array: true
+  end
+
+  create_table "demands", force: :cascade do |t|
+    t.integer "specialization", default: 0, null: false
+    t.integer "demand", default: 3, null: false
+    t.datetime "start_time", null: false
+    t.datetime "end_time", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["start_time", "end_time", "specialization"], name: "index_demands_on_start_time_and_end_time_and_specialization", unique: true
   end
 
   create_table "schedules", force: :cascade do |t|
@@ -69,13 +79,11 @@ ActiveRecord::Schema.define(version: 2020_12_03_201837) do
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
-  create_table "weekly_demands", force: :cascade do |t|
-    t.integer "week", default: 0, null: false
-    t.integer "year", default: 2020, null: false
-    t.string "demand", null: false
+  create_table "weeks", force: :cascade do |t|
+    t.integer "year"
+    t.integer "week"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index %w[week year], name: "index_weekly_demands_on_week_and_year", unique: true
   end
 
 end
