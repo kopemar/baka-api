@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_06_163310) do
+ActiveRecord::Schema.define(version: 2020_12_06_225312) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -25,6 +25,7 @@ ActiveRecord::Schema.define(version: 2020_12_06_163310) do
     t.integer "maximum_working_hours"
     t.integer "employee_id"
     t.integer "working_days", array: true
+    t.integer "schedule_id"
   end
 
   create_table "demands", force: :cascade do |t|
@@ -35,12 +36,14 @@ ActiveRecord::Schema.define(version: 2020_12_06_163310) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.date "start_date"
+    t.date "end_date"
     t.index ["start_time", "end_time", "specialization"], name: "index_demands_on_start_time_and_end_time_and_specialization", unique: true
   end
 
   create_table "schedules", force: :cascade do |t|
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "contract_id"
   end
 
   create_table "shifts", force: :cascade do |t|
@@ -48,6 +51,7 @@ ActiveRecord::Schema.define(version: 2020_12_06_163310) do
     t.datetime "updated_at", precision: 6, null: false
     t.datetime "end_time"
     t.datetime "start_time"
+    t.integer "schedule_id"
   end
 
   create_table "users", force: :cascade do |t|

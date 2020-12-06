@@ -4,9 +4,9 @@ class Demand < ApplicationRecord
   validates :start_time, :end_time, :overlap => {:exclude_edges => %w[start_time end_time]}
   validate :validate_date
 
-  scope :for_date, -> (date) { where(:start_date => date) }
-
-  scope :between, -> (start_date, end_date) { where("demands.start_date BETWEEN ? AND ?", start_date, end_date)}
+  def hours
+    (self.end_time - self. start_time).to_i
+  end
 
   DEMAND = {
       none: 0,
@@ -17,8 +17,13 @@ class Demand < ApplicationRecord
       highest: 5
   }
 
+  scope :for_date, -> (date) { where(:start_date => date) }
+
+  scope :between, -> (start_date, end_date) { where("demands.start_date BETWEEN ? AND ?", start_date, end_date) }
+
   private def truncate_time
     self.start_date = self.start_time.change(:hour => 0)
+    self.end_date = self.end_time.change(:hour => 0)
     self.start_time = self.start_time.change(:min => 0)
     self.end_time = self.end_time.change(:min => 0)
   end

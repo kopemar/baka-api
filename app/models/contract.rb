@@ -1,6 +1,8 @@
 class Contract < ApplicationRecord
   belongs_to :employee, optional: true
 
+  has_one :schedule
+
   def active
     (end_date.after?(Date.today) && start_date.before?(Date.today)) || end_date == nil
   end
