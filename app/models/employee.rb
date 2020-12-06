@@ -33,6 +33,13 @@ class Employee < User
     hash.merge!(multiple_contracts: self.has_multiple_active_contracts?)
   end
 
+  def can_work_at?(date)
+    contracts.active_employment_contracts.each do |contract|
+      return true if contract.working_days.include?(date.wday)
+    end
+    false
+  end
+
   def can_work_at(date, start_date, end_date)
     if @working_days == nil || @working_days.empty?
       get_possible_working_days(start_date, end_date)

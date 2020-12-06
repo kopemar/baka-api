@@ -46,3 +46,5 @@ gem 'ffaker'
 
 gem 'factory_bot_rails'
 
+gem 'validates_overlap'
+

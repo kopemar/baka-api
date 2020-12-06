@@ -39,4 +39,13 @@ class EmployeeTest < ActiveSupport::TestCase
     assert_nil employees.find_by(id: e5.id)
   end
 
+  test "Can work at?" do
+    e1 = employee_monday
+    monday = Date.today.monday.to_date
+    tuesday = 1.day.after(monday)
+
+    assert e1.can_work_at?(monday)
+    assert_not e1.can_work_at?(tuesday)
+  end
+
 end
