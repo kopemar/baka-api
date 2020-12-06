@@ -22,6 +22,9 @@ class DemandTest < ActiveSupport::TestCase
     d1 = demand_this_week
     d2 = demand_not_this_week
 
+    p d1
+    p d2
+
     assert_nil Demand.in_week(Date.today.year, Date.today.cweek).find_by(id: d2.id)
     assert_not_nil Demand.in_week(Date.today.monday.year, Date.today.cweek).find_by(id: d1.id)
   end

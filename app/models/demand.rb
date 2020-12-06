@@ -1,5 +1,11 @@
 class Demand < ApplicationRecord
-  before_save :calculate_year, :calculate_week
+  # todo might need a cleanup...
+  before_save :truncate_time, :calculate_year, :calculate_week,
+
+  def truncate_time
+    self.start_time = self.start_time.change(:min => 0)
+    self.end_time = self.end_time.change(:min => 0)
+  end
 
   def calculate_week
     self.week = self.start_time.to_date.cweek
