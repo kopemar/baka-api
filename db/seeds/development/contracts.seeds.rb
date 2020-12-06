@@ -14,7 +14,7 @@ after 'development:users' do
 
   FactoryBot.create_list(:employment_contract, 10) do |c|
     c.employee = Employee.order(Arel.sql("RANDOM()")).first
-    c.schedule = Schedule.create
+    c.schedule_id = Schedule.create(contract_id: c.id).id
     c.save!
   end
 end

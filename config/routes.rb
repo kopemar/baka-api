@@ -4,6 +4,8 @@ Rails.application.routes.draw do
   #
   get "schedules/:year/:week", to: "schedule#schedule"
 
+  get "schedule", to: "schedule#get_user_schedule"
+
   get "employees", to: "employee#get_all"
 
   get "contracts/all", to: "contract#get_all"
