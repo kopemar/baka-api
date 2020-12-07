@@ -3,7 +3,7 @@ class ScheduleController < ApplicationController
 
   before_action :authenticate_user!
   def get_user_schedule
-    render json: UserScheduleService.call(current_user)
+    render json: {:shifts => UserScheduleService.call(current_user)}
   end
 
   def schedule
