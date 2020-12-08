@@ -10,7 +10,7 @@ class SchedulingService < ApplicationService
   def call
     day = 0
     date = Date.commercial(@year, @week + (day/7).floor, day % 7 + 1)
-    # DemandService.call(date, @days.days.after(date))
+    DemandService.call(date, @days.days.after(date))
     employees = Employee::with_employment_contract
     @days.times do |day|
       # todo new year!
@@ -21,7 +21,7 @@ class SchedulingService < ApplicationService
           if n.can_work_at(date, date, @days.days.after(date))
             p "========================= #{n.username} can work at #{date} ========================="
             hour = rand(0..28)
-            unless hour > 24
+            unless hour > 16
               start = hour.hours.after(date.midnight)
               Shift.create!(start_time: start, end_time: 8.hours.after(start), schedule_id: n.contracts.first.schedule.id)
             end

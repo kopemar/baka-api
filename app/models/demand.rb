@@ -4,7 +4,7 @@ class Demand < ApplicationRecord
   validates :start_time, :end_time, :overlap => {:exclude_edges => %w[start_time end_time]}
   validate :validate_date
 
-  def hours
+  def duration
     (self.end_time - self. start_time).to_i
   end
 
