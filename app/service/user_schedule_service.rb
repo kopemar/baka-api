@@ -9,7 +9,7 @@ class UserScheduleService < ApplicationService
     @user.contracts.each do |contract|
       set.merge(contract.schedule.shifts)
     end
-    set
+    set.sort_by { |d| d.start_time}
   end
 
 end
