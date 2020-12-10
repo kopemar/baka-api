@@ -12,8 +12,13 @@ class Contract < ApplicationRecord
                                                .where("start_date <= ?", Date::today)
   }
 
+  scope :shifts_planned, -> (start_time, end_time) { joins(:schedule).merge(Schedule.planned_between(start_time, end_time)) }
+
+  scope :with_no_shifts_planned_in, -> (start_time, end_time) { Contract.where.not(id: Contract.shifts_planned(start_time, end_time)) }
+
   def as_json(*args)
     hash = super(*args)
     hash.merge!(active: self.active)
+    hash.merge!(schedules: self.schedule)
   end
 end

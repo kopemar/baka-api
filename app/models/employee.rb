@@ -5,7 +5,21 @@ class Employee < User
 
   has_many :contracts
 
-  @working_days
+  attr_accessor :last
+
+  def get_last_scheduled_day_before(date)
+    if self.last.nil?
+      days = Set.new
+      contracts.active_employment_contracts.each do |contract|
+        shift = contract.schedule.shifts.where('shifts.start_time < ?', date).max_by { |d| d.start_time }
+        days.add(shift) unless shift.nil?
+      end
+      unless days.empty?
+        self.last = days.max_by { |d| d.start_time }
+      end
+    end
+    self.last
+  end
 
   def get_possible_working_days(start_date, end_date)
     @working_days = Set.new
@@ -28,9 +42,11 @@ class Employee < User
 
   scope :with_employment_contract, -> { joins(:contracts).merge!(Contract.active_employment_contracts).select("DISTINCT ON (users.id) users.*") }
 
+  scope :to_be_planned, -> (start_date, end_date)  { Employee.with_employment_contract.joins(:contracts).merge!(Contract.with_no_shifts_planned_in(start_date, end_date)).select("DISTINCT ON (users.id) users.*") }
+
   def as_json(*args)
     hash = super(*args)
-    hash.merge!(multiple_contracts: self.has_multiple_active_contracts?)
+    # hash.merge!(contracts: self.contracts)
   end
 
   def can_work_at?(date)

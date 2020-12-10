@@ -30,8 +30,9 @@ FactoryBot.define do
     trait :works_mondays do
       working_days { [1] }
     end
-
   end
+
+
 end
 
 def employee_with_contracts
@@ -60,5 +61,29 @@ end
 def employee_monday
   FactoryBot.create(:employee) do |e|
     FactoryBot.create(:contract, :works_mondays, :active, employee: e)
+  end
+end
+
+def employee_shift_now
+  FactoryBot.create(:employee) do |e|
+    FactoryBot.create(:contract, :active, employee: e) do |c|
+      FactoryBot.create(:schedule, contract: c) do |s|
+        FactoryBot.create(:shift, schedule: s)
+        c.schedule_id = s.id
+        c.save
+      end
+    end
+  end
+end
+
+def employee_shift_past
+  FactoryBot.create(:employee) do |e|
+    FactoryBot.create(:contract, :active, employee: e) do |c|
+      FactoryBot.create(:schedule, contract: c) do |s|
+        FactoryBot.create(:shift, :past, schedule: s)
+        c.schedule_id = s.id
+        c.save
+      end
+    end
   end
 end

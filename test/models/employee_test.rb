@@ -26,17 +26,16 @@ class EmployeeTest < ActiveSupport::TestCase
     e2 = employee_with_contracts
     e3 = employee_with_no_contract
     e4 = employee_two_active_contracts
-    e5 = employee_two_inactive_contracts
 
     employees = Employee.with_employment_contract
 
     assert employees.length == 3
+    p Employee.with_employment_contract
 
-    assert_not_nil employees.find_by(id: e1.id)
-    assert_not_nil employees.find_by(id: e2.id)
-    assert_nil employees.find_by(id: e3.id)
-    assert_not_nil employees.find_by(id: e4.id)
-    assert_nil employees.find_by(id: e5.id)
+    assert_not_nil employees.find_by(username: e1.username)
+    assert_not_nil employees.find_by(username: e2.username)
+    assert_nil employees.find_by(username: e3.username)
+    assert_not_nil employees.find_by(username: e4.username)
   end
 
   test "Can work at?" do
@@ -46,6 +45,19 @@ class EmployeeTest < ActiveSupport::TestCase
 
     assert e1.can_work_at?(monday)
     assert_not e1.can_work_at?(tuesday)
+  end
+
+  test "Get employees to plan" do
+    e1 = employee_shift_now
+    p "e1 #{e1}"
+    assert Employee.to_be_planned(1.day.ago, 1.day.from_now).empty?
+
+    e2 = employee_shift_past
+
+    assert Employee.to_be_planned(1.day.ago, 1.day.from_now).length == 1
+
+    assert_nil Employee.to_be_planned(1.day.ago, 1.day.from_now).find_by(username: e1.username)
+    assert_not_nil Employee.to_be_planned(1.day.ago, 1.day.from_now).find_by(username: e2.username)
   end
 
 end
