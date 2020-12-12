@@ -95,7 +95,7 @@ class Employee < User
     unless shifts.empty?
       last = shifts.max_by { |d| d.start_time }
     end
-    last
+    self.last = last
   end
 
 end

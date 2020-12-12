@@ -20,13 +20,18 @@ def create_shifts_happening_now
     FactoryBot.create(:contract, :active, employee: e) do |c|
       FactoryBot.create(:schedule, contract: c) do |s|
         FactoryBot.create(:shift, schedule: s)
+        c.schedule_id = s.id
+        c.save!
       end
     end
   end
 
   FactoryBot.create_list(:employee, 2) do |e|
     FactoryBot.create(:contract, :active, employee: e) do |c|
-      FactoryBot.create(:schedule, contract: c)
+      FactoryBot.create(:schedule, contract: c) do |s|
+        c.schedule_id = s.id
+        c.save!
+      end
     end
   end
 end
@@ -37,6 +42,8 @@ def create_shifts_past_future
       FactoryBot.create(:schedule, contract: c) do |s|
         FactoryBot.create(:shift, :past, schedule: s)
         FactoryBot.create(:shift, :future, schedule: s)
+        c.schedule_id = s.id
+        c.save!
       end
     end
   end
@@ -45,6 +52,8 @@ def create_shifts_past_future
     FactoryBot.create(:contract, :active, employee: e) do |c|
       FactoryBot.create(:schedule, contract: c) do |s|
         FactoryBot.create(:shift, :past, schedule: s)
+        c.schedule_id = s.id
+        c.save!
       end
     end
   end

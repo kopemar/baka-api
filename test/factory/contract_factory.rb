@@ -37,20 +37,40 @@ end
 
 def employee_with_contracts
   FactoryBot.create(:employee) do |e|
-    FactoryBot.create(:contract, :inactive, employee: e)
-    FactoryBot.create(:contract, :active, employee: e)
+    FactoryBot.create(:contract, :inactive, employee: e) do |c|
+      FactoryBot.create(:schedule, contract: c) do |s|
+        c.schedule_id = s.id
+        c.save
+      end
+    end
+    FactoryBot.create(:contract, :active, employee: e) do |c|
+      FactoryBot.create(:schedule, contract: c) do |s|
+        c.schedule_id = s.id
+        c.save
+      end
+    end
   end
 end
 
 def employee_two_active_contracts
   FactoryBot.create(:employee) do |e|
-    FactoryBot.create_list(:contract, 2, :active, employee: e)
+    FactoryBot.create_list(:contract, 2, :active, employee: e) do |c|
+      FactoryBot.create(:schedule, contract: c) do |s|
+        c.schedule_id = s.id
+        c.save
+      end
+    end
   end
 end
 
 def employee_inactive_contracts
   FactoryBot.create(:employee) do |e|
-    FactoryBot.create_list(:contract, 2, :inactive, employee: e)
+    FactoryBot.create_list(:contract, 2, :inactive, employee: e) do |c|
+      FactoryBot.create(:schedule, contract: c) do |s|
+        c.schedule_id = s.id
+        c.save
+      end
+    end
   end
 end
 

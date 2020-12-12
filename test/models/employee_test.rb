@@ -11,14 +11,12 @@ class EmployeeTest < ActiveSupport::TestCase
     employee = employee_with_contracts
 
     assert employee.contracts.length == 2
-    assert !employee.has_multiple_active_contracts?
   end
 
   test "Employee with two active contract" do
     employee = employee_two_active_contracts
 
     assert employee.contracts.length == 2
-    assert employee.has_multiple_active_contracts?
   end
 
   test "Get employees with active employment contracts" do

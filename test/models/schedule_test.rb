@@ -12,6 +12,8 @@ class ScheduleTest < ActiveSupport::TestCase
   test "Test schedules planned not now" do
     create_shifts_past_future
 
+    assert_empty Schedule.planned_between(6.days.ago, 4.days.ago)
+    assert_not_empty Schedule.planned_between(4.days.ago, 3.days.ago)
     assert_not_empty Schedule.planned_between(4.days.ago, 2.days.ago)
     assert_empty Schedule.planned_between(1.hours.ago, 8.hour.from_now)
     assert_not_empty Schedule.planned_between(3.days.from_now, 4.days.from_now)

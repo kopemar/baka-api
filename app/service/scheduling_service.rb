@@ -21,8 +21,10 @@ class SchedulingService < ApplicationService
       employees.each do |n|
         last = n.get_last_scheduled_shift_before(date)
         if n.can_work_at(date, @start_date, @end_date)
+          hours_since_last = n.last.nil? ? MINIMUM_BREAK_HOURS : ((date.midnight - n.last.end_time)) / 1.hours
+          @logger.debug "Hours #{n.last}"
           hour = rand(0..28)
-          unless hour > 16
+          unless hour > 24
             start = hour.hours.after(date.midnight)
             end_time = STANDARD_DAILY_WORKING_HOURS.hours.after(start)
             schedule = n.get_schedule_for_shift_time(start, end_time)

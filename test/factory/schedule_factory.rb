@@ -10,7 +10,6 @@ def schedule_shift_now
         FactoryBot.create(:shift, schedule: s)
         c.schedule_id = s.id
         c.save
-        p c
         return c
       end
     end
@@ -23,7 +22,6 @@ def schedule_shift_past
       FactoryBot.create(:schedule, contract: c) do |s|
         FactoryBot.create(:shift, :past, schedule: s)
         c.schedule_id = s.id
-        p c
         c.save
         return c
       end
