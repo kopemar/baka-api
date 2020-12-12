@@ -30,7 +30,6 @@ class SchedulingService < ApplicationService
             @logger.debug "ALL SCHEDULES OF #{n.id} -> "
             @logger.debug "Employee #{n.id} -> schedule #{schedule.id unless schedule.nil?}"
             unless schedule.nil?
-              @logger.debug "Ahoj, schedule #{schedule} pro #{n.username} neni nil"
               n.last = Shift.create!(start_time: start, end_time: end_time, schedule_id: schedule.id)
               @logger.debug "Created shift #{n.last}"
             end
