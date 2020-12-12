@@ -3,6 +3,11 @@ FactoryBot.define do
     start_time { 1.hours.ago }
     end_time { 8.hours.from_now }
 
+    trait :past_2019 do
+      start_time { "2019-12-30".to_datetime }
+      end_time { 8.hours.after(start_time) }
+    end
+
     trait :past do
       start_time { 3.days.ago }
       end_time { 8.hours.after(start_time) }
@@ -52,6 +57,19 @@ def create_shifts_past_future
     FactoryBot.create(:contract, :active, employee: e) do |c|
       FactoryBot.create(:schedule, contract: c) do |s|
         FactoryBot.create(:shift, :past, schedule: s)
+        c.schedule_id = s.id
+        c.save!
+      end
+    end
+  end
+end
+
+def create_employee_shifts_past
+  FactoryBot.create(:employee) do |e|
+    FactoryBot.create_list(:contract, 2, :active, employee: e) do |c|
+      FactoryBot.create(:schedule, contract: c) do |s|
+        FactoryBot.create(:shift, :past_2019, schedule: s)
+        FactoryBot.create(:shift, :future, schedule: s)
         c.schedule_id = s.id
         c.save!
       end

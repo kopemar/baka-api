@@ -58,4 +58,9 @@ class EmployeeTest < ActiveSupport::TestCase
     assert_not_nil Employee.to_be_planned(1.day.ago, 1.day.from_now).find_by(username: e2.username)
   end
 
+  test "Last shift test" do
+    e1 = create_employee_shifts_past
+    assert_not_nil e1.get_last_scheduled_shift_before(Date.today.midnight)
+    assert_equal("2019-12-30".to_datetime, e1.get_last_scheduled_shift_before(Date.today.midnight).start_time)
+  end
 end
