@@ -1,4 +1,5 @@
 class Contract < ApplicationRecord
+  validates_uniqueness_of :schedule_id
   belongs_to :employee, optional: true
 
   has_one :schedule
