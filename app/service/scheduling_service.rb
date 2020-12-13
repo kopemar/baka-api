@@ -23,12 +23,12 @@ class SchedulingService < ApplicationService
           @logger.debug "xxxxxxxxxxxxxxxxxxx USERNAME #{n.username} xxxxxxxxxxxxxxxxxxx"
           last = n.get_last_scheduled_shift_before(date)
 
-          if n.can_work_at(date, @start_date, @end_date)
+          if n.can_work_at?(date)
             hours_since_last = n.last.nil? ? MINIMUM_BREAK_HOURS : ((date.midnight - n.last.end_time)) / 1.hours
-            @logger.debug "Hours since last for #{n.username} #{n.last}"
             hour = rand(0..28)
             @logger.debug "================== RANDOM: #{hour} =================="
             unless hour > 24
+              @logger.debug "=========== RANDOM < 24 ============"
               start = hour.hours.after(date.midnight)
               end_time = STANDARD_DAILY_WORKING_HOURS.hours.after(start)
               schedule = n.get_schedule_for_shift_time(start, end_time)
