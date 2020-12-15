@@ -5,6 +5,8 @@ class SchedulingService < ApplicationService
     @end_date = end_date
     @split = split == 0 ? 3 : split
     @logger = Logger.new(STDOUT)
+
+    @demand = DemandService.call(start_date, end_date)
   end
 
   def call
@@ -19,26 +21,23 @@ class SchedulingService < ApplicationService
       days.times do |d|
         date = d.days.after(@start_date)
         p "========================= scheduling for #{date.wday} #{date} =========================".upcase
-        employees.each do |n|
-          @logger.debug "xxxxxxxxxxxxxxxxxxx USERNAME #{n.username} xxxxxxxxxxxxxxxxxxx"
-          last = n.get_last_scheduled_shift_before(date)
+        employees.each do |employee|
+          last = employee.get_last_scheduled_shift_before(date)
 
-          if n.can_work_at?(date)
-            hours_since_last = n.last.nil? ? MINIMUM_BREAK_HOURS : ((date.midnight - n.last.end_time)) / 1.hours
-            hour = rand(0..28)
-            @logger.debug "================== RANDOM: #{hour} =================="
-            unless hour > 24
-              @logger.debug "=========== RANDOM < 24 ============"
-              start = hour.hours.after(date.midnight)
-              end_time = STANDARD_DAILY_WORKING_HOURS.hours.after(start)
-              schedule = n.get_schedule_for_shift_time(start, end_time)
-              @logger.debug "Employee #{n.id} -> schedule #{schedule.id unless schedule.nil?}"
+          if employee.can_work_at?(date)
+            hours_since_last = employee.last.nil? ? MINIMUM_BREAK_HOURS : ((date.midnight - employee.last.end_time)) / 1.hours
+            # random starting hours
+            hours = get_random_working_hours(date, employee)
+            if hours[:hour] <= 24
+              start = hours[:hour].hours.after(date.midnight)
+              end_time = hours[:duration].hours.after(start)
+              schedule = employee.get_schedule_for_shift_time(start, end_time)
               if schedule.nil?
-                @logger.debug "Employee #{n.id} has null schedule!"
+                @logger.debug "Cannot plan shift for #{start}, #{end_time} as schedule is nil"
               else
-                n.last = Shift.create!(start_time: start, end_time: end_time, schedule_id: schedule.id)
-                partial_schedule.add(n.last)
-                @logger.debug "Created shift #{n.last}"
+                @logger.debug "Planning shift for #{start}, #{end_time} as schedule is not nil"
+                employee.last = Shift.create!(start_time: start, end_time: end_time, schedule_id: schedule.id)
+                partial_schedule.add(employee.last)
               end
             end
           end
@@ -49,9 +48,52 @@ class SchedulingService < ApplicationService
       employees.each do |e|
         schedule.add(UserScheduleService.call(e, @start_date, @end_date))
       end
-      partial_schedule
     end
   end
 
+  private def get_random_working_hours(date, employee)
+    {hour: get_random_starting_hours(date, employee), duration: STANDARD_DAILY_WORKING_HOURS}
+  end
+
+  private def get_random_starting_hours(date, employee)
+    @logger.debug @demand[date.to_date].sort_by { |d| -d.demand } unless @demand[date.to_date].nil?
+    base = get_random_starting_hours_helper(date, employee)
+    upper_bound = 0.0
+
+    base.each_value do |v|
+      upper_bound += v.to_d
+    end
+
+    random = rand(0..upper_bound)
+
+    hour = 0
+    sum = 0
+
+    base.each do |k, v|
+      sum += v
+      if sum >= random
+        hour = k
+      end
+    end
+    hour
+  end
+
+  private def get_random_starting_hours_helper(date, employee)
+    shifts = Shift.planned_between(date.midnight, date.end_of_day)
+    demands = nil
+    demands = @demand[date.to_date].sort_by { |d| -d.demand } unless @demand[date.to_date].nil?
+
+    randomized = Hash.new
+
+    24.times do |i|
+      unless demands.nil?
+        demand = demands.filter { |s| s.start_time <= i.hours.after(date.midnight) && !(s.end_time <= i.hours.after(date.midnight)) }.first.demand
+        shift = shifts.filter { |s| s.start_time <= i.hours.after(date.midnight) && !(s.end_time <= i.hours.after(date.midnight)) }.count
+
+        randomized[i] = (demand / (shift + 1)).to_d
+      end
+    end
+    randomized
+  end
 
 end

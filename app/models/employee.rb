@@ -55,19 +55,11 @@ class Employee < User
     false
   end
 
-  # def can_work_at(date, start_date, end_date)
-  #   @working_days ||= get_possible_working_days(start_date, end_date)
-  #   logger.debug "#{username} in #{date.to_date} CAN WORK AT => #{@working_days}"
-  #   @working_days.include?(date.to_date)
-  # end
-
   def get_schedule_for_shift_time(start_time, end_time)
     day_of_week = start_time.wday
     can_work_at = can_work_at?(start_time)
     if can_work_at
-      logger.debug "===== #{username} can work at: #{day_of_week}"
       if active_contracts_count == 1
-        logger.debug "XXXXX == 1 schedule_#{contracts.first.schedule.id}"
         schedule = contracts.first.schedule
         return schedule if schedule.shifts.planned_between(MINIMUM_BREAK_HOURS.hours.before(start_time), MINIMUM_BREAK_HOURS.hours.after(end_time)).empty?
       else
@@ -75,9 +67,6 @@ class Employee < User
           contracts.active_employment_contracts.each do |c|
             schedule = c.schedule
             if schedule.contract.working_days.include?(day_of_week)
-              logger.debug "For #{username}, #{start_time} to #{end_time}"
-              logger.debug "For #{username}: #{schedule.shifts.map(&:start_time)} to #{schedule.shifts.map(&:end_time)}, empty: #{schedule.shifts.planned_between(MINIMUM_BREAK_HOURS.hours.before(start_time), MINIMUM_BREAK_HOURS.hours.after(end_time)).empty?}"
-              logger.debug schedule.shifts.planned_between(MINIMUM_BREAK_HOURS.hours.before(start_time), MINIMUM_BREAK_HOURS.hours.after(end_time))
               if schedule.shifts.planned_between(MINIMUM_BREAK_HOURS.hours.before(start_time), MINIMUM_BREAK_HOURS.hours.after(end_time)).empty?
                 return schedule
               end

@@ -9,4 +9,4 @@ FactoryBot.define do
 
 end
 
-FactoryBot.create_list(:demand, 100)
+FactoryBot.create_list(:demand, 1000)
