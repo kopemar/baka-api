@@ -6,7 +6,8 @@ class ContractController < ApplicationController
   end
 
   before_action :authenticate_user!
+
   def get_current_user_contracts
-    render json: Contract.where(employee_id: current_user.id)
+    render json: {:contracts => Contract.where(employee_id: current_user.id)}
   end
 end
