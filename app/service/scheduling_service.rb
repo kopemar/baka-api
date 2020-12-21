@@ -71,8 +71,10 @@ class SchedulingService < ApplicationService
 
     base.each do |k, v|
       sum += v
+      @logger.debug "KEY: #{k} | VALUE: #{v} | SUM: #{sum}"
       if sum >= random
         hour = k
+        break
       end
     end
     hour
@@ -90,7 +92,7 @@ class SchedulingService < ApplicationService
         demand = demands.filter { |s| s.start_time <= i.hours.after(date.midnight) && !(s.end_time <= i.hours.after(date.midnight)) }.first.demand
         shift = shifts.filter { |s| s.start_time <= i.hours.after(date.midnight) && !(s.end_time <= i.hours.after(date.midnight)) }.count
 
-        randomized[i] = (demand / (shift + 1)).to_d
+        randomized[i] = shift == 0 ? 3.0 * (demand).to_d : (demand / (shift)).to_d
       end
     end
     randomized

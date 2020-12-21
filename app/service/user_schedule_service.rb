@@ -8,14 +8,19 @@ class UserScheduleService < ApplicationService
 
   def call
     set = Set.new
+
     @user.contracts.each do |contract|
-      if @start_date.nil? || @end_date.nil?
-        set.merge(contract.schedule.shifts)
-      else
-        set.merge(contract.schedule.shifts.planned_between(@start_date, @end_date))
-      end
+        set.add(contract.schedule.id)
     end
-    set.sort_by { |d| d.start_time}
+
+    if !@start_date.nil? && !@end_date.nil?
+      Shift.where(schedule_id: set).planned_between(@start_date, @end_date)
+    elsif @start_date.nil?
+      Shift.where(schedule_id: set).planned_before(@end_date)
+    elsif @end_date.nil?
+      Shift.where(schedule_id: set).planned_after(@start_date)
+    end
+
   end
 
 end
