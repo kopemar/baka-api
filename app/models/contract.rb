@@ -4,6 +4,16 @@ class Contract < ApplicationRecord
 
   has_one :schedule
 
+  def type_to_id
+    if self.type == "EmploymentContract"
+      1
+    elsif self.type == "AgreementToCompleteAJob"
+      2
+    else
+      0
+    end
+  end
+
   def active
     (end_date.after?(Date.today) && start_date.before?(Date.today)) || end_date == nil
   end
@@ -20,6 +30,7 @@ class Contract < ApplicationRecord
   def as_json(*args)
     hash = super(*args)
     hash.merge!(active: self.active)
+    hash.merge!(type: type_to_id)
     hash.merge!(schedules: self.schedule)
   end
 end
