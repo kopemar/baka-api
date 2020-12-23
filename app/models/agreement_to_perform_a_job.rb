@@ -1,0 +1,2 @@
+class AgreementToPerformAJob < Contract
+end

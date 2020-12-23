@@ -9,6 +9,8 @@ class Contract < ApplicationRecord
       1
     elsif self.type == "AgreementToCompleteAJob"
       2
+    elsif self.type == "AgreementToPerformAJob"
+      3
     else
       0
     end
