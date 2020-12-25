@@ -27,6 +27,11 @@ class Contract < ApplicationRecord
 
   scope :shifts_planned, -> (start_time, end_time) { joins(:schedule).merge(Schedule.planned_between(start_time, end_time)) }
 
+  scope :active_agreements, -> { where(type: %w[AgreementToCompleteAJob AgreementToPerformAJob])
+                                     .where("end_date >= ? OR end_date IS NULL", Date::today)
+                                     .where("start_date <= ?", Date::today)
+  }
+
   scope :with_no_shifts_planned_in, -> (start_time, end_time) { Contract.where.not(id: Contract.shifts_planned(start_time, end_time)) }
 
   def as_json(*args)

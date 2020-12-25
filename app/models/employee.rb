@@ -29,6 +29,10 @@ class Employee < User
     working_days
   end
 
+  def has_agreement?
+    self.contracts.active_agreements.length > 0
+  end
+
   def active_contracts_count
     self.contracts.active_employment_contracts.length
   end
@@ -45,7 +49,7 @@ class Employee < User
 
   def as_json(*args)
     hash = super(*args)
-    # hash.merge!(contracts: self.contracts)
+    hash.merge!(agreement: has_agreement?)
   end
 
   def can_work_at?(date)

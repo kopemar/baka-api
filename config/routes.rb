@@ -4,10 +4,14 @@ Rails.application.routes.draw do
   #
   get "schedules", to: "schedule#schedule"
 
+  post "schedule/:id", to: "schedule#assign_shift"
+
   get "shifts", to: "shift#get_user_schedule"
 
   get "employees", to: "employee#get_all"
 
   get "contracts", to: "contract#get_current_user_contracts"
+
+  get "unassigned", to: "shift#get_unassigned_shifts"
 
 end
