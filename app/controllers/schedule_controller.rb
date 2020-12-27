@@ -20,4 +20,9 @@ class ScheduleController < ApplicationController
     end
     render :status => :bad_request
   end
+
+  def get_schedules
+    schedules = Schedule.where(id: Contract::active_agreements::where(employee_id: current_user.id).map { |c| c.schedule_id })
+    render json: {:schedules => schedules}
+  end
 end

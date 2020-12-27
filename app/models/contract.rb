@@ -38,6 +38,5 @@ class Contract < ApplicationRecord
     hash = super(*args)
     hash.merge!(active: self.active)
     hash.merge!(type: type_to_id)
-    hash.merge!(schedules: self.schedule)
   end
 end

@@ -2,7 +2,7 @@ Rails.application.routes.draw do
   mount_devise_token_auth_for 'User', at: 'auth'
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
   #
-  get "schedules", to: "schedule#schedule"
+  get "generate-schedule", to: "schedule#schedule"
 
   post "schedule/:id", to: "schedule#assign_shift"
 
@@ -14,4 +14,5 @@ Rails.application.routes.draw do
 
   get "unassigned", to: "shift#get_unassigned_shifts"
 
+  get "schedules", to: "schedule#get_schedules"
 end
