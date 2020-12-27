@@ -8,21 +8,4 @@ class ScheduleController < ApplicationController
 
   before_action :authenticate_user!
 
-  def assign_shift
-    contract = Contract::active_agreements.where(employee_id: current_user.id).where(schedule_id: params[:id]).first
-    unless contract.nil?
-      shift = Shift.where(id: params[:shift_id]).first
-      if shift.schedule_id.nil?
-        shift.schedule_id = contract.schedule_id
-        shift.save!
-        return render json: shift
-      end
-    end
-    render :status => :bad_request
-  end
-
-  def get_schedules
-    schedules = Schedule.where(id: Contract::active_agreements::where(employee_id: current_user.id).map { |c| c.schedule_id })
-    render json: {:schedules => schedules}
-  end
 end

@@ -4,8 +4,6 @@ Rails.application.routes.draw do
   #
   get "generate-schedule", to: "schedule#schedule"
 
-  post "schedule/:id", to: "schedule#assign_shift"
-
   get "shifts", to: "shift#get_user_schedule"
 
   get "employees", to: "employee#get_all"
@@ -14,5 +12,9 @@ Rails.application.routes.draw do
 
   get "unassigned", to: "shift#get_unassigned_shifts"
 
-  get "schedules", to: "schedule#get_schedules"
+  get "shift/:id/schedules", to: "shift#get_possible_schedules"
+
+  post "shift/:id/schedule", to: "shift#assign_shift"
+
+  delete "shift/:id/schedule", to: "shift#remove_from_schedule"
 end

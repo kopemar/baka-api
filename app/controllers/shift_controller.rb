@@ -20,6 +20,19 @@ class ShiftController < ApplicationController
     }
   end
 
+  def assign_shift
+    contract = Contract::active_agreements.where(employee_id: current_user.id).where(schedule_id: params[:schedule_id]).first
+    unless contract.nil?
+      shift = Shift.where(id: params[:id]).first
+      if shift.schedule_id.nil?
+        shift.schedule_id = contract.schedule_id
+        shift.save!
+        return render json: shift
+      end
+    end
+    render :status => :bad_request
+  end
+
   def get_unassigned_shifts
     shifts = if params[:start_date].nil? && params[:end_date].nil?
                Shift::unassigned
@@ -37,5 +50,17 @@ class ShiftController < ApplicationController
         :total_pages => collection.total_pages,
         :has_next => collection.next_page.present?
     }
+  end
+
+  def remove_from_schedule
+    shift = Shift.where(id: params[:id]).first
+    shift.schedule_id = nil
+    shift.save!
+    render json: shift
+  end
+
+  def get_possible_schedules
+    schedules = Schedule.where(id: Contract::active_agreements::where(employee_id: current_user.id).map { |c| c.schedule_id })
+    render json: {:schedules => schedules}
   end
 end
