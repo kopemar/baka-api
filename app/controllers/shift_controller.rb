@@ -26,6 +26,7 @@ class ShiftController < ApplicationController
       shift = Shift.where(id: params[:id]).first
       if shift.schedule_id.nil?
         shift.schedule_id = contract.schedule_id
+        shift.user_scheduled = true
         if shift.save!
           return render json: shift
         end
@@ -56,9 +57,12 @@ class ShiftController < ApplicationController
 
   def remove_from_schedule
     shift = Shift.where(id: params[:id]).first
-    shift.schedule_id = nil
-    shift.save!
-    render json: shift
+    if shift.user_scheduled && ((shift.start_time - DateTime::now).to_i / 1.day) > 4
+      shift.schedule_id = nil
+      shift.save!
+      return render json: shift
+    end
+    render :status => :unauthorized
   end
 
   def get_possible_schedules
