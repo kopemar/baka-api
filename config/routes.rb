@@ -4,13 +4,11 @@ Rails.application.routes.draw do
   #
   get "generate-schedule", to: "schedule#schedule"
 
-  get "shifts", to: "shift#get_user_schedule"
+  get "shifts", to: "shift#get_shifts"
 
   get "employees", to: "employee#get_all"
 
   get "contracts", to: "contract#get_current_user_contracts"
-
-  get "unassigned", to: "shift#get_unassigned_shifts"
 
   get "shift/:id/schedules", to: "shift#get_possible_schedules"
 

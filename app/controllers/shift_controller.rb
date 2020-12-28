@@ -1,8 +1,10 @@
 class ShiftController < ApplicationController
   before_action :authenticate_user!
 
-  def get_user_schedule
-    schedule = if params[:start_date].nil? && params[:end_date].nil?
+  def get_shifts
+    schedule = if params[:unassigned] == true.to_s
+                 get_unassigned_shifts
+               elsif params[:start_date].nil? && params[:end_date].nil?
                  UserScheduleService.call(current_user).order(:start_time)
                elsif params[:start_date].nil?
                  UserScheduleService.call(current_user, nil, params[:end_date].to_date).order('shifts.start_time DESC')
@@ -37,22 +39,16 @@ class ShiftController < ApplicationController
 
   def get_unassigned_shifts
     overlaps = Shift.where(schedule_id: Schedule.where(contract_id: Contract.where(employee_id: current_user.id).all.map { |d| d.id })).map { |d| "end_time >= '#{d.start_time}' AND start_time <= '#{d.end_time}'" }.join(" OR ")
-    shifts = if params[:start_date].nil? && params[:end_date].nil?
-               Shift::unassigned.where.not(overlaps).order('shifts.start_time')
-             elsif params[:start_date].nil?
-               Shift::unassigned::planned_before(params[:end_date].to_datetime).where.not(overlaps).order('shifts.start_time DESC')
-             elsif params[:end_date].nil?
-               Shift::unassigned::planned_after(params[:start_date].to_datetime).where.not(overlaps).order('shifts.start_time')
-             else
-               Shift::unassigned::planned_between(params[:start_date].to_datetime, params[:end_date].to_datetime).where.not(overlaps).order('shifts.start_time')
-             end
-
-    render json: {
-        :shifts => collection = shifts.paginate(page: params[:page], per_page: params[:per_page].nil? ? 30 : params[:per_page]),
-        :current_page => collection.current_page,
-        :total_pages => collection.total_pages,
-        :has_next => collection.next_page.present?
-    }
+    shift = if params[:start_date].nil? && params[:end_date].nil?
+              Shift::unassigned.where.not(overlaps).order('shifts.start_time')
+            elsif params[:start_date].nil?
+              Shift::unassigned::planned_before(params[:end_date].to_datetime).where.not(overlaps).order('shifts.start_time DESC')
+            elsif params[:end_date].nil?
+              Shift::unassigned::planned_after(params[:start_date].to_datetime).where.not(overlaps).order('shifts.start_time')
+            else
+              Shift::unassigned::planned_between(params[:start_date].to_datetime, params[:end_date].to_datetime).where.not(overlaps).order('shifts.start_time')
+            end
+    return shift
   end
 
   def remove_from_schedule
