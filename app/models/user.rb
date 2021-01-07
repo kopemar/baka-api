@@ -24,15 +24,12 @@ class User < ApplicationRecord
     ROLE.key?(type.downcase.to_sym) ? ROLE[type.downcase.to_sym] : super
   end
 
-  def is_manager
+  def is_manager?
     self.type == "Manager"
   end
 
   def as_json(*args)
     hash = super(*args)
-    hash.merge(manager: is_manager)
-    unless self.organization.nil?
-      hash.merge(organization_name: self.organization.name)
-    end
+    hash.merge({manager: is_manager?, organization_name: self.organization.name})
   end
 end
