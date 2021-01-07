@@ -52,13 +52,29 @@ class ShiftController < ApplicationController
   def get_unassigned_shifts
     overlaps = Shift.where(schedule_id: Schedule.where(contract_id: Contract.where(employee_id: current_user.id).all.map { |d| d.id })).map { |d| "end_time >= '#{d.start_time}' AND start_time <= '#{d.end_time}'" }.join(" OR ")
     if params[:start_date].nil? && params[:end_date].nil?
-      Shift::unassigned.where.not(overlaps).order('shifts.start_time')
+      if overlaps.empty?
+        Shift::unassigned.all.order('shifts.start_time')
+      else
+        Shift::unassigned.where.not(overlaps).order('shifts.start_time')
+      end
     elsif params[:start_date].nil?
-      Shift::unassigned::planned_before(params[:end_date].to_datetime).where.not(overlaps).order('shifts.start_time DESC')
+      if overlaps.empty?
+        Shift::unassigned::planned_before(params[:end_date].to_datetime).all.order('shifts.start_time DESC')
+      else
+        Shift::unassigned::planned_before(params[:end_date].to_datetime).where.not(overlaps).order('shifts.start_time DESC')
+      end
     elsif params[:end_date].nil?
-      Shift::unassigned::planned_after(params[:start_date].to_datetime).where.not(overlaps).order('shifts.start_time')
+      if overlaps.empty?
+        Shift::unassigned::planned_after(params[:start_date].to_datetime).all.order('shifts.start_time')
+      else
+        Shift::unassigned::planned_after(params[:start_date].to_datetime).where.not(overlaps).order('shifts.start_time')
+      end
     else
-      Shift::unassigned::planned_between(params[:start_date].to_datetime, params[:end_date].to_datetime).where.not(overlaps).order('shifts.start_time')
+      if overlaps.empty?
+        Shift::unassigned::planned_between(params[:start_date].to_datetime, params[:end_date].to_datetime).order('shifts.start_time')
+      else
+        Shift::unassigned::planned_between(params[:start_date].to_datetime, params[:end_date].to_datetime).where.not(overlaps).order('shifts.start_time')
+      end
     end
   end
 

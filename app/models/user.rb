@@ -3,6 +3,8 @@ class User < ApplicationRecord
          :recoverable, :rememberable
   include DeviseTokenAuth::Concerns::User
 
+  belongs_to :organization
+
   ROLE = {
       employee: 1,
       manager: 2
@@ -29,5 +31,8 @@ class User < ApplicationRecord
   def as_json(*args)
     hash = super(*args)
     hash.merge(manager: is_manager)
+    unless self.organization.nil?
+      hash.merge(organization_name: self.organization.name)
+    end
   end
 end

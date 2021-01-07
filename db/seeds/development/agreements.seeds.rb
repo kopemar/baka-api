@@ -1,4 +1,4 @@
-# after 'development:users' do
+after 'development:users' do
   FactoryBot.define do
     factory :agreement_to_complete_a_job do
       start_date { FFaker::Time.between(1.years.from_now, 7.months.ago) }
@@ -18,4 +18,4 @@
     c.schedule_id = Schedule.create(contract_id: c.id).id
     c.save!
   end
-# end
+end
