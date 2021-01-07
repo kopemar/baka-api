@@ -4,7 +4,8 @@ class User < ApplicationRecord
   include DeviseTokenAuth::Concerns::User
 
   ROLE = {
-      employee: 1
+      employee: 1,
+      manager: 2
   }
 
   validates_uniqueness_of :username
@@ -19,5 +20,14 @@ class User < ApplicationRecord
 
   def role
     ROLE.key?(type.downcase.to_sym) ? ROLE[type.downcase.to_sym] : super
+  end
+
+  def is_manager
+    self.type == "Manager"
+  end
+
+  def as_json(*args)
+    hash = super(*args)
+    hash.merge(manager: is_manager)
   end
 end
