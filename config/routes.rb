@@ -15,4 +15,6 @@ Rails.application.routes.draw do
   post "shift/:id/schedule", to: "shift#assign_shift"
 
   delete "shift/:id/schedule", to: "shift#remove_from_schedule"
+
+  post "templates", to: "shift_template#create_template"
 end
