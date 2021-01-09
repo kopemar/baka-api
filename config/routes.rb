@@ -17,4 +17,8 @@ Rails.application.routes.draw do
   delete "shift/:id/schedule", to: "shift#remove_from_schedule"
 
   post "templates", to: "shift_template#create_template"
+
+  get "periods", to: "scheduling_period#all"
+
+  get "units/:id", to: "scheduling_unit#in_period"
 end
