@@ -1,6 +1,6 @@
 #days
 class SchedulingUnit < ApplicationRecord
-  before_save :add_scheduling_period
+  before_validation :add_scheduling_period
 
   belongs_to :scheduling_period
 

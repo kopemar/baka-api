@@ -13,4 +13,13 @@ class ShiftTemplateController < ApplicationController
       render :json => {:data => template}
     end
   end
+
+  def in_unit
+    if params[:unit_id].nil?
+      render :status => :unprocessable_entity, :json => {:errors => ["Unit Id is missing"]}
+    else
+      templates = ShiftTemplate.where(scheduling_unit_id: params[:unit_id]).all
+      render :json => {:data => templates}
+    end
+  end
 end

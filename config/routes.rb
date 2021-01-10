@@ -18,6 +18,8 @@ Rails.application.routes.draw do
 
   post "templates", to: "shift_template#create_template"
 
+  get "templates", to: "shift_template#in_unit"
+
   get "periods", to: "scheduling_period#all"
 
   get "units/:id", to: "scheduling_unit#in_period"
