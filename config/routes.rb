@@ -12,13 +12,13 @@ Rails.application.routes.draw do
 
   get "shift/:id/schedules", to: "shift#get_possible_schedules"
 
-  post "shift/:id/schedule", to: "shift#assign_shift"
+  post "shifts", to: "shift#assign_shift"
 
   delete "shift/:id/schedule", to: "shift#remove_from_schedule"
 
   post "templates", to: "shift_template#create_template"
 
-  get "templates", to: "shift_template#in_unit"
+  get "templates", to: "shift_template#get_templates"
 
   get "periods", to: "scheduling_period#all"
 

@@ -5,12 +5,11 @@ class ShiftTemplate < ApplicationRecord
   belongs_to :scheduling_unit
 
   def count_duration
-    logger.debug "count_duration"
     self.duration = ((end_time - start_time - break_minutes.minutes).to_f / 1.hour)
   end
 
   def validate_duration
-    unless self.duration <= 12
+    unless self.duration <= MAX_SHIFT_DURATION_HOURS
       errors.add("Duration is too long")
     end
     unless self.duration > 0
@@ -22,6 +21,22 @@ class ShiftTemplate < ApplicationRecord
     unless self.start_time.before?(self.end_time)
       errors.add("Start time has to be before end time")
     end
+  end
+
+  scope :planned_between, -> (start_date, end_date) {
+    where("end_time >= ? AND start_time <= ?", start_date, end_date)
+  }
+
+  scope :planned_before, -> (end_time) {
+    where("end_time <= ? ", end_time)
+  }
+
+  scope :planned_after, -> (start_time) {
+    where("start_time >= ? ", start_time)
+  }
+
+  def can_be_assigned?
+    true
   end
 
   def add_to_scheduling_unit

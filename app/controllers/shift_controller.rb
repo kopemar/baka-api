@@ -23,67 +23,28 @@ class ShiftController < ApplicationController
   end
 
   def assign_shift
-    if params[:schedule_id].nil?
-      return render :status => :bad_request, :json => {:errors => ["schedule_id not defined"]}
-    end
-    contract = Contract::active_agreements.where(employee_id: current_user.id).where(schedule_id: params[:schedule_id]).first
-    shift = Shift.where(id: params[:id]).first
-    errors = Array.new
-    if shift.nil?
-      render :status => :not_found, json: {:errors => {
-          :message => "Shift not found!"
-      }}
-    elsif !contract.nil?
-      if shift.schedule_id.nil?
-        shift.schedule_id = contract.schedule_id
-        shift.user_scheduled = true
-        if shift.save!
-          return render json: shift
-        else
-          errors.push("Could not save shift")
-        end
+    if params[:schedule_id].nil? || params[:template_id].nil?
+      render :status => :bad_request, :json => {:errors => ["schedule_id not defined"]}
+    elsif ShiftTemplate.where(id: params[:template_id]).first.nil?
+      render :status => :not_found, :json => {:errors => ["Template not found"]}
+    elsif Schedule.where(id: params[:schedule_id]).nil?
+      render :status => :not_found, :json => {:errors => ["Schedule not found"]}
+    else
+      assignment = SelfAssignShiftService.call(params, current_user)
+      if !assignment.nil?
+        render :json => assignment
       else
-        errors.push("Schedule ID is not nil")
+        render :status => :unprocessable_entity, json: { errors: ["Could not assign shift"] }
       end
     end
-    render :status => :unprocessable_entity, :json => {:errors => errors}
   end
 
-  def get_unassigned_shifts
-    overlaps = Shift.where(schedule_id: Schedule.where(contract_id: Contract.where(employee_id: current_user.id).all.map { |d| d.id })).map { |d| "end_time >= '#{d.start_time}' AND start_time <= '#{d.end_time}'" }.join(" OR ")
-    if params[:start_date].nil? && params[:end_date].nil?
-      if overlaps.empty?
-        Shift::unassigned.all.order('shifts.start_time')
-      else
-        Shift::unassigned.where.not(overlaps).order('shifts.start_time')
-      end
-    elsif params[:start_date].nil?
-      if overlaps.empty?
-        Shift::unassigned::planned_before(params[:end_date].to_datetime).all.order('shifts.start_time DESC')
-      else
-        Shift::unassigned::planned_before(params[:end_date].to_datetime).where.not(overlaps).order('shifts.start_time DESC')
-      end
-    elsif params[:end_date].nil?
-      if overlaps.empty?
-        Shift::unassigned::planned_after(params[:start_date].to_datetime).all.order('shifts.start_time')
-      else
-        Shift::unassigned::planned_after(params[:start_date].to_datetime).where.not(overlaps).order('shifts.start_time')
-      end
-    else
-      if overlaps.empty?
-        Shift::unassigned::planned_between(params[:start_date].to_datetime, params[:end_date].to_datetime).order('shifts.start_time')
-      else
-        Shift::unassigned::planned_between(params[:start_date].to_datetime, params[:end_date].to_datetime).where.not(overlaps).order('shifts.start_time')
-      end
-    end
-  end
 
   def remove_from_schedule
     shift = Shift.where(id: params[:id]).first
     errors = Array.new
     if shift.user_scheduled && ((shift.start_time - DateTime::now).to_i / 1.day) > 4
-      shift.schedule_id = nil
-      shift.save!
+      Shift.delete_by(id: shift.id)
       return render json: shift
     else
       unless shift.user_scheduled

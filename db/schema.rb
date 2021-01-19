@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_09_143703) do
+ActiveRecord::Schema.define(version: 2021_01_11_101825) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -89,8 +89,10 @@ ActiveRecord::Schema.define(version: 2021_01_09_143703) do
     t.datetime "end_time"
     t.datetime "start_time"
     t.integer "schedule_id"
-    t.integer "duration", default: 8
+    t.float "duration", default: 8.0
     t.boolean "user_scheduled", default: false
+    t.integer "shift_template_id"
+    t.integer "break_minutes"
   end
 
   create_table "users", force: :cascade do |t|
