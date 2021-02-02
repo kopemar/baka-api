@@ -10,6 +10,9 @@ class SchedulingService < ApplicationService
   end
 
   def call
+    ActiveRecord::Base.transaction do
+      days = (@end_date - @start_date).to_i + 1
+    end
     # ActiveRecord::Base.transaction do
     #   days = (@end_date - @start_date).to_i + 1
     #   # DemandService.call(date, @days.days.after(date))
@@ -51,51 +54,6 @@ class SchedulingService < ApplicationService
     # end
   end
 
-  private def get_random_working_hours(date, employee)
-    {hour: get_random_starting_hours(date, employee), duration: STANDARD_DAILY_WORKING_HOURS}
-  end
 
-  private def get_random_starting_hours(date, employee)
-    @logger.debug @demand[date.to_date].sort_by { |d| -d.demand } unless @demand[date.to_date].nil?
-    base = get_random_starting_hours_helper(date, employee)
-    upper_bound = 0.0
-
-    base.each_value do |v|
-      upper_bound += v.to_d
-    end
-
-    random = rand(0..upper_bound)
-
-    hour = 0
-    sum = 0
-
-    base.each do |k, v|
-      sum += v
-      @logger.debug "KEY: #{k} | VALUE: #{v} | SUM: #{sum}"
-      if sum >= random
-        hour = k
-        break
-      end
-    end
-    hour
-  end
-
-  private def get_random_starting_hours_helper(date, employee)
-    shifts = Shift.planned_between(date.midnight, date.end_of_day)
-    demands = nil
-    demands = @demand[date.to_date].sort_by { |d| -d.demand } unless @demand[date.to_date].nil?
-
-    randomized = Hash.new
-
-    24.times do |i|
-      unless demands.nil?
-        demand = demands.filter { |s| s.start_time <= i.hours.after(date.midnight) && !(s.end_time <= i.hours.after(date.midnight)) }.first.demand
-        shift = shifts.filter { |s| s.start_time <= i.hours.after(date.midnight) && !(s.end_time <= i.hours.after(date.midnight)) }.count
-
-        randomized[i] = shift == 0 ? 3.0 * (demand).to_d : (demand / (shift)).to_d
-      end
-    end
-    randomized
-  end
 
 end

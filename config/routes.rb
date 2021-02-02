@@ -23,4 +23,6 @@ Rails.application.routes.draw do
   get "periods", to: "scheduling_period#all"
 
   get "units/:id", to: "scheduling_unit#in_period"
+
+  get "periods/:id/calculations/shift-times", to: "scheduling_period#calculate_shift_times"
 end

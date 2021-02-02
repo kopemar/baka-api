@@ -9,7 +9,12 @@ class ShiftTemplateController < ApplicationController
       return render :status => :unprocessable_entity, :json => {:errors => ["Something is missing"]}
     else
       template = ShiftTemplate.create!(
-          start_time: params[:start_time].to_datetime, end_time: params[:end_time].to_datetime, break_minutes: params[:break_minutes].to_i)
+          start_time: params[:start_time].to_datetime,
+          end_time: params[:end_time].to_datetime,
+          break_minutes: params[:break_minutes].to_i,
+          priority: params[:priority].to_i,
+          organization_id: current_user.organization_id
+      )
       render :json => {:data => template}
     end
   end

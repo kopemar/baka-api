@@ -43,8 +43,7 @@ class Employee < User
   }
 
   scope :to_be_planned, -> (start_date, end_date) {
-    Employee.with_employment_contract
-    # Employee.with_employment_contract.joins(:contracts).merge!(Contract.with_no_shifts_planned_in(start_date, end_date)).select("DISTINCT ON (users.id) users.*")
+    Employee.with_employment_contract.joins(:contracts).merge!(Contract.with_no_shifts_planned_in(start_date, end_date)).select("DISTINCT ON (users.id) users.*")
   }
 
   def as_json(*args)

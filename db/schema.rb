@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_11_101825) do
+ActiveRecord::Schema.define(version: 2021_01_26_140543) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -62,6 +62,7 @@ ActiveRecord::Schema.define(version: 2021_01_11_101825) do
     t.date "end_date"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "organization_id", null: false
   end
 
   create_table "scheduling_units", force: :cascade do |t|
@@ -70,6 +71,7 @@ ActiveRecord::Schema.define(version: 2021_01_11_101825) do
     t.datetime "start_time", null: false
     t.datetime "end_time", null: false
     t.integer "scheduling_period_id", null: false
+    t.integer "organization_id", null: false
   end
 
   create_table "shift_templates", force: :cascade do |t|
@@ -81,6 +83,8 @@ ActiveRecord::Schema.define(version: 2021_01_11_101825) do
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.integer "scheduling_unit_id"
+    t.integer "organization_id", null: false
+    t.boolean "is_employment_contract"
   end
 
   create_table "shifts", force: :cascade do |t|

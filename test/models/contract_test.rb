@@ -9,6 +9,7 @@ class ContractTest < ActiveSupport::TestCase
     assert_not_nil schedule1
 
     schedule2 = Schedule.where(id: c2.schedule_id).first
+    p c2.schedule_id
     assert_not_nil schedule2
 
     s1 = Shift.where(schedule_id: schedule1.id).first

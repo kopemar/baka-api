@@ -1,6 +1,6 @@
 FactoryBot.define do
-  factory :shift do
-    start_time { 1.hours.ago }
+  factory :shift_template do
+    start_time { 0.hours.from_now }
     end_time { 8.hours.from_now }
 
     trait :past_2019 do
@@ -14,64 +14,85 @@ FactoryBot.define do
     end
 
     trait :future do
-      start_time { 3.days.from_now }
+      start_time { 1.month.from_now }
       end_time { 8.hours.after(start_time) }
     end
   end
 end
 
 def create_shifts_happening_now
-  FactoryBot.create_list(:employee, 5) do |e|
+  tmpl = get_shift_now
+  FactoryBot.build_list(:employee, 5) do |e|
+    e.organization_id = tmpl.organization_id
     FactoryBot.create(:contract, :active, employee: e) do |c|
       FactoryBot.create(:schedule, contract: c) do |s|
-        FactoryBot.create(:shift, schedule: s)
         c.schedule_id = s.id
         c.save!
+
+        s1 = Shift.from_template(tmpl)
+        s1.schedule_id = s.id
+        s1.save
       end
     end
+    e.save!
   end
 
-  FactoryBot.create_list(:employee, 2) do |e|
-    FactoryBot.create(:contract, :active, employee: e) do |c|
-      FactoryBot.create(:schedule, contract: c) do |s|
-        c.schedule_id = s.id
-        c.save!
-      end
-    end
-  end
+  # FactoryBot.create_list(:employee, 2) do |e|
+  #   FactoryBot.create(:contract, :active, employee: e) do |c|
+  #     FactoryBot.create(:schedule, contract: c) do |s|
+  #       c.schedule_id = s.id
+  #       c.save!
+  #     end
+  #   end
+  # end
 end
 
 def create_shifts_past_future
-  FactoryBot.create_list(:employee, 5) do |e|
+  tmpl_past = get_shift_2019
+  FactoryBot.build_list(:employee, 5) do |e|
+    e.organization_id = tmpl_past.id
     FactoryBot.create(:contract, :active, employee: e) do |c|
       FactoryBot.create(:schedule, contract: c) do |s|
-        FactoryBot.create(:shift, :past, schedule: s)
-        FactoryBot.create(:shift, :future, schedule: s)
+        s1 = Shift.from_template(tmpl_past)
+        s1.schedule_id = s.id
+        s1.save
+
+        s2 = Shift.from_template(FactoryBot.create(:shift_template, :future))
+        s2.schedule_id =  s.id
+        s2.save
+
         c.schedule_id = s.id
         c.save!
       end
     end
+    e.save
   end
 
-  FactoryBot.create_list(:employee, 2) do |e|
+  FactoryBot.build_list(:employee, 2) do |e|
+    e.organization_id = o.id
     FactoryBot.create(:contract, :active, employee: e) do |c|
       FactoryBot.create(:schedule, contract: c) do |s|
-        FactoryBot.create(:shift, :past, schedule: s)
+        s1 = Shift.from_template(FactoryBot.create(:shift_template, :past))
+        s1.schedule_id = s.id
+        s1.save
         c.schedule_id = s.id
         c.save!
       end
     end
+    e.save
   end
 end
 
 def create_employee_shifts_past
-  FactoryBot.create(:employee) do |e|
+  tmp = get_shift_2019
+  FactoryBot.create(:employee, organization_id: tmp.organization_id) do |e|
     FactoryBot.create_list(:contract, 2, :active, employee: e) do |c|
       FactoryBot.create(:schedule, contract: c) do |s|
-        FactoryBot.create(:shift, :past_2019, schedule: s)
-        FactoryBot.create(:shift, :future, schedule: s)
         c.schedule_id = s.id
         c.save!
+        s1 = Shift.from_template(tmp)
+        s1.schedule_id = s.id
+        s1.save
       end
     end
   end

@@ -3,7 +3,11 @@ require 'test_helper'
 class EmployeeTest < ActiveSupport::TestCase
 
   test "employee initialization" do
-    e = Employee.create!(username: "employee", email:"employee@example.com", first_name: FFaker::Name.first_name, last_name: FFaker::Name.last_name, birth_date: "2000-12-24")
+    o = generate_organization
+    e = FactoryBot.create(
+        :employee,
+        organization_id: o.id
+    )
     assert(e.id != nil)
   end
 
@@ -43,19 +47,6 @@ class EmployeeTest < ActiveSupport::TestCase
 
     assert e1.can_work_at?(monday)
     assert_not e1.can_work_at?(tuesday)
-  end
-
-  test "Get employees to plan" do
-    e1 = employee_shift_now
-    p "e1 #{e1}"
-    assert Employee.to_be_planned(1.day.ago, 1.day.from_now).empty?
-
-    e2 = employee_shift_past
-
-    assert Employee.to_be_planned(1.day.ago, 1.day.from_now).length == 1
-
-    assert_nil Employee.to_be_planned(1.day.ago, 1.day.from_now).find_by(username: e1.username)
-    assert_not_nil Employee.to_be_planned(1.day.ago, 1.day.from_now).find_by(username: e2.username)
   end
 
   test "Last shift test" do

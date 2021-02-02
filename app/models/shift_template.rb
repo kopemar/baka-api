@@ -41,6 +41,6 @@ class ShiftTemplate < ApplicationRecord
 
   def add_to_scheduling_unit
     logger.debug "add to scheduling unit"
-    self.scheduling_unit = SchedulingUnit.where("end_time >= ? AND start_time <= ?", start_time, start_time).first
+    self.scheduling_unit = SchedulingUnit.where("end_time >= ? AND start_time <= ?", start_time, start_time).where(organization_id: self.organization_id).first
   end
 end
