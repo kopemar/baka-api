@@ -216,6 +216,8 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     response_body = response.parsed_body
     assert_response(201)
 
+    assert response_body["templates"].all? { |shift| shift["is_employment_contract"] }
+
     assert response_body["templates"].length == 20
 
     Time.zone = "London"
@@ -251,6 +253,8 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     assert_response(201)
 
     assert response_body["templates"].length == 19
+
+    assert response_body["templates"].all? { |shift| shift["is_employment_contract"] }
 
     Time.zone = "London"
     assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(5.days.after(Time.zone.now.monday)).to_time}
