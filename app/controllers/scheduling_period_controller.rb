@@ -19,8 +19,12 @@ class SchedulingPeriodController < ApplicationController
   end
 
   def calculate_shift_times
-    render :json => {:times => ShiftTimesCalcService.call(params)}
+    render :json => { :times => ShiftTimesCalcService.call(params) }
   rescue ShiftTimesCalcService::ShiftServiceError => e
-    render :status => :bad_request, :json => {:errors => [e.message]}
+    render :status => :bad_request, :json => { :errors => [e.message] }
+  end
+
+  def generate_shift_templates
+    render :status => :created, :json => { :templates => ShiftTemplateGenerator.call(params) }
   end
 end

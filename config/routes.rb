@@ -25,4 +25,6 @@ Rails.application.routes.draw do
   get "units/:id", to: "scheduling_unit#in_period"
 
   get "periods/:id/calculations/shift-times", to: "scheduling_period#calculate_shift_times"
+
+  post "periods/:id/shift-templates", to: "scheduling_period#generate_shift_templates"
 end

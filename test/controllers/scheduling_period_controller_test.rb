@@ -159,12 +159,21 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     assert_empty times.select { |time| time["start_time"].to_time == "09:00".to_time }
     assert_nil times.select { |time| time["end_time"].to_time == "17:30".to_time }.first
 
+    assert_equal([1, 2, 3, 4], times.map { |time| time["id"] })
+
+    start_08_00 = times.select { |time| time["start_time"].to_time == "08:00".to_time }.first
+    end_17_10 = times.select { |time| time["end_time"].to_time == "17:10".to_time }.first
+
+    assert_not_nil start_08_00
+    assert_equal(1, start_08_00["id"])
+    assert_not_empty times.select { |time| time["end_time"].to_time == "16:30".to_time }
+
+    assert_not_nil end_17_10
+    assert_equal(2, end_17_10["id"])
+
     assert_not_empty times.select { |time| time["start_time"].to_time == "08:40".to_time }
-    assert_not_nil times.select { |time| time["end_time"].to_time == "17:10".to_time }.first
     assert_not_empty times.select { |time| time["start_time"].to_time == "09:20".to_time }
     assert_not_nil times.select { |time| time["end_time"].to_time == "17:50".to_time }.first
-    assert_not_nil times.select { |time| time["start_time"].to_time == "08:00".to_time }.first
-    assert_not_empty times.select { |time| time["end_time"].to_time == "16:30".to_time }
     assert_not_empty times.select { |time| time["start_time"].to_time == "10:00".to_time }
     assert_not_nil times.select { |time| time["end_time"].to_time == "18:30".to_time }.first
   end
@@ -184,5 +193,71 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
         headers: @auth_tokens
     # todo what should be here?
     assert_response(400)
+  end
+
+  test "Scheduling templates gen" do
+    org = generate_organization
+    user = FactoryBot.create(:employee, organization: org)
+    @auth_tokens = auth_tokens_for_user(user)
+
+    period = FactoryBot.create(:scheduling_period, organization: org)
+
+    post "/periods/#{period.id}/shift-templates",
+        params: {
+            working_days: [1, 2, 3, 4, 5],
+            start_time: "08:00",
+            end_time: "18:30",
+            shift_hours: 8,
+            break_minutes: 30,
+            per_day: 4
+        },
+        headers: @auth_tokens
+
+    response_body = response.parsed_body
+    assert_response(201)
+
+    assert response_body["templates"].length == 20
+
+    Time.zone = "London"
+    assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(5.days.after(Time.zone.now.monday)).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(Time.zone.now.monday).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 10.hours.after(2.days.after(Time.zone.now.monday)).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["end_time"].to_time == 18.hours.after(2.days.after(30.minutes.after(Time.zone.now.monday))).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(40.minutes.after(4.days.after(Time.zone.now.monday))).to_time}
+  end
+
+  test "Scheduling templates gen - exclude" do
+    org = generate_organization
+    user = FactoryBot.create(:employee, organization: org)
+    @auth_tokens = auth_tokens_for_user(user)
+
+    period = FactoryBot.create(:scheduling_period, organization: org)
+
+    post "/periods/#{period.id}/shift-templates",
+         params: {
+             working_days: [1, 2, 3, 4, 5],
+             start_time: "08:00",
+             end_time: "18:30",
+             shift_hours: 8,
+             break_minutes: 30,
+             per_day: 4,
+             excluded: {
+                 1 => [1]
+             }
+         },
+         headers: @auth_tokens
+
+    response_body = response.parsed_body
+    assert_response(201)
+
+    assert response_body["templates"].length == 19
+
+    Time.zone = "London"
+    assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(5.days.after(Time.zone.now.monday)).to_time}
+    assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(Time.zone.now.monday).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(1.days.after(Time.zone.now.monday)).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 10.hours.after(2.days.after(Time.zone.now.monday)).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["end_time"].to_time == 18.hours.after(2.days.after(30.minutes.after(Time.zone.now.monday))).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(40.minutes.after(4.days.after(Time.zone.now.monday))).to_time}
   end
 end

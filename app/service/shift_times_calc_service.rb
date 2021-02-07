@@ -5,6 +5,8 @@ class ShiftTimesCalcService < ApplicationService
     @params = params
   end
 
+
+  # result is deterministic, that's why IDs should be valid anytime & can be used in API...
   def call
     if @params[:start_time].nil? || @params[:end_time].nil? || @params[:shift_hours].nil? || @params[:break_minutes].nil?
       raise ShiftServiceError.new("Some of the required params is missing.")
@@ -26,26 +28,24 @@ class ShiftTimesCalcService < ApplicationService
 
     array = Array.new
 
-    p "========= shift duration: #{hours_in_day}"
     raise ShiftServiceError.new("Working hours in the day can not be covered.") unless shift_duration*per_day >= hours_in_day
     raise ShiftServiceError.new("Shift is too long.") unless shift_duration <= hours_in_day
 
     minutes_difference = ((hours_in_day - hours) * 60 - minutes) / (per_day - 1)
     (per_day - 1).times do |index|
-      p "index: #{((hours_in_day - hours)) * 60 - minutes}"
-      array.push(return_shift_hash_start((index*minutes_difference).minutes.after(start_time).to_time, hours, minutes))
+      array.push(return_shift_hash_start((index*minutes_difference).minutes.after(start_time).to_time, hours, minutes, index + 1))
     end
 
-    array.push(return_shift_hash_end(end_time, hours, minutes))
+    array.push(return_shift_hash_end(end_time, hours, minutes, per_day))
     array
   end
 
-  def return_shift_hash_start(start_time, shift_hours, break_minutes)
-    {:start_time => start_time.to_time.beginning_of_minute, end_time: shift_hours.hours.after(break_minutes.minutes.after(start_time).to_time.beginning_of_minute) }
+  def return_shift_hash_start(start_time, shift_hours, break_minutes, id)
+    {:start_time => start_time.to_time.beginning_of_minute, end_time: shift_hours.hours.after(break_minutes.minutes.after(start_time).to_time.beginning_of_minute), :id => id}
   end
 
-  def return_shift_hash_end(end_time, shift_hours, break_minutes)
+  def return_shift_hash_end(end_time, shift_hours, break_minutes, id)
     p end_time
-    {:start_time => shift_hours.hours.before(break_minutes.minutes.before(end_time)).to_time.beginning_of_minute, :end_time => end_time.to_time.beginning_of_minute}
+    {:start_time => shift_hours.hours.before(break_minutes.minutes.before(end_time)).to_time.beginning_of_minute, :end_time => end_time.to_time.beginning_of_minute, :id => id}
   end
 end

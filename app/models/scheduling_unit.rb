@@ -11,21 +11,21 @@ class SchedulingUnit < ApplicationRecord
   end
 
   # generates shift templates for employment contract employees
-  # def generate_shift_templates
-  #   3.times do |n|
-  #     start = (n*8).hours.after(start_time.midnight)
-  #     break_min = 30
-  #     ShiftTemplate.create!(
-  #         start_time: start,
-  #         break_minutes: break_min,
-  #         end_time: STANDARD_DAILY_WORKING_HOURS.hours.after(break_min.minutes.after(start)),
-  #         priority: 0,
-  #         scheduling_unit_id: self.id,
-  #         organization_id: self.organization_id,
-  #         is_employment_contract: true
-  #     )
-  #   end
-  # end
+  def create_shift_template(start_time, end_time, break_minutes, is_excluded = false)
+    st = start_time.hour.hours.after(start_time.min.minutes.after(self.start_time.to_date))
+    en = end_time.hour.hours.after(end_time.min.minutes.after(self.start_time.to_date))
+    if start_time.to_time > end_time.to_time
+      en = end_time.hour.hours.after(self.start_time.to_date)
+    end
+    ShiftTemplate.create!(
+        start_time: st,
+        end_time: en,
+        break_minutes: break_minutes,
+        organization_id: self.organization_id,
+        is_employment_contract: true,
+        excluded: is_excluded
+    )
+  end
 
   def is_day?
     true
