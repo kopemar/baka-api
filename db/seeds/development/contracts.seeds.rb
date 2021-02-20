@@ -12,9 +12,16 @@ after 'development:users' do
     end
   end
 
-  FactoryBot.create_list(:employment_contract, 10) do |c|
-    c.employee = Employee.order(Arel.sql("RANDOM()")).first
-    c.schedule_id = Schedule.create(contract_id: c.id).id
-    c.save!
-  end
+  Organization.all.each { |org|
+    FactoryBot.create_list(:employee, 20) do |employee|
+      employee.organization = org
+      FactoryBot.create(:employment_contract) do |contract|
+        contract.employee = employee
+        contract.schedule_id = Schedule.create(contract_id: contract.id).id
+        contract.save!
+      end
+      employee.save!
+    end
+  }
+
 end

@@ -13,9 +13,10 @@ class ShiftTemplateController < ApplicationController
           end_time: params[:end_time].to_datetime,
           break_minutes: params[:break_minutes].to_i,
           priority: params[:priority].to_i,
-          organization_id: current_user.organization_id
+          organization_id: current_user.organization_id,
+          is_employment_contract: false
       )
-      render :json => {:data => template}
+      render :json => {:templates => template}
     end
   end
 
@@ -33,34 +34,34 @@ class ShiftTemplateController < ApplicationController
     else
       in_unit
     end
-    render :json => {:data => templates}
+    render :json => {:templates => templates}
   end
 
   def get_unassigned_shifts
     overlaps = Shift::for_user(current_user).map { |d| "end_time >= '#{d.start_time}' AND start_time <= '#{d.end_time}'" }.join(" OR ")
     if params[:start_date].nil? && params[:end_date].nil?
       if overlaps.empty?
-        ShiftTemplate.all.order('start_time')
+        ShiftTemplate::can_be_user_scheduled.where(organization_id: current_user.organization_id).order('start_time')
       else
-        ShiftTemplate.where.not(overlaps).order('start_time')
+        ShiftTemplate::can_be_user_scheduled.where.not(overlaps).where(organization_id: current_user.organization_id).order('start_time')
       end
     elsif params[:start_date].nil?
       if overlaps.empty?
-        ShiftTemplate::planned_before(params[:end_date].to_datetime).all.order('start_time DESC')
+        ShiftTemplate::can_be_user_scheduled::planned_before(params[:end_date].to_datetime).where(organization_id: current_user.organization_id).order('start_time DESC')
       else
-        ShiftTemplate::planned_before(params[:end_date].to_datetime).where.not(overlaps).order('start_time DESC')
+        ShiftTemplate::can_be_user_scheduled::planned_before(params[:end_date].to_datetime).where.not(overlaps).where(organization_id: current_user.organization_id).order('start_time DESC')
       end
     elsif params[:end_date].nil?
       if overlaps.empty?
-        ShiftTemplate::planned_after(params[:start_date].to_datetime).all.order('start_time')
+        ShiftTemplate::can_be_user_scheduled::planned_after(params[:start_date].to_datetime).where(organization_id: current_user.organization_id).order('start_time')
       else
-        ShiftTemplate::planned_after(params[:start_date].to_datetime).where.not(overlaps).order('start_time')
+        ShiftTemplate::can_be_user_scheduled::planned_after(params[:start_date].to_datetime).where.not(overlaps).where(organization_id: current_user.organization_id).order('start_time')
       end
     else
       if overlaps.empty?
-        ShiftTemplate::planned_between(params[:start_date].to_datetime, params[:end_date].to_datetime).order('start_time')
+        ShiftTemplate::can_be_user_scheduled::planned_between(params[:start_date].to_datetime, params[:end_date].to_datetime).order('start_time').where(organization_id: current_user.organization_id)
       else
-        ShiftTemplate::planned_between(params[:start_date].to_datetime, params[:end_date].to_datetime).where.not(overlaps).order('start_time')
+        ShiftTemplate::can_be_user_scheduled::planned_between(params[:start_date].to_datetime, params[:end_date].to_datetime).where.not(overlaps).where(organization_id: current_user.organization_id).order('start_time')
       end
     end
   end

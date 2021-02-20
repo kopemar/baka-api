@@ -56,8 +56,9 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     assert_response(400)
   end
 
+  # todo stack overflow credit
   def auth_tokens_for_user(user)
-    # The argument 'user' should be a hash that includes the params 'email' and 'password'.
+    # The argument 'user' should be a hash that includes the params 'username' and 'password'.
     post '/auth/sign_in/',
          params: {username: user[:username], password: ""},
          as: :json
@@ -69,7 +70,6 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     org = generate_organization
     user = FactoryBot.create(:employee, organization: org)
     @auth_tokens = auth_tokens_for_user(user)
-    p @auth_tokens
 
     get "/periods/1/calculations/shift-times",
         params: {
@@ -265,4 +265,26 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     assert_not_empty response_body["templates"].select{ |shift| shift["end_time"].to_time == 18.hours.after(2.days.after(30.minutes.after(Time.zone.now.monday))).to_time}
     assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(40.minutes.after(4.days.after(Time.zone.now.monday))).to_time}
   end
+
+  test "Scheduling period days" do
+    org = generate_organization
+    user = FactoryBot.create(:employee, organization: org)
+    @auth_tokens = auth_tokens_for_user(user)
+
+    period = FactoryBot.create(:scheduling_period, organization: org)
+
+    get "/periods/#{period.id}/calculations/period-days",
+        headers: @auth_tokens
+
+    parsed_response = response.parsed_body
+    tagged_logger.debug parsed_response
+
+    assert parsed_response["days"].length == 7
+
+    assert_empty parsed_response["days"].select { |d| d["id"] == 0 }
+    assert_not_empty parsed_response["days"].select { |d| d["id"] == 7 }
+    assert_not_empty parsed_response["days"].select { |d| d["date"] == DateTime::now.monday.to_date.to_s }
+
+    assert_not_empty parsed_response["days"].select { |d| d["date"] == 2.days.after(DateTime::now.monday).to_date.to_s }
+   end
 end

@@ -12,7 +12,7 @@ class SelfAssignShiftService < ApplicationService
     contract = Contract::active_agreements.where(employee_id: @current_user.id).where(schedule_id: @params[:schedule_id]).first
     template = ShiftTemplate.where(id: @params[:template_id]).first
     unless template.nil? || contract.nil?
-      if template.can_be_assigned?
+      if template.can_be_user_assigned?
         shift = Shift.from_template(template)
         shift.schedule_id = contract.schedule_id
         shift.user_scheduled = true

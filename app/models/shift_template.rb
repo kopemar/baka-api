@@ -23,6 +23,10 @@ class ShiftTemplate < ApplicationRecord
     end
   end
 
+  def can_be_user_assigned?
+    !is_employment_contract
+  end
+
   scope :planned_between, -> (start_date, end_date) {
     where("end_time >= ? AND start_time <= ?", start_date, end_date)
   }
@@ -35,9 +39,7 @@ class ShiftTemplate < ApplicationRecord
     where("start_time >= ? ", start_time)
   }
 
-  def can_be_assigned?
-    true
-  end
+  scope :can_be_user_scheduled, -> { where(is_employment_contract: false) }
 
   def add_to_scheduling_unit
     logger.debug "add to scheduling unit"

@@ -1,21 +1,48 @@
 after 'development:users' do
   FactoryBot.define do
     factory :agreement_to_complete_a_job do
-      start_date { FFaker::Time.between(1.years.from_now, 7.months.ago) }
-      end_date { FFaker::Time.between(6.months.ago, 3.years.from_now) }
+      start_date { FFaker::Time.between(1.years.ago, 7.months.ago) }
+      end_date { FFaker::Time.between(6.months.after(start_date), 3.years.after(start_date)) }
+
+      trait :valid do
+        start_date { FFaker::Time.between(1.years.ago, 1.months.ago) }
+        end_date { FFaker::Time.between(1.months.from_now, 3.years.from_now) }
+      end
     end
   end
 
   FactoryBot.define do
     factory :agreement_to_perform_a_job do
-      start_date { FFaker::Time.between(1.years.from_now, 7.months.ago) }
-      end_date { FFaker::Time.between(6.months.ago, 3.years.from_now) }
+      start_date { FFaker::Time.between(1.years.ago, 7.months.ago) }
+      end_date { FFaker::Time.between(6.months.after(start_date), 3.years.after(start_date)) }
+
+      trait :valid do
+        start_date { FFaker::Time.between(1.years.ago, 1.months.ago) }
+        end_date { FFaker::Time.between(1.months.from_now, 3.years.from_now) }
+      end
     end
   end
 
-  FactoryBot.create_list(:agreement_to_perform_a_job, 10) do |c|
-    c.employee = Employee.order(Arel.sql("RANDOM()")).first
-    c.schedule_id = Schedule.create(contract_id: c.id).id
-    c.save!
-  end
+  Organization.all.each { |org|
+    FactoryBot.create_list(:employee, 10) do |employee|
+      employee.organization = org
+        FactoryBot.create(:agreement_to_complete_a_job, :valid) do |contract|
+          contract.employee = employee
+          contract.schedule_id = Schedule.create(contract_id: contract.id).id
+          contract.save!
+        end
+        employee.save!
+    end
+
+    FactoryBot.create_list(:employee, 10) do |employee|
+      employee.organization = org
+      FactoryBot.create(:agreement_to_perform_a_job, :valid) do |contract|
+        contract.employee = employee
+        contract.schedule_id = Schedule.create(contract_id: contract.id).id
+        contract.save!
+      end
+      employee.save!
+    end
+  }
+
 end

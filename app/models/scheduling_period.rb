@@ -1,10 +1,5 @@
 # weeks
 class SchedulingPeriod < ApplicationRecord
-  # after_save :generate_scheduling_units
-  #
-  # validates :start_date, :end_date, :overlap => {
-  #     :query_options => {:joins => :organization}
-  # }
   belongs_to :organization
   has_many :scheduling_units
 
