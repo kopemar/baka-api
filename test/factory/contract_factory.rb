@@ -35,7 +35,8 @@ FactoryBot.define do
     working_days { [1, 2, 3] }
 
     trait :inactive do
-      end_date { "2020-01-01" }
+      start_date { "2017-01-01" }
+      end_date { "2018-01-01" }
     end
 
     trait :active do
@@ -69,11 +70,11 @@ def employee_with_contracts
   end
 end
 
-def employee_two_active_contracts
+def employee_active_contract
   o = generate_organization
   FactoryBot.build(:employee) do |e|
     e.organization_id = o.id
-    FactoryBot.create_list(:contract, 2, :active, employee: e) do |c|
+    FactoryBot.create(:contract, :active, employee: e) do |c|
       FactoryBot.create(:schedule, contract: c) do |s|
         c.schedule_id = s.id
         c.save

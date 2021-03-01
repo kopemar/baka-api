@@ -17,17 +17,18 @@ class EmployeeTest < ActiveSupport::TestCase
     assert employee.contracts.length == 2
   end
 
-  test "Employee with two active contract" do
-    employee = employee_two_active_contracts
+  test "Employee with active contract" do
+    employee = employee_active_contract
 
-    assert employee.contracts.length == 2
+    assert_not_nil employee.contracts.first
+    assert employee.contracts.length == 1
   end
 
   test "Get employees with active employment contracts" do
-    e1 = employee_two_active_contracts
+    e1 = employee_active_contract
     e2 = employee_with_contracts
     e3 = employee_with_no_contract
-    e4 = employee_two_active_contracts
+    e4 = employee_active_contract
 
     employees = Employee.with_employment_contract
 
@@ -49,9 +50,4 @@ class EmployeeTest < ActiveSupport::TestCase
     assert_not e1.can_work_at?(tuesday)
   end
 
-  test "Last shift test" do
-    e1 = create_employee_shifts_past
-    assert_not_nil e1.get_last_scheduled_shift_before(Date.today.midnight)
-    assert_equal("2019-12-30".to_datetime, e1.get_last_scheduled_shift_before(Date.today.midnight).start_time)
-  end
 end
