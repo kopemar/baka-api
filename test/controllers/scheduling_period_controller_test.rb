@@ -2,6 +2,23 @@ require 'test_helper'
 
 class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
+  def generate_scheduling_period(org)
+    FactoryBot.create(:scheduling_period, organization: org)
+  end
+
+  def generate_shift_templates(period, auth_tokens)
+    post "/periods/#{period.id}/shift-templates",
+         params: {
+             working_days: [1, 2, 3, 4, 5],
+             start_time: "08:00",
+             end_time: "16:30",
+             shift_hours: 8,
+             break_minutes: 30,
+             per_day: 1
+         },
+         headers: auth_tokens
+  end
+
   test "Computations - create shift - too short time" do
     org = generate_organization
     user = FactoryBot.create(:employee, organization: org)
@@ -286,5 +303,29 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     assert_not_empty parsed_response["days"].select { |d| d["date"] == DateTime::now.monday.to_date.to_s }
 
     assert_not_empty parsed_response["days"].select { |d| d["date"] == 2.days.after(DateTime::now.monday).to_date.to_s }
-   end
+  end
+
+
+  test "Generate schedule" do
+    org = generate_organization
+    user = FactoryBot.create(:manager, organization: org)
+    @auth_tokens = auth_tokens_for_user(user)
+
+    period = FactoryBot.create(:scheduling_period, organization: org)
+
+    employee = employee_active_contract(org)
+
+    assert_empty Shift::in_scheduling_period period.id
+
+    generate_shift_templates(period, @auth_tokens)
+
+    post "/periods/#{period.id}/calculations/generate-schedule",
+         headers: @auth_tokens
+    assert_response(:success)
+
+    assert_not_empty Shift::in_scheduling_period period.id
+
+    # assert that any random shift was assigned to this ONLY employee
+    assert_not_empty employee.contracts.first.schedule.shifts.select { |shift|  shift.id == Shift::in_scheduling_period(period.id).sample.id }
+  end
 end

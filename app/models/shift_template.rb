@@ -51,4 +51,8 @@ class ShiftTemplate < ApplicationRecord
     logger.debug "add to scheduling unit"
     self.scheduling_unit = SchedulingUnit.where("end_time >= ? AND start_time <= ?", start_time, start_time).where(organization_id: self.organization_id).first
   end
+
+  def as_json(*args)
+    super(*args).merge({ shifts_count: Shift.where(shift_template_id: self.id).count })
+  end
 end

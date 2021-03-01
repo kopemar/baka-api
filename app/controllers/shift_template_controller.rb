@@ -37,6 +37,13 @@ class ShiftTemplateController < ApplicationController
     render :json => {:templates => templates}
   end
 
+  def get_employees
+    template = ShiftTemplate.where(id: params["id"]).first
+    return render :status => :bad_request, :json => {:errors => ["No ID"]} if template.nil?
+
+    render :json => { :employees => Contract.where(schedule_id: Shift.where(shift_template_id: template.id).map(&:schedule_id)).map(&:employee) }
+  end
+
   def get_unassigned_shifts
     overlaps = Shift::for_user(current_user).map { |d| "end_time >= '#{d.start_time}' AND start_time <= '#{d.end_time}'" }.join(" OR ")
     if params[:start_date].nil? && params[:end_date].nil?

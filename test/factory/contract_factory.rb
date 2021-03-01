@@ -47,6 +47,14 @@ FactoryBot.define do
       working_days { [1] }
     end
   end
+
+  factory :manager do
+    first_name { FFaker::Name.first_name }
+    last_name { FFaker::Name.last_name }
+    sequence(:username, 1) { |n| "manager#{n}" }
+    email {  "#{username}@example.com" }
+    encrypted_password { BCrypt::Password.create("") }
+  end
 end
 
 def employee_with_contracts
@@ -70,8 +78,7 @@ def employee_with_contracts
   end
 end
 
-def employee_active_contract
-  o = generate_organization
+def employee_active_contract(o = generate_organization)
   FactoryBot.build(:employee) do |e|
     e.organization_id = o.id
     FactoryBot.create(:contract, :active, employee: e) do |c|

@@ -19,6 +19,8 @@ Rails.application.routes.draw do
 
   get "templates", to: "shift_template#get_templates"
 
+  get "templates/:id/employees", to: "shift_template#get_employees"
+
   get "periods", to: "scheduling_period#all"
 
   get "periods/:id", to: "scheduling_period#by_id"
