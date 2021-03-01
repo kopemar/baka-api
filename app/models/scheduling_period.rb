@@ -18,4 +18,8 @@ class SchedulingPeriod < ApplicationRecord
     end
     self.scheduling_units
   end
+
+  def is_week?
+    true
+  end
 end

@@ -19,10 +19,13 @@ class Shift < ApplicationRecord
         start_time: template.start_time,
         end_time: template.end_time,
         shift_template_id: template.id,
-        duration: template.duration,
         break_minutes: template.break_minutes
     )
   end
+
+  scope :in_scheduling_period, -> (period_id) {
+    where(shift_template_id: ShiftTemplate::in_scheduling_period(period_id).map(&:id))
+  }
 
   scope :planned_between, -> (start_date, end_date) {
     where("shifts.end_time >= ? AND shifts.start_time <= ?", start_date, end_date)

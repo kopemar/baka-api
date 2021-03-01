@@ -7,11 +7,11 @@ class ShiftController < ApplicationController
                elsif params[:start_date].nil? && params[:end_date].nil?
                  UserScheduleService.call(current_user).order(:start_time)
                elsif params[:start_date].nil?
-                 UserScheduleService.call(current_user, nil, params[:end_date].to_date).order('shifts.start_time DESC')
+                 UserScheduleService.call(current_user, nil, params[:end_date].to_datetime).order('shifts.start_time DESC')
                elsif params[:end_date].nil?
-                 UserScheduleService.call(current_user, params[:start_date].to_date, nil).order('start_time')
+                 UserScheduleService.call(current_user, params[:start_date].to_datetime, nil).order('start_time')
                else
-                 UserScheduleService.call(current_user, params[:start_date].to_date, params[:end_date].to_date).order(:start_time)
+                 UserScheduleService.call(current_user, params[:start_date].to_date, params[:end_date].to_datetime).order(:start_time)
                end
 
     render json: {

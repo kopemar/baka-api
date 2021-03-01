@@ -41,6 +41,12 @@ class ShiftTemplate < ApplicationRecord
 
   scope :can_be_user_scheduled, -> { where(is_employment_contract: false) }
 
+  scope :to_be_auto_scheduled, -> { where(is_employment_contract: true) }
+
+  scope :in_scheduling_period, -> (period_id) {
+    where(scheduling_unit_id: SchedulingPeriod.where(id: period_id).first.scheduling_units.map(&:id))
+  }
+
   def add_to_scheduling_unit
     logger.debug "add to scheduling unit"
     self.scheduling_unit = SchedulingUnit.where("end_time >= ? AND start_time <= ?", start_time, start_time).where(organization_id: self.organization_id).first

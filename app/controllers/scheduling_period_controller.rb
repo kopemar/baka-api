@@ -40,6 +40,28 @@ class SchedulingPeriodController < ApplicationController
     days_count.times do |n|
       days.push({:date => n.days.after(period.start_date).to_date, :id => n + 1})
     end
-    render :json => {:days => days }
+    render :json => {:days => days}
+  end
+
+  def generate_schedule
+    unless current_user.is_manager?
+      return render :status => :forbidden, :json => {:errors => ["Only managers can call this"]}
+    end
+    SchedulingService.call(params)
+    render :json => {:errors => ["No errors, just test message"], :success => false}
+  end
+
+  def by_id
+    period = SchedulingPeriod.where(id: params[:id]).first
+    if period.nil?
+      return render :status => :not_found
+    end
+    if period.organization_id != current_user.organization_id
+      return render :status => :forbidden, :json => {:errors => ["This period is not within your organization."]}
+    end
+    unless current_user.is_manager?
+      return render :status => :forbidden, :json => {:errors => ["Only managers and higher can access this resource."]}
+    end
+    render :json => period
   end
 end

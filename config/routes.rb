@@ -1,7 +1,6 @@
 Rails.application.routes.draw do
   mount_devise_token_auth_for 'User', at: 'auth'
-  # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
-  #
+
   get "periods/:id/calculations/schedule", to: "schedule#schedule"
 
   get "shifts", to: "shift#get_shifts"
@@ -22,11 +21,15 @@ Rails.application.routes.draw do
 
   get "periods", to: "scheduling_period#all"
 
-  get "units/:id", to: "scheduling_unit#in_period"
+  get "periods/:id", to: "scheduling_period#by_id"
+
+  get "periods/:id/units", to: "scheduling_unit#in_period"
 
   get "periods/:id/calculations/shift-times", to: "scheduling_period#calculate_shift_times"
 
   get "periods/:id/calculations/period-days", to: "scheduling_period#get_unit_dates_for_period"
 
   post "periods/:id/shift-templates", to: "scheduling_period#generate_shift_templates"
+
+  post "periods/:id/calculations/generate-schedule", to: "scheduling_period#generate_schedule"
 end
