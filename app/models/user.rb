@@ -1,6 +1,5 @@
 class User < ApplicationRecord
-  devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable
+  devise :database_authenticatable, :recoverable, :rememberable
   include DeviseTokenAuth::Concerns::User
 
   belongs_to :organization
@@ -30,6 +29,6 @@ class User < ApplicationRecord
 
   def as_json(*args)
     hash = super(*args)
-    hash.merge({manager: is_manager?, organization_name: self.organization.name})
+    hash.merge({manager: is_manager?, organization_name: self.organization.name, organization_id: self.organization_id})
   end
 end

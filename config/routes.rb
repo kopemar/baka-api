@@ -17,6 +17,8 @@ Rails.application.routes.draw do
 
   post "templates", to: "shift_template#create_template"
 
+  get "organization/:id/employees", to: "organization#get_employees"
+
   get "templates", to: "shift_template#get_templates"
 
   get "templates/:id/employees", to: "shift_template#get_employees"
