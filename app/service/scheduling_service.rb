@@ -28,6 +28,7 @@ class SchedulingService < ApplicationService
       Shift.where(scheduler_type: SCHEDULER_TYPES[:SYSTEM]).joins(:schedule).where(schedule_id: Schedule.select(:id).joins(:contract).where(contract_id: Contract.select(:id).joins(:employee).where(employee_id: @employees.map(&:id)))).delete_all
 
       schedule = get_first_solution(@employees)
+      p get_soft_constraint_violations(schedule)
 
       assign_shifts(schedule)
     end
@@ -45,6 +46,12 @@ class SchedulingService < ApplicationService
         shift.save!
       end
     end
+  end
+
+  private def get_soft_constraint_violations(solution)
+
+    violated = NoEmptyShifts.is_violated(@to_schedule.map(&:id), solution)
+    p "IS VIOLATED #{violated}"
   end
 
   private def get_first_solution(employee_array)
