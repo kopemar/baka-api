@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_02_07_161710) do
+ActiveRecord::Schema.define(version: 2021_03_04_192253) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -98,6 +98,7 @@ ActiveRecord::Schema.define(version: 2021_02_07_161710) do
     t.boolean "user_scheduled", default: false
     t.integer "shift_template_id"
     t.integer "break_minutes"
+    t.integer "scheduler_type", default: 0
   end
 
   create_table "users", force: :cascade do |t|

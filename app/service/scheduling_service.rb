@@ -23,25 +23,25 @@ class SchedulingService < ApplicationService
       p "Shifts in period #{Shift::in_scheduling_period(@scheduling_period.id).to_a}"
 
       @employees = Employee::with_employment_contract
-                      .where(organization_id: @scheduling_period.organization_id)
+                       .where(organization_id: @scheduling_period.organization_id)
+
+      Shift.where(scheduler_type: SCHEDULER_TYPES[:SYSTEM]).joins(:schedule).where(schedule_id: Schedule.select(:id).joins(:contract).where(contract_id: Contract.select(:id).joins(:employee).where(employee_id: @employees.map(&:id)))).delete_all
 
       schedule = get_first_solution(@employees)
 
-      p schedule
-      # todo
-      #
       assign_shifts(schedule)
     end
   end
 
   private def assign_shifts(schedule)
     schedule.each do |employee_id, shift_ids|
-      employee = @employees.select { |e| e.id == employee_id}.first
+      employee = @employees.select { |e| e.id == employee_id }.first
       templates = shift_ids.map { |id| @to_schedule.select { |template| template.id == id }.first }
 
       templates.each do |template|
         shift = Shift.from_template(template)
         shift.schedule_id = employee.contracts.active_employment_contracts.first.schedule_id
+        shift.scheduler_type = SCHEDULER_TYPES[:SYSTEM]
         shift.save!
       end
     end
@@ -55,11 +55,11 @@ class SchedulingService < ApplicationService
           employee.contracts.active_employment_contracts.first.work_load
         }
 
-    patterns = ShiftPatterns.new(@to_schedule)
+    @patterns = ShiftPatterns.new(@to_schedule)
 
     employee_groups.each do |work_load, employees|
-      shift_count = ((work_load * WEEKLY_WORKING_HOURS).to_d / @shift_duration).ceil
-      tmp_patterns = patterns.patterns_of_length(shift_count)
+      shift_count = [((work_load * WEEKLY_WORKING_HOURS).to_d / @shift_duration).ceil, @scheduling_period.scheduling_units.count].min
+      tmp_patterns = @patterns.patterns_of_length(shift_count)
 
       # todo if already assigned
       employees.each { |employee|

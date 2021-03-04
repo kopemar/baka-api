@@ -45,6 +45,7 @@ class ShiftTemplateController < ApplicationController
   end
 
   def get_unassigned_shifts
+    # todo cleanup
     overlaps = Shift::for_user(current_user).map { |d| "end_time >= '#{d.start_time}' AND start_time <= '#{d.end_time}'" }.join(" OR ")
     if params[:start_date].nil? && params[:end_date].nil?
       if overlaps.empty?
