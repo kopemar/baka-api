@@ -30,10 +30,10 @@ class SchedulingService < ApplicationService
       schedule = get_first_solution(@employees)
       violations = get_soft_constraint_violations(schedule)
 
-      assign_shifts(schedule)
-
       p "============================ IMPROVE SOLUTION ============================="
-      try_to_improve_solution(schedule, violations)
+      schedule = try_to_improve_solution(schedule, violations)
+
+      assign_shifts(schedule)
       return get_soft_constraint_violations(schedule)
     end
   end
@@ -55,7 +55,8 @@ class SchedulingService < ApplicationService
   private
   def try_to_improve_solution(solution, violations)
     old_sanction = violations[:no_empty_shifts][:sanction]
-    old_solution = solution.map { |v| v.clone }
+    old_solution = Hash.new
+    solution.map { |k, v| old_solution[k] = v.clone }
     violations[:no_empty_shifts][:violations].each_with_index do |violation, i|
       employee = @employees[i]
       work_load = @employee_groups.select { |key|
@@ -64,16 +65,22 @@ class SchedulingService < ApplicationService
 
       shift_count = get_shift_count(work_load)
 
-      solution[employee.id] = @patterns.patterns_of_length(shift_count).select { |p| p.include? violation.first }
+      solution[employee.id] = @patterns.patterns_of_length(shift_count).select { |p| p.include? violation.first }.sample
     end
-    p "OLD SANCTION = #{old_sanction}"
+    p "============= OLD SOLUTION ==============="
+    p old_solution
     p solution
+    p "OLD SANCTION = #{old_sanction}"
+    new_sanction = get_soft_constraint_violations(solution)[:no_empty_shifts][:sanction]
+    p "OLD SANCTION = #{old_sanction}"
+    p "NEW SANCTION = #{new_sanction}"
+    old_sanction >= new_sanction ? solution : old_solution
   end
 
   def get_soft_constraint_violations(solution)
     violations = Hash.new
     violations[:no_empty_shifts] = NoEmptyShifts.get_violations_hash(@to_schedule, solution, @employees, @shift_duration,100)
-    puts "violations hash #{violations}"
+
     violations
   end
 
