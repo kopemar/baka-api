@@ -47,8 +47,8 @@ class SchedulingPeriodController < ApplicationController
     unless current_user.is_manager?
       return render :status => :forbidden, :json => {:errors => ["Only managers can call this"]}
     end
-    SchedulingService.call(params)
-    render :json => {:errors => ["No errors, just test message"], :success => false}
+    result = SchedulingService.call(params)
+    render :json => {:errors => ["No errors, just test message"], :success => true, :violations => result}
   end
 
   def by_id

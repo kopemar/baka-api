@@ -28,9 +28,13 @@ class SchedulingService < ApplicationService
       Shift.where(scheduler_type: SCHEDULER_TYPES[:SYSTEM]).joins(:schedule).where(schedule_id: Schedule.select(:id).joins(:contract).where(contract_id: Contract.select(:id).joins(:employee).where(employee_id: @employees.map(&:id)))).delete_all
 
       schedule = get_first_solution(@employees)
-      p get_soft_constraint_violations(schedule)
+      violations = get_soft_constraint_violations(schedule)
 
       assign_shifts(schedule)
+
+      p "============================ IMPROVE SOLUTION ============================="
+      try_to_improve_solution(schedule, violations)
+      return get_soft_constraint_violations(schedule)
     end
   end
 
@@ -48,24 +52,43 @@ class SchedulingService < ApplicationService
     end
   end
 
-  private def get_soft_constraint_violations(solution)
+  private
+  def try_to_improve_solution(solution, violations)
+    old_sanction = violations[:no_empty_shifts][:sanction]
+    old_solution = solution.map { |v| v.clone }
+    violations[:no_empty_shifts][:violations].each_with_index do |violation, i|
+      employee = @employees[i]
+      work_load = @employee_groups.select { |key|
+        @employee_groups[key].select { |e| e == employee }.first.nil? == false
+      }.keys[0]
 
-    violated = NoEmptyShifts.is_violated(@to_schedule.map(&:id), solution)
-    p "IS VIOLATED #{violated}"
+      shift_count = get_shift_count(work_load)
+
+      solution[employee.id] = @patterns.patterns_of_length(shift_count).select { |p| p.include? violation.first }
+    end
+    p "OLD SANCTION = #{old_sanction}"
+    p solution
   end
 
-  private def get_first_solution(employee_array)
+  def get_soft_constraint_violations(solution)
+    violations = Hash.new
+    violations[:no_empty_shifts] = NoEmptyShifts.get_violations_hash(@to_schedule, solution, @employees, @shift_duration,100)
+    puts "violations hash #{violations}"
+    violations
+  end
+
+  def get_first_solution(employee_array)
     schedule = Hash.new
 
-    employee_groups =
+    @employee_groups =
         employee_array.group_by { |employee|
           employee.contracts.active_employment_contracts.first.work_load
         }
 
     @patterns = ShiftPatterns.new(@to_schedule)
 
-    employee_groups.each do |work_load, employees|
-      shift_count = [((work_load * WEEKLY_WORKING_HOURS).to_d / @shift_duration).ceil, @scheduling_period.scheduling_units.count].min
+    @employee_groups.each do |work_load, employees|
+      shift_count = get_shift_count(work_load)
       tmp_patterns = @patterns.patterns_of_length(shift_count)
 
       # todo if already assigned
@@ -74,6 +97,10 @@ class SchedulingService < ApplicationService
       }
     end
     schedule
+  end
+
+  def get_shift_count(work_load)
+    [((work_load * WEEKLY_WORKING_HOURS).to_d / @shift_duration).ceil, @scheduling_period.scheduling_units.count].min
   end
 
 end
