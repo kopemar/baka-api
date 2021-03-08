@@ -1,3 +1,5 @@
+require_relative '../services/scheduling/scheduling'
+
 class SchedulingPeriodController < ApplicationController
   include DeviseTokenAuth::Concerns::SetUserByToken
   before_action :authenticate_user!
@@ -47,7 +49,7 @@ class SchedulingPeriodController < ApplicationController
     unless current_user.is_manager?
       return render :status => :forbidden, :json => {:errors => ["Only managers can call this"]}
     end
-    result = SchedulingService.call(params)
+    result = Scheduling::Scheduling.new(params).call
     render :json => {:errors => ["No errors, just test message"], :success => true, :violations => result}
   end
 

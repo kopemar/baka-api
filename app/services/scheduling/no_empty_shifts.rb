@@ -1,18 +1,15 @@
-class NoEmptyShifts < Constraint
+class Scheduling::NoEmptyShifts < Constraint
+  include Scheduling
 
   def self.is_violated(shifts, schedule)
     NoEmptyShifts.get_sanction(shifts, schedule, 100) > 0
   end
 
   def self.get_empty_shifts(shifts, schedule)
-    array = []
-    schedule.map { |_, value| array += value }
-
-    hash = Hash.new
-    shifts.each { |i| hash[i] = 0 }
-    array.uniq.map { |a| hash[a] = array.count(a) }
+    p "============ DEBUG SCHEDULE #{schedule} =================="
+    hash = ScheduleStatistics.get_shifts_utilization(shifts, schedule)
     p hash
-    return hash.filter do |key, value|
+    return hash.filter do |_, value|
       value == 0
     end
   end

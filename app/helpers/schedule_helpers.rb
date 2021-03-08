@@ -1,0 +1,3 @@
+class ScheduleHelpers
+  # todo
+end

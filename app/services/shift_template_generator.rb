@@ -11,6 +11,8 @@ class ShiftTemplateGenerator < ApplicationService
 
     excluded = @params[:excluded].nil? ? Hash.new : @params[:excluded].to_enum.to_h
 
+    puts "========================== EXCLUDED : #{excluded} ================================"
+
     period = SchedulingPeriod.where(id: scheduling_period_id).first
 
     p "Scheduling PERIOD: #{period.start_date}"
@@ -24,7 +26,7 @@ class ShiftTemplateGenerator < ApplicationService
     working_days.each do |day|
       unit = units.select{ |u| u.start_time.to_date == (day - 1).days.after(period.start_date) }.first
       template_times.each { |time|
-        templates.push(unit.create_shift_template(time[:start_time], time[:end_time], @params[:break_minutes].to_i)) if excluded[day.to_s].nil? || !excluded[day.to_s].include?(time[:id].to_s) }
+        templates.push(unit.create_shift_template(time[:start_time], time[:end_time], @params[:break_minutes].to_i)) if excluded[day.to_s].nil? || !excluded[day.to_s].include?(time[:id].to_i) }
     end
     templates
   end

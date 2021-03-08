@@ -1,8 +1,14 @@
-class ShiftPatterns
-
+class Scheduling::ShiftPatterns
   def initialize(shift_templates)
     @shift_templates = shift_templates.sort_by { |template| template.start_time }
     build_patterns
+  end
+
+  def max_length
+    p "====== @paths #{@paths} ========="
+    max = 0
+    @paths.each { |e| max = [e.length, max].max }
+    max
   end
 
   def patterns_of_length(length)
@@ -28,11 +34,13 @@ class ShiftPatterns
     hash[:start].map { |point| find_path(hash, [point]) }
   end
 
-  private def reduce_to_paths(hash)
+  private
+
+  def reduce_to_paths(hash)
     reduce_to_hash_recursively(hash, :start, hash[:start])
   end
 
-  private def reduce_to_hash_recursively(original_hash, parent_index, parent)
+  def reduce_to_hash_recursively(original_hash, parent_index, parent)
     original_hash[parent_index].each_with_index do |start_key, index|
       break unless index < original_hash[parent_index].length
       array = original_hash[start_key]
@@ -45,7 +53,7 @@ class ShiftPatterns
     original_hash
   end
 
-  private def remove_duplicates_from_parent(parent, child)
+  def remove_duplicates_from_parent(parent, child)
     parent.filter { |item| !child.include? item }
   end
 
@@ -53,7 +61,7 @@ class ShiftPatterns
     (other.start_time - first.end_time).to_d / 1.hour
   end
 
-  private def find_path(hash, partial_path)
+  def find_path(hash, partial_path)
     if hash[partial_path.last].empty?
       @paths.push(partial_path)
       return
