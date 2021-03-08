@@ -5,13 +5,8 @@ class Scheduling::ScheduleStatistics
     schedule.map { |_, value| array += value unless value.nil? }
     p array
     hash = Hash.new
-    p "======== UTILIZATION"
-    shifts.map do |i|
-      p "======== UTILIZATION"
-      p i
 
-      hash[i] = 0
-    end
+    shifts.map { |shift| hash[shift] = 0}
     array.uniq.map { |a| hash[a] = array.count(a) }
 
     return hash

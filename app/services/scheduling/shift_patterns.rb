@@ -5,17 +5,34 @@ class Scheduling::ShiftPatterns
   end
 
   def max_length
-    p "====== @paths #{@paths} ========="
     max = 0
     @paths.each { |e| max = [e.length, max].max }
     max
   end
 
-  def patterns_of_length(length)
-    tmp_paths = @paths.clone.filter{ |path| path.length >= length }
-
+  def patterns_of_params(params)
     paths = []
-    tmp_paths.each { |path| path.combination(length).each { |combination| paths.push(combination) } }
+    length = params[:length]
+    count = params[:count] || 1
+    contains = params[:contains] || []
+    unless length.nil?
+      tmp_paths = @paths.clone.filter { |path| path.length >= length && path.to_set.superset?(contains.to_set) } || []
+
+      if tmp_paths.empty?
+        # todo -> ty podzasobene
+        p "EMPTY, NEXT"
+        tmp_paths = @paths.clone.filter { |path| path.length >= length && path.to_set.superset?([contains.sample].to_set) } || []
+      end
+
+      p "==================== PATTERNS OF PARAMS ===================="
+      #p tmp_paths
+
+      count.times do
+        paths += [random_combination(tmp_paths.sample, length)]
+      end
+      return paths
+    end
+
     paths
   end
 
@@ -33,8 +50,20 @@ class Scheduling::ShiftPatterns
 
     hash[:start].map { |point| find_path(hash, [point]) }
   end
-
   private
+
+  def random_combination(path, length)
+    set = Set.new
+    path_clone = path.clone
+
+    length.times do
+      sample = path_clone.sample
+      path_clone.delete(sample)
+      set.add(sample)
+    end
+
+    set.to_a
+  end
 
   def reduce_to_paths(hash)
     reduce_to_hash_recursively(hash, :start, hash[:start])
