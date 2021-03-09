@@ -59,17 +59,11 @@ module Scheduling
       solution.map { |k, v| old_solution[k] = v.clone }
 
       p "============= OLD SOLUTION ==============="
-      p old_solution
-      p solution
+      p "🎁 OLD SOLUTION #{old_solution}"
       solution = try_to_improve(solution, violations, :no_empty_shifts)
 
-      solution = try_to_improve(solution, violations, :demand_fulfill)
-      p "OLD SANCTION = #{old_sanction}"
-
-      p "OLD SOLUTION #{old_solution}"
-      p "NEW SOLUTION #{solution}"
-
-      solution
+      p "🎁 NEW SOLUTION #{solution}"
+      try_to_improve(solution, violations, :demand_fulfill)
     end
 
     def try_to_improve(solution, violations, type)
@@ -84,6 +78,9 @@ module Scheduling
       end
 
       new_sanction = get_soft_constraint_violations(solution)[:sanction]
+
+      p "🧸 OLD SANCTION WAS #{old_sanction}; NEW SANCTION IS #{new_sanction} THEREFORE I AM PICKING #{old_sanction >= new_sanction ? "NEW" : "OLD"} solution in #{type}"
+
       old_sanction >= new_sanction ? solution : old_solution
     end
 
@@ -105,24 +102,25 @@ module Scheduling
     #
     def improve_demand_fulfill(solution, violations)
       p "================== IMPROVE DEMAND FULFILL =================="
-      employee_badness = Hash.new
+      employees = Hash.new
       violations_hash = Hash.new
       violations.group_by { |_, v| v }.map do |group, values|
         violations_hash[group] = values.map(&:first)
       end
 
       solution.each do |employee, schedule|
-        employee_badness[employee] = schedule.map { |shift| (violations[shift] || 0 ) > 0 ? violations[shift] : 0 }.reduce(:+)
+        # fixme
+        employees[employee] = schedule.map { |shift| (violations[shift] || 0 ) > 0 ? violations[shift] : 0 }.reduce(:+)
       end
 
-      employee_badness = employee_badness.filter { |_, v| v > 0 }
-
-      employee_badness.each do |id, _|
+      employees.each do |id|
         min_violations = violations_hash.keys.min
-        pattern = @patterns.patterns_of_params( { length: get_shift_count(get_employee_workload(id)), contains: violations_hash[min_violations] } ).first
-        p "CHANGING ========= #{solution[id]} TO #{pattern}"
+        p "🍄 EMPLOYEE #{id.first}"
+        shift_count = get_shift_count(get_employee_workload(id.first))
 
-        solution[id] = pattern unless pattern.nil?
+        pattern = @patterns.patterns_of_params( { length: shift_count, contains: violations_hash[min_violations] } ).first
+        p "🍄 CHANGING #{id.first} ========= #{solution[id.first]} TO #{pattern}"
+        solution[id.first] = pattern unless pattern.nil?
       end
 
       solution

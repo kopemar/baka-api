@@ -3,7 +3,7 @@ class Scheduling::ScheduleStatistics
   def self.get_shifts_utilization(shifts, schedule)
     array = []
     schedule.map { |_, value| array += value unless value.nil? }
-    p array
+
     hash = Hash.new
 
     shifts.map { |shift| hash[shift] = 0}

@@ -35,12 +35,11 @@ class Scheduling::DemandFulfill < Constraint
       employees_count = average[prio]
 
       shifts.each do |shift|
-        p utilization
         difference = utilization[shift] - employees_count
         violations[shift] = difference if difference != 0
       end
     end
-    p "============= Violations #{violations} ============"
+
     violations
   end
 
@@ -53,10 +52,6 @@ class Scheduling::DemandFulfill < Constraint
     factor = 10.to_d
     demand = Hash.new
 
-    p "======================== MEDIUM ASSIGNMENTS ========================"
-
-    p average_demand
-    p medium_demand_value - average_demand
     medium_assignments = (assignments_per_average * (1 + ((medium_demand_value - average_demand) / factor).to_d)).round
 
 
@@ -64,7 +59,7 @@ class Scheduling::DemandFulfill < Constraint
       demand[v] = (medium_assignments * (1 - ((medium_demand_value - v) / factor).to_d)).round
     end
 
-    p demand
+    demand
   end
 
 
