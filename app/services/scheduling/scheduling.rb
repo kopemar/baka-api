@@ -1,4 +1,5 @@
 module Scheduling
+  class BreakInnerLoop < StandardError; end
   class Scheduling
     class SchedulingError < StandardError; end
 
@@ -28,16 +29,17 @@ module Scheduling
         schedule = get_first_solution(@employees)
         violations = get_soft_constraint_violations(schedule)
 
-        p "============================ IMPROVE SOLUTION ============================="
+        Rails.logger.debug "📊 ============================ IMPROVE SOLUTION ============================="
         schedule = try_to_improve_solution(schedule, violations)
 
-        p "========= SCHEDULE: #{schedule} =============="
+        Rails.logger.debug "📅 ========= SCHEDULE: #{schedule} =============="
         assign_shifts(schedule)
         return get_soft_constraint_violations(schedule)
       end
     end
 
     private def assign_shifts(schedule)
+      Rails.logger.error schedule
       schedule.each do |employee_id, shift_ids|
         employee = @employees.select { |e| e.id == employee_id }.first
         templates = shift_ids.map { |id| @to_schedule.select { |template| template.id == id }.first }
@@ -58,12 +60,14 @@ module Scheduling
       old_solution = Hash.new
       solution.map { |k, v| old_solution[k] = v.clone }
 
-      p "============= OLD SOLUTION ==============="
-      p "🎁 OLD SOLUTION #{old_solution}"
+      Rails.logger.debug "============= OLD SOLUTION ==============="
+
       solution = try_to_improve(solution, violations, :no_empty_shifts)
 
-      p "🎁 NEW SOLUTION #{solution}"
+      Rails.logger.debug "🎁 OLD SOLUTION #{old_solution}"
+      Rails.logger.debug "🎁 NEW SOLUTION #{solution}"
       try_to_improve(solution, violations, :demand_fulfill)
+      solution
     end
 
     def try_to_improve(solution, violations, type)
@@ -71,55 +75,100 @@ module Scheduling
       old_sanction = violations[:sanction]
       solution.map { |k, v| old_solution[k] = v.clone }
 
+      utilization = ScheduleStatistics.get_shifts_utilization(@to_schedule.map(&:id), solution)
+
       if type == :no_empty_shifts
-        improve_empty_shifts(solution, violations[type][:violations])
+        improve_empty_shifts(solution, violations[type][:violations], utilization)
       elsif type == :demand_fulfill
         improve_demand_fulfill(solution, violations[type][:violations])
       end
 
       new_sanction = get_soft_constraint_violations(solution)[:sanction]
 
-      p "🧸 OLD SANCTION WAS #{old_sanction}; NEW SANCTION IS #{new_sanction} THEREFORE I AM PICKING #{old_sanction >= new_sanction ? "NEW" : "OLD"} solution in #{type}"
+      Rails.logger.debug "🧸 OLD SANCTION WAS #{old_sanction}; NEW SANCTION IS #{new_sanction} THEREFORE I AM PICKING #{old_sanction >= new_sanction ? "NEW" : "OLD"} solution in #{type}"
 
       old_sanction >= new_sanction ? solution : old_solution
     end
 
     # Improves solution based on NoEmptyShifts constraint.
     # Finds random pattern where empty shift is present and assigns it to some employee.
-    def improve_empty_shifts(solution, violations)
-      violations.each_with_index do |violation, i|
-        employee = @employees[i]
-        work_load = @employee_groups.select { |key|
-          @employee_groups[key].select { |e| e == employee }.first.nil? == false
-        }.keys.first
+    def improve_empty_shifts(solution, violations, utilization)
+      exclude = utilization.filter { |_, v| v == 1 }.map { |k, _| k }.to_set
+      Rails.logger.debug "🌡 exclude #{exclude}"
 
-        shift_count = get_shift_count(work_load)
+      # todo this won't be good enough
+      employees = solution.filter { |_, v| !v.to_set.intersect?(exclude) }.map { |k, _| k }
+      Rails.logger.debug "🌡 employees #{employees}"
 
-        solution[employee.id] = @patterns.patterns_of_params({ length: shift_count, contains: [violation.first] }).sample
+      shifts_to_assign = violations.map { |k, _| k }
+
+      Rails.logger.debug "🦠 shifts_to_assign #{shifts_to_assign} "
+
+      if employees.length == 0
+        assign_empty_shifts(solution, {:employees => @employees.map(&:id), :shifts => shifts_to_assign})
+      else
+        assign_empty_shifts(solution, {:employees => employees, :shifts => shifts_to_assign})
       end
     end
 
+    def assign_empty_shifts(solution, params)
+      employees = params[:employees]
+      shifts = params[:shifts]
+
+      remaining_shifts = shifts.map(&:clone).to_set
+      division_factor = 1
+
+      shifts.length.times do
+        minimum = [remaining_shifts.length, 5].min
+        combination_count = (minimum.to_d / division_factor).ceil
+
+        found_any = analyze_combinations(remaining_shifts, combination_count, solution, employees)
+
+        division_factor = found_any ? 1 : division_factor + 1
+        Rails.logger.debug "🤥 Remaining: #{remaining_shifts}"
+
+        break if remaining_shifts.empty?
+      end
+    end
+
+    private def analyze_combinations(remaining_shifts, combination_count, solution, employees)
+      remaining_shifts.to_a.reverse.combination(combination_count).to_a.each do |slice|
+        # fixme smarter length, not just 5
+        patterns = @patterns.patterns_of_params({:contains => slice, :length => 5})
+        Rails.logger.debug "🤥 COMBINED #{patterns} (slice: #{slice})"
+        unless patterns.first.nil?
+          # todo not enough employees?
+          solution[employees.pop] = patterns.first
+          remaining_shifts = remaining_shifts.subtract(patterns.first.to_set)
+          return true
+        end
+      end
+      false
+    end
     #
     def improve_demand_fulfill(solution, violations)
-      p "================== IMPROVE DEMAND FULFILL =================="
+      Rails.logger.debug "😂 IMPROVE DEMAND FULFILL =================="
       employees = Hash.new
       violations_hash = Hash.new
       violations.group_by { |_, v| v }.map do |group, values|
         violations_hash[group] = values.map(&:first)
       end
 
+      Rails.logger.debug "🤓 #{violations_hash}"
+
       solution.each do |employee, schedule|
         # fixme
-        employees[employee] = schedule.map { |shift| (violations[shift] || 0 ) > 0 ? violations[shift] : 0 }.reduce(:+)
+        employees[employee] = schedule.map { |shift| (violations[shift] || 0) > 0 ? violations[shift] : 0 }.reduce(:+)
       end
 
       employees.each do |id|
         min_violations = violations_hash.keys.min
-        p "🍄 EMPLOYEE #{id.first}"
+        Rails.logger.debug "🍄 EMPLOYEE #{id.first}"
         shift_count = get_shift_count(get_employee_workload(id.first))
 
-        pattern = @patterns.patterns_of_params( { length: shift_count, contains: violations_hash[min_violations] } ).first
-        p "🍄 CHANGING #{id.first} ========= #{solution[id.first]} TO #{pattern}"
+
+        pattern = @patterns.patterns_of_params({length: shift_count, contains: violations_hash[min_violations].combination(shift_count).to_a.sample}).first
+        Rails.logger.debug "🍄 CHANGING #{id.first} ========= #{solution[id.first]} TO #{pattern}"
         solution[id.first] = pattern unless pattern.nil?
       end
 
@@ -149,8 +198,8 @@ module Scheduling
 
       @employee_groups.each do |work_load, employees|
         shift_count = get_shift_count(work_load)
-        p "========= shift_count #{shift_count} ==========="
-        tmp_patterns = @patterns.patterns_of_params({ length: shift_count, count: employees.length })
+        Rails.logger.debug "========= shift_count #{shift_count} ==========="
+        tmp_patterns = @patterns.patterns_of_params({length: shift_count, count: employees.length})
         # todo if already assigned
         employees.each { |employee|
           schedule[employee.id] = tmp_patterns.sample
@@ -166,7 +215,7 @@ module Scheduling
     def get_employee_workload(employee)
       tmp_employee = employee
       if employee.is_a? Integer
-        tmp_employee = @employees.find { |e| e.id == employee}
+        tmp_employee = @employees.find { |e| e.id == employee }
       end
       @employee_groups.select { |key|
         @employee_groups[key].select { |e| e == tmp_employee }.first.nil? == false

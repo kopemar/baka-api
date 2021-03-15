@@ -1,4 +1,4 @@
-require 'test_helper'
+ActiveSupport::TestCase
 
 class ScheduleTest < ActiveSupport::TestCase
   test "Test schedules planned between" do

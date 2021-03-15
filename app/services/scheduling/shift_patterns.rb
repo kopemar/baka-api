@@ -1,139 +1,10 @@
 class Scheduling::ShiftPatterns
-
+  include Scheduling
   # fixme move to another file...
-  class ShiftVertex
-    def initialize(shift, prev_patterns = [], next_patterns = [])
-      @shifty = shift
-      @prev = prev_patterns
-      @next = next_patterns
-    end
 
-    def shift
-      @shifty
-    end
-
-    def prev
-      @prev
-    end
-
-    def next
-      @next
-    end
-
-    def add_next(new_next)
-      if new_next.is_a? Array
-        @next += new_next
-      else
-        @next.push(new_next)
-      end
-      update_max_next_steps
-    end
-
-    def add_prev(new_prev)
-      if new_prev.is_a? Array
-        @prev += new_prev
-      else
-        @prev.push(new_prev)
-      end
-      update_max_prev_steps
-    end
-
-    def max_next_steps
-      update_max_next_steps
-      @max_next_steps
-    end
-
-    def max_prev_steps
-      if @max_prev_steps.nil?
-        update_max_prev_steps
-      end
-      @max_prev_steps
-    end
-
-    def max_path_length
-      max_prev_steps + max_next_steps + 1
-    end
-
-    def random_path(params)
-      length = params[:length]
-      path = []
-
-      if length.nil? || length > max_path_length
-        # todo but low prio
-      else
-
-      end
-      path += [ self ]
-
-      prev_length = { :min_length => length - path.length - max_next_steps, :max_length => length - path.length }
-      # p "🦚 prev_length #{prev_length}"
-      path += get_random_prev(prev_length)
-      next_length = { :min_length => length - path.length, :max_length => length - path.length }
-      # p "🦚 next_length #{next_length}"
-      path += get_random_next(next_length)
-      # p "======== RANDOM PATH ========"
-      path.map { |vertex| vertex.shift.id }.sort
-    end
-
-    protected def get_random_prev(params, path = [])
-      min_length = params[:min_length] || 0
-
-      max_length = params[:max_length] || max_prev_steps
-
-      previous = @prev.map { |i| i.clone }.filter { |v| v.max_prev_steps >= min_length - 1 }
-
-      tmp_shift = get_sample(previous, min_length <= 0)
-
-      path += [tmp_shift] if tmp_shift.is_a? ShiftVertex
-      if max_length > 1
-        path = tmp_shift.get_random_prev({:min_length => min_length - 1, :max_length => max_length - 1 }, path) if tmp_shift.is_a? ShiftVertex
-      end
-      path
-    end
-
-    protected def get_random_next(params, path = [])
-      min_length = params[:min_length] || 0
-
-      max_length = params[:max_length] || max_next_steps
-
-      next_steps = @next.map { |i| i.clone }.filter { |v| v.max_next_steps >= min_length - 1 }
-
-      tmp_shift = get_sample(next_steps, min_length <= 0)
-
-      path += [tmp_shift] if tmp_shift.is_a? ShiftVertex
-      if max_length > 1
-        path = tmp_shift.get_random_next({:min_length => min_length - 1, max_length => max_length - 1 }, path) if tmp_shift.is_a? ShiftVertex
-      end
-      path
-    end
-
-    private def get_sample(array, can_be_empty)
-      if can_be_empty
-        array.push([])
-      end
-
-      sample = array.sample
-
-      sample.is_a?(ShiftVertex) ? sample : nil
-    end
-
-    private def update_max_next_steps
-      first = @next.min { |_, b| b.shift.start_time }
-      @max_next_steps = first.nil? ? 0 : first.max_next_steps + 1
-    end
-
-    private def update_max_prev_steps
-      last = @prev.max { |_, b| b.shift.end_time }
-      @max_prev_steps = last.nil? ? 0 : last.max_prev_steps + 1
-    end
-
-    def to_s
-      "========== @shift #{@shifty.id} [max_path_length: #{max_path_length}]  [prev=> #{@prev.map { |prev| prev.shift.id}}, max_prev_count #{max_prev_steps}] [next=> #{@next.map { |prev| prev.shift.id}}, max_next_count #{max_next_steps}]"
-    end
-
-  end
 
   def initialize(shift_templates)
+    Rails.logger.debug "🥝 new ShiftPatterns with #{shift_templates.map(&:start_time)}"
     @shift_templates = shift_templates.sort_by { |template| template.start_time }
     build_patterns
   end
@@ -143,29 +14,52 @@ class Scheduling::ShiftPatterns
   end
 
   def patterns_of_params(params)
-    p "🐲 PATTERNS_OF_PARAMS #{params}"
+    Rails.logger.debug "🐲 PATTERNS_OF_PARAMS #{params}"
     paths = []
     length = params[:length] || get_max_path_length(@hash_vertices)
     count = params[:count] || 1
 
     # todo smarter contains
-    contains = params[:contains] || []
+    contains = (params[:contains] || []).sort
 
     # todo excludes
     excludes = params[:excludes] || []
 
-    unless length.nil?
-      vertices = @vertices.filter { |vertex| vertex.max_path_length >= length }
+    if length > get_max_path_length(@hash_vertices)
+      return paths
+    end
 
+    unless length.nil?
+      vertices = @vertices.filter { |vertex| vertex.max_path_length >= length - 1 }
       count.times do
+        if !contains.is_a?(Array) || (!contains.empty? && contains.length > length)
+          Rails.logger.debug "😡 Contains malformed"
+          return paths
+        end
         if contains.empty?
-          sample = vertices.sample
+          sample = SchedulingUtils.get_sample(vertices.filter { |v| v.max_path_length >= length }, false)
+        elsif can_exist?(contains)
+          Rails.logger.debug "🌵 CAN EXIST WITH #{contains}"
+          if contains.length == length
+            count.times do
+              paths.push(contains)
+            end
+            return paths
+          end
+          # todo might be even smarter, e.g. might contain all of them...  :)
+          sample = @hash_vertices[contains.first]
         else
-          # fixme multiple contains
-          sample = @hash_vertices[contains.sample]
+          Rails.logger.debug "🌵 CANNOT EXIST"
+          return paths
         end
 
-        paths += [sample.random_path({ :length => length })] unless sample.nil?
+        random_path = sample.nil? ? nil : sample.random_path({ :length => length, :contains => contains })
+
+        if random_path.nil?
+          return []
+        end
+
+        paths += [random_path]
       end
 
       return paths
@@ -174,14 +68,38 @@ class Scheduling::ShiftPatterns
     paths
   end
 
+  private def can_exist?(contains, length = contains.length)
+    # all contained vertices, sorted by shift start time ASC
+    vertices = contains.map { |id| @hash_vertices[id] }.sort { |v| v.shift.start_time}
+    can_exist = true
+    Rails.logger.debug "🐮#{contains}"
+    # first check – does the path even exist?
+    vertices.each do |vertex|
+      contains.each do |id|
+        unless vertex.shift.id == id || vertex.get_next.any? { |v| v.shift.id == id} || vertex.prev.any? { |v| v.shift.id == id }
+          p "🎈 NOT contains #{id}"
+          can_exist = false
+          break
+        end
+      end
+      break unless can_exist
+    end
+    if can_exist
+      # can build pattern with enough steps?
+      max_steps = vertices.first.max_prev_steps + vertices.last.max_next_steps + SchedulingUtils.max_next_steps_with(vertices)
+      can_exist = max_steps >= length
+    end
+    can_exist
+  end
+
   private def build_patterns
     hash = Hash.new
     @paths = []
 
-    # todo make global
+    # todo make global here
     hash_vertices = Hash.new
 
-    hash[:start] = @shift_templates.map(&:id)
+    hash[:start] = @shift_templates.sort_by { |s| s.start_time }.map(&:id)
 
     @shift_templates.each do |template|
       hash_vertices[template.id] = ShiftVertex.new(template)
@@ -194,25 +112,24 @@ class Scheduling::ShiftPatterns
     end
 
     @shift_templates.reverse.each do |template|
+      Rails.logger.debug "🐸 build patterns #{template.start_time}"
       hash_vertices[template.id].add_next @shift_templates.filter { |tmpl|
         shift_difference_hours(template, tmpl) > 12
-      }.map { |next_template|
-        hash_vertices[next_template.id]
-      }
+      }.map { |next_template| hash_vertices[next_template.id] }
     end
-
 
     @max_length = get_max_path_length(hash_vertices)
 
     @hash_vertices = hash_vertices
     @vertices = @hash_vertices.map { |_, v| v }
   end
-  private
 
+  private
+  # todo refactor this
   def random_combination(path, length)
     set = Set.new
     path_clone = path.clone
-
+    Rails.logger.debug "🌍 PATH #{path}"
     length.times do
       sample = path_clone.sample
       path_clone.delete(sample)
@@ -231,5 +148,6 @@ class Scheduling::ShiftPatterns
   def get_max_path_length(hash)
     hash.map { |_, v| v.max_path_length }.max
   end
+
 
 end

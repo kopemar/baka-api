@@ -1,7 +1,12 @@
 FactoryBot.define do
   factory :scheduling_period do
-    start_date { DateTime::now.monday }
-    end_date { DateTime::now.sunday }
+
+    trait :sequence do
+      sequence(:start_date, 1) { |n| (n - 1).weeks.after(DateTime::now.monday).to_date }
+    end
+
+    start_date { DateTime::now.to_date }
+    end_date { 1.day.before(1.week.after(start_date).to_date) }
 
     trait :past_2019 do
       start_date { "2019-12-30".to_datetime.monday }
@@ -156,7 +161,7 @@ def get_shift_now
   p = FactoryBot.create(:scheduling_period, organization_id: o.id)
   p.generate_scheduling_units
 
-  FactoryBot.create(:shift_template, organization_id: o.id)
+  FactoryBot.create(:shift_template, :now, organization_id: o.id)
 end
 
 def get_shift_2019

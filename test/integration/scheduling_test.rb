@@ -24,17 +24,4 @@ class SchedulingTest < ActionDispatch::IntegrationTest
     assert_response :success
     SchedulingPeriod.where(id: period.id).first
   end
-
-  test "Init" do
-    org = generate_organization
-    user = FactoryBot.create(:employee, organization: org)
-    @auth_tokens = auth_tokens_for_user(user)
-    period = generate_period(@auth_tokens, org)
-
-    get "/periods/#{period.id}/calculations/schedule",
-        headers: @auth_tokens
-
-    assert_response :success
-
-  end
 end

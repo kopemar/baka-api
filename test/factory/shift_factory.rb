@@ -1,7 +1,12 @@
 FactoryBot.define do
   factory :shift_template do
-    start_time { 0.hours.from_now }
-    end_time { 8.hours.from_now }
+    sequence(:start_time, 1) { |n| (12 * n).hours.from_now }
+    end_time { 8.hours.after(start_time) }
+
+    trait :sequence_24_h do
+      sequence(:start_time, 1) { |n| (24 * n).hours.from_now }
+      end_time { 8.hours.after(start_time) }
+    end
 
     trait :past_2019 do
       start_time { "2019-12-30".to_datetime }
@@ -11,6 +16,11 @@ FactoryBot.define do
     trait :past do
       start_time { 3.days.ago }
       end_time { 8.hours.after(start_time) }
+    end
+
+    trait :now do
+      start_time { 0.hours.from_now }
+      end_time { 8.hours.from_now }
     end
 
     trait :future do
