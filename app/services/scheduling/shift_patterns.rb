@@ -72,7 +72,7 @@ class Scheduling::ShiftPatterns
     # all contained vertices, sorted by shift start time ASC
     vertices = contains.map { |id| @hash_vertices[id] }.sort { |v| v.shift.start_time}
     can_exist = true
-    Rails.logger.debug "🐮#{contains}"
+    Rails.logger.debug "🐮 #{contains}"
     # first check – does the path even exist?
     vertices.each do |vertex|
       contains.each do |id|
@@ -86,7 +86,8 @@ class Scheduling::ShiftPatterns
     end
     if can_exist
       # can build pattern with enough steps?
-      max_steps = vertices.first.max_prev_steps + vertices.last.max_next_steps + SchedulingUtils.max_next_steps_with(vertices)
+      max_steps = vertices.first.max_prev_steps + vertices.last.max_next_steps + SchedulingUtils.max_next_steps_with(vertices) + 1
+      Rails.logger.debug "🐮 can_exist but #{max_steps}"
       can_exist = max_steps >= length
     end
     can_exist
@@ -107,14 +108,14 @@ class Scheduling::ShiftPatterns
 
     @shift_templates.each do |template|
       hash_vertices[template.id].add_prev @shift_templates.filter { |tmpl|
-        shift_difference_hours(tmpl, template) > 12
+        shift_difference_hours(tmpl, template) > MINIMUM_BREAK_HOURS_UNDERAGE
       }.map { |prev_template| hash_vertices[prev_template.id] }
     end
 
     @shift_templates.reverse.each do |template|
       Rails.logger.debug "🐸 build patterns #{template.start_time}"
       hash_vertices[template.id].add_next @shift_templates.filter { |tmpl|
-        shift_difference_hours(template, tmpl) > 12
+        shift_difference_hours(template, tmpl) > MINIMUM_BREAK_HOURS_UNDERAGE
       }.map { |next_template| hash_vertices[next_template.id] }
     end
 

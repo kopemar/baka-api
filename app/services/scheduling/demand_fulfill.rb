@@ -8,9 +8,6 @@ class Scheduling::DemandFulfill < Constraint
 
     shifts.group_by(&:priority).map { |demand, shift| shift_priority_groups[demand] = shift.map(&:id) }
 
-    puts "=================== DEMAND FULFILL VIOLATIONS ====================="
-    p shift_priority_groups
-
     total_assignments = schedule.map{ |_, v| v.length }.sum
     summary_demand = shifts.map(&:priority).sum
     average_demand =  (summary_demand / shifts.length).to_d
@@ -24,6 +21,7 @@ class Scheduling::DemandFulfill < Constraint
 
     hash[:violations] = get_violating_shifts(utilization, average, shift_priority_groups)
     hash[:sanction] = get_sanction_from_array(hash[:violations], value_per_violation)
+    Rails.logger.debug "🥳 DEMAND FULFILL VIOLATIONS #{hash}"
     hash
   end
 
@@ -53,7 +51,6 @@ class Scheduling::DemandFulfill < Constraint
     demand = Hash.new
 
     medium_assignments = (assignments_per_average * (1 + ((medium_demand_value - average_demand) / factor).to_d)).round
-
 
     (1..5).each do |v|
       demand[v] = (medium_assignments * (1 - ((medium_demand_value - v) / factor).to_d)).round

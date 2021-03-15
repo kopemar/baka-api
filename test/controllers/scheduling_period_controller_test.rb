@@ -324,9 +324,15 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
          headers: @auth_tokens
     assert_response(:success)
 
+    templates = ShiftTemplate::in_scheduling_period period.id
+
     assert_not_empty Shift::in_scheduling_period period.id
 
     # assert that any random shift was assigned to this ONLY employee
-    assert_not_empty employee.contracts.first.schedule.shifts.select { |shift|  shift.id == Shift::in_scheduling_period(period.id).sample.id }
+    shifts = employee.contracts.first.schedule.shifts
+    Rails.logger.debug "🤫 #{shifts.map(&:shift_template_id)}"
+    assert_equal 5, shifts.length
+
+    assert templates.length == shifts.length
   end
 end

@@ -57,6 +57,7 @@ module Scheduling
 
     def try_to_improve_solution(solution, violations)
       old_sanction = violations[:sanction]
+      return solution if old_sanction == 0
       old_solution = Hash.new
       solution.map { |k, v| old_solution[k] = v.clone }
 
