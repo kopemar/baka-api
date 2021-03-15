@@ -86,7 +86,7 @@ class Scheduling::ShiftVertex
 
     path.push(self)
 
-    next_params = {:min_length => length - path.length, :max_length => length - path.length, :contains => contains}
+    next_params = { :length => length - path.length, :contains => contains }
     Rails.logger.debug "🦚 next_params #{next_params}"
     path += get_random_next(next_params)
 
@@ -101,24 +101,20 @@ class Scheduling::ShiftVertex
   end
 
 
-  # I know that  can exist at this point…
+  # We know that pattern can exist at this point…
   protected def get_random_next(params)
     path = []
     Rails.logger.debug "🦦 get_rnd_next #{params}"
-    min_length = params[:min_length] || 0
-    max_length = params[:max_length] || max_next_steps
+    max_length = params[:length] || max_next_steps
     contains = params[:contains] || []
 
     return [] if max_length <= 0
 
     contained_vertices = @next.map(&:clone).filter { |p| contains.include? p.shift.id }
-    contained_ids = contained_vertices.map { |p| p.shift.id }
 
     # do not execute if no contains requirements are given
     unless contains.empty?
-      tmp_path = contained_vertices
-
-      path += tmp_path
+      path += contained_vertices
     end
 
     next_steps = @next.to_set.union(@prev.to_set).to_a
@@ -133,7 +129,7 @@ class Scheduling::ShiftVertex
     # Rails.logger.debug "🤑 Next steps #{next_steps.map(&:to_s)}"
     max_length.times do
       Rails.logger.debug "🥴 max_length times do"
-      tmp_shift = SchedulingUtils.get_sample(next_steps, min_length <= 0)
+      tmp_shift = SchedulingUtils.get_sample(next_steps, false)
 
       if tmp_shift.is_a? ShiftVertex
         path += [tmp_shift]
