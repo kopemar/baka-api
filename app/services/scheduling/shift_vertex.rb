@@ -115,26 +115,18 @@ class Scheduling::ShiftVertex
       path += contained_vertices
     end
 
-    @next.union(@prev).map do |vert|
-      Rails.logger.debug "🤩 [ShiftVertex(#{vert.shift.id})::compute_random_path] -> max steps with  #{SchedulingUtils.max_steps_with([self, vert])}"
-    end
-
-    next_steps = @next.union(@prev).filter { |vert| SchedulingUtils.max_steps_with([self, vert]) >= length }
+    next_steps = @next.union(@prev)
+    next_steps = next_steps.filter { |vert| SchedulingUtils.max_steps_with([self, vert]) >= length } unless max_path_length > length
 
     path.each do |p|
-      Rails.logger.debug "😔 [ShiftVertex::#{self.to_s}] #{p.to_s}"
       next_steps = next_steps.to_set.intersection(p.get_next.to_set.union(p.prev.to_set)).to_a
     end
 
     length.times do
-      Rails.logger.debug "🥴 [ShiftVertex] max_length times do get_sample #{next_steps.map(&:to_s)}"
       tmp_shift = SchedulingUtils.get_sample(next_steps, false)
 
       if tmp_shift.is_a? ShiftVertex
-        Rails.logger.debug "🤢 [ShiftVertex -> #{self.shift.id}] got Random NEXT: #{tmp_shift.shift.id} FROM sample #{next_steps.get_shift_ids}; union: #{tmp_shift.get_next.union(tmp_shift.prev).get_shift_ids}"
         path += [tmp_shift]
-
-
         next_steps = next_steps.intersection(tmp_shift.get_next.union(tmp_shift.prev)).to_a
       end
 

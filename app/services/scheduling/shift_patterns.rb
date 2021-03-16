@@ -31,7 +31,6 @@ class Scheduling::ShiftPatterns
 
     unless length.nil?
       possible_vertices = @vertices.filter { |vertex| (vertex.max_path_length >= length) && (contains.empty? || contains.include?(vertex.shift.id)) }
-      Rails.logger.debug "🤗 #{possible_vertices.map(&:to_s)}"
 
       if !contains.is_a?(Array) || (contains.length > length)
         Rails.logger.debug "😡 Contains malformed (too long: #{contains.length > length})"
