@@ -29,10 +29,10 @@ module Scheduling
         schedule = get_first_solution(@employees)
         violations = get_soft_constraint_violations(schedule)
 
-        Rails.logger.debug "📊 ============================ IMPROVE SOLUTION ============================="
+        Rails.logger.debug "📊 IMPROVE SOLUTION "
         schedule = try_to_improve_solution(schedule, violations)
 
-        Rails.logger.debug "📅 ========= SCHEDULE: #{schedule} =============="
+        Rails.logger.debug "📅 SCHEDULE: #{schedule} "
         assign_shifts(schedule)
         return get_soft_constraint_violations(schedule)
       end
