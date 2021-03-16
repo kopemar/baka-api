@@ -1,5 +1,5 @@
 module Scheduling
-  class BreakInnerLoop < StandardError; end
+
   class Scheduling
     class SchedulingError < StandardError; end
 
