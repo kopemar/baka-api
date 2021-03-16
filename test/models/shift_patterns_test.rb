@@ -121,7 +121,10 @@ class ShiftPatternsTest < ActiveSupport::TestCase
     end
 
     if third.nil?
-      third = templates.find { |s| shift_difference_hours(s, first) > MINIMUM_BREAK_HOURS && shift_difference_hours(s, second) > MINIMUM_BREAK_HOURS }
+      third = templates.find { |s| shift_difference_hours(first, s) > MINIMUM_BREAK_HOURS && shift_difference_hours(second, s) > MINIMUM_BREAK_HOURS } ||
+          templates.find { |s| shift_difference_hours(s, first) > MINIMUM_BREAK_HOURS && shift_difference_hours(s, second) > MINIMUM_BREAK_HOURS } ||
+          templates.find { |s| shift_difference_hours(first, s) > MINIMUM_BREAK_HOURS && shift_difference_hours(s, second) > MINIMUM_BREAK_HOURS } ||
+          templates.find { |s| shift_difference_hours(s, first) > MINIMUM_BREAK_HOURS && shift_difference_hours(second, s) > MINIMUM_BREAK_HOURS }
     end
 
     contains_2 = [first, second].map(&:id)
