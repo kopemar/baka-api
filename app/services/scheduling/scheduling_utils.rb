@@ -13,8 +13,6 @@ class Scheduling::SchedulingUtils
     end
 
     def max_steps_with(nodes)
-      return 0 if nodes.empty?
-      return 1 if nodes.length == 1
       nodes = nodes.sort_by { |node| node.shift.start_time.to_i }
       Rails.logger.debug "🤡 #{nodes.map(&:to_s)}"
       max_steps = 0
