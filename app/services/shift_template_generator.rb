@@ -9,18 +9,20 @@ class ShiftTemplateGenerator < ApplicationService
     scheduling_period_id = @params[:id].to_i
     working_days = @params[:working_days].to_a.map{ |d| d.to_i }
 
-    excluded = @params[:excluded].nil? ? Hash.new : @params[:excluded].to_enum.to_h
+    excluded = @params[:excluded].nil? ? Hash.new : @params[:excluded]
 
-    puts "========================== EXCLUDED : #{excluded} ================================"
+    excluded.to_enum.to_h.map {|k, v|
+      excluded[k] = v.map(&:to_i)
+    }
+
+    Rails.logger.debug "😻 excluded #{excluded}"
 
     period = SchedulingPeriod.where(id: scheduling_period_id).first
 
-    p "Scheduling PERIOD: #{period.start_date}"
+    Rails.logger.debug "🙀 Scheduling PERIOD: #{period.start_date}"
 
     units = period.generate_scheduling_units_in(working_days)
-
     template_times = ShiftTimesCalcService.call(@params)
-
     templates = Array.new
 
     working_days.each do |day|
