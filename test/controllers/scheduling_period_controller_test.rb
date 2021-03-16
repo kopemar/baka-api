@@ -73,16 +73,6 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     assert_response(400)
   end
 
-  # todo stack overflow credit
-  def auth_tokens_for_user(user)
-    # The argument 'user' should be a hash that includes the params 'username' and 'password'.
-    post '/auth/sign_in/',
-         params: {username: user[:username], password: ""},
-         as: :json
-    # The three categories below are the ones you need as authentication headers.
-    response.headers.slice('client', 'access-token', 'uid', 'token-type', 'expiry')
-  end
-
   test "Computations - create one shift" do
     org = generate_organization
     user = FactoryBot.create(:employee, organization: org)

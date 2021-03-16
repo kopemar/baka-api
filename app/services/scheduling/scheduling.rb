@@ -7,6 +7,10 @@ module Scheduling
       @params = params
 
       period_id = params["id"]
+      @priorities = get_priorities(params["priorities"]) || {
+          :no_empty_shifts => 150,
+          :demand_fulfill => 50
+      }
 
       raise SchedulingError.new("No ID of scheduling period") if period_id.nil?
       @scheduling_period = SchedulingPeriod.where(id: period_id).first
@@ -63,16 +67,21 @@ module Scheduling
 
       Rails.logger.debug "============= OLD SOLUTION ==============="
 
-      solution = try_to_improve(solution, violations, :no_empty_shifts)
+      solution = try_to_improve(solution, violations, :no_empty_shifts) unless @priorities[:no_empty_shifts].nil? || @priorities[:no_empty_shifts] < 1
 
       Rails.logger.debug "🎁 OLD SOLUTION #{old_solution}"
       Rails.logger.debug "🎁 NEW SOLUTION #{solution}"
-      try_to_improve(solution, violations, :demand_fulfill)
+      solution = try_to_improve(solution, violations, :demand_fulfill) unless @priorities[:demand_fulfill].nil? || @priorities[:demand_fulfill] < 1
       solution
     end
 
     def try_to_improve(solution, violations, type)
       old_solution = Hash.new
+
+      solution.map do |k, v|
+        old_solution[k] = v.clone
+      end
+
       old_sanction = violations[:sanction]
       solution.map { |k, v| old_solution[k] = v.clone }
 
@@ -94,22 +103,23 @@ module Scheduling
     # Improves solution based on NoEmptyShifts constraint.
     # Finds random pattern where empty shift is present and assigns it to some employee.
     def improve_empty_shifts(solution, violations, utilization)
+      Rails.logger.info "📦 Improve empty shifts"
       exclude = utilization.filter { |_, v| v == 1 }.map { |k, _| k }.to_set
-      Rails.logger.debug "🌡 exclude #{exclude}"
 
       # todo this won't be good enough
       employees = solution.filter { |_, v| !v.to_set.intersect?(exclude) }.map { |k, _| k }
+
+      if employees.empty?
+        employees = solution.map { |k, _| k }
+      end
+
       Rails.logger.debug "🌡 employees #{employees}"
 
       shifts_to_assign = violations.map { |k, _| k }
 
       Rails.logger.debug "🦠 shifts_to_assign #{shifts_to_assign} "
 
-      if employees.length == 0
-        assign_empty_shifts(solution, {:employees => @employees.map(&:id), :shifts => shifts_to_assign})
-      else
-        assign_empty_shifts(solution, {:employees => employees, :shifts => shifts_to_assign})
-      end
+      assign_empty_shifts(solution, {:employees => employees, :shifts => shifts_to_assign})
     end
 
     def assign_empty_shifts(solution, params)
@@ -148,39 +158,65 @@ module Scheduling
     end
     #
     def improve_demand_fulfill(solution, violations)
-      Rails.logger.debug "😂 IMPROVE DEMAND FULFILL =================="
+      Rails.logger.debug "😂 IMPROVE DEMAND FULFILL"
       employees = Hash.new
       violations_hash = Hash.new
+      violations_copy = Hash.new.deep_merge(violations)
+
       violations.group_by { |_, v| v }.map do |group, values|
         violations_hash[group] = values.map(&:first)
       end
-
-      Rails.logger.debug "🤓 #{violations_hash}"
 
       solution.each do |employee, schedule|
         # fixme
         employees[employee] = schedule.map { |shift| (violations[shift] || 0) > 0 ? violations[shift] : 0 }.reduce(:+)
       end
 
-      employees.each do |id|
+      Rails.logger.debug "🪖 #{employees}"
+
+      employees.filter { |_, v| v > 0 }.each do |id|
         min_violations = violations_hash.keys.min
-        Rails.logger.debug "🍄 EMPLOYEE #{id.first}"
+        break if min_violations == 0
+
         shift_count = get_shift_count(get_employee_workload(id.first))
 
+        Rails.logger.debug "🍄 EMPLOYEE #{id.first} shift_count: #{shift_count}"
+        Rails.logger.debug "🐶 #{violations_hash} / #{violations_copy}"
 
         pattern = @patterns.patterns_of_params({length: shift_count, contains: violations_hash[min_violations].combination(shift_count).to_a.sample}).first
         Rails.logger.debug "🍄 CHANGING #{id.first} ========= #{solution[id.first]} TO #{pattern}"
+        modify_demand_hash(violations, violations_hash, solution[id.first], pattern)
         solution[id.first] = pattern unless pattern.nil?
       end
-
       solution
+    end
+
+    private def modify_demand_hash(violations, violations_hash, removed, added)
+      modify_demand_hash_helper(violations, violations_hash, removed, -1 )
+      modify_demand_hash_helper(violations, violations_hash, added, 1 )
+    end
+
+    private def modify_demand_hash_helper(violations, violations_hash, modified, f)
+    modified.each do |m|
+      Rails.logger.debug "😋 modify #{m}: #{f}"
+      violation_factor = violations[m]
+      violations_hash[violation_factor].delete(m)
+      violations_hash.delete(violation_factor) if violations_hash[violation_factor].empty?
+
+      violations[m] = (violation_factor += f)
+
+      violations_hash[violation_factor] = [] if violations_hash[violation_factor].nil?
+
+      violations_hash[violation_factor].push(m)
+    end
     end
 
     def get_soft_constraint_violations(solution)
       violations = Hash.new
-      violations[:no_empty_shifts] = NoEmptyShifts.get_violations_hash(@to_schedule, solution, @employees, @shift_duration, 100)
+      violations[:no_empty_shifts] = NoEmptyShifts.get_violations_hash(@to_schedule, solution, @employees, @shift_duration, @priorities[:no_empty_shifts] || 0)  unless @priorities[:no_empty_shifts] == 0
 
-      violations[:demand_fulfill] = DemandFulfill.get_violations_hash(@to_schedule, solution, @employee_groups, @shift_duration, 100)
+
+      violations[:demand_fulfill] = DemandFulfill.get_violations_hash(@to_schedule, solution, @employee_groups, @shift_duration, @priorities[:demand_fulfill] || 0) unless @priorities[:demand_fulfill] == 0
 
       overall_sanction = violations.map { |_, violation| violation[:sanction] }.reduce(:+)
       violations[:sanction] = overall_sanction
@@ -223,5 +259,12 @@ module Scheduling
       }.keys.first
     end
 
+    def get_priorities(priorities)
+      return nil if priorities.nil?
+      p = Hash.new
+      priorities.to_enum.map { |k, v| p[k.to_sym] = v.to_i }
+      Rails.logger.debug "✉️ get_priorities #{p}"
+      p
+    end
   end
 end
