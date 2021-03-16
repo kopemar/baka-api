@@ -184,9 +184,11 @@ module Scheduling
         Rails.logger.debug "🐶 #{violations_hash} / #{violations_copy}"
 
         pattern = @patterns.patterns_of_params({length: shift_count, contains: violations_hash[min_violations].combination(shift_count).to_a.sample}).first
-        Rails.logger.debug "🍄 CHANGING #{id.first} ========= #{solution[id.first]} TO #{pattern}"
-        modify_demand_hash(violations, violations_hash, solution[id.first], pattern)
-        solution[id.first] = pattern unless pattern.nil?
+        unless pattern.nil?
+          Rails.logger.debug "🍄 CHANGING #{id.first} ========= #{solution[id.first]} TO #{pattern}"
+          modify_demand_hash(violations, violations_hash, solution[id.first], pattern)
+          solution[id.first] = pattern
+        end
       end
       solution
     end
@@ -198,10 +200,10 @@ module Scheduling
 
     private def modify_demand_hash_helper(violations, violations_hash, modified, f)
     modified.each do |m|
-      Rails.logger.debug "😋 modify #{m}: #{f}"
-      violation_factor = violations[m]
-      violations_hash[violation_factor].delete(m)
-      violations_hash.delete(violation_factor) if violations_hash[violation_factor].empty?
+      Rails.logger.debug "😋 modify #{m}: #{f} / #{violations_hash}"
+      violation_factor = violations[m] || 0
+      violations_hash[violation_factor].delete(m) unless violations_hash[violation_factor].nil?
+      violations_hash.delete(violation_factor) if !violations_hash[violation_factor].nil? && violations_hash[violation_factor].empty?
 
       violations[m] = (violation_factor += f)
 
