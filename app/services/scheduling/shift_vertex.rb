@@ -2,13 +2,13 @@ class Scheduling::ShiftVertex
   include Scheduling
 
   def initialize(shift, prev_patterns = [], next_patterns = [])
-    @shifty = shift
+    @shift = shift
     @prev = prev_patterns
     @next = next_patterns
   end
 
   def shift
-    @shifty
+    @shift
   end
 
   def prev
@@ -56,25 +56,25 @@ class Scheduling::ShiftVertex
     return nil if node.nil?
     is_next = !get_next.map { |v| v.shift.id }.filter { |n| n == node.shift.id }.empty?
     is_prev = !is_next && !@prev.map { |v| v.shift.id }.filter { |n| n == node.shift.id }.empty?
+    patterns = ShiftPatterns.new([])
     Rails.logger.debug "👻 max steps between #{node} is_prev: #{is_prev} & is_next: #{is_next}"
     if is_next
       patterns = ShiftPatterns.new(node.prev.intersection(get_next).map { |s| s.shift })
-      max_length = patterns.max_length || 0
-      return max_length
     elsif is_prev
       patterns = ShiftPatterns.new(prev.intersection(node.get_next).map { |s| s.shift })
-      max_length = patterns.max_length || 0
-      return max_length
     end
-    0
+    max_length = patterns.max_length || 0
+    return max_length
   end
 
   def max_path_length
     max_prev_steps + max_next_steps + 1
   end
 
+  # We know that pattern can exist at this point…
   def random_path(params)
-    Rails.logger.debug "💜 random path params #{params}"
+    Rails.logger.debug "💜 #{@shift.id} -> random path params #{params}"
+
     length = params[:length] || max_path_length
     contains = params[:contains] || []
     path = []
@@ -88,7 +88,7 @@ class Scheduling::ShiftVertex
 
     next_params = { :length => length - path.length, :contains => contains }
     Rails.logger.debug "🦚 next_params #{next_params}"
-    path += get_random_next(next_params)
+    path += compute_random_path(next_params)
 
     length_match = path.length == length
     contains_all = contains.empty? || (contains.to_set.subset?(path.map { |s| s.shift.id }.to_set))
@@ -102,15 +102,15 @@ class Scheduling::ShiftVertex
 
 
   # We know that pattern can exist at this point…
-  protected def get_random_next(params)
+  def compute_random_path(params)
     path = []
     Rails.logger.debug "🦦 get_rnd_next #{params}"
-    max_length = params[:length] || max_next_steps
+    length = params[:length] || max_next_steps
     contains = params[:contains] || []
 
-    return [] if max_length <= 0
+    return [] if length <= 0
 
-    contained_vertices = @next.map(&:clone).filter { |p| contains.include? p.shift.id }
+    contained_vertices = @next.map(&:clone).filter { |p| contains.include? p.shift.id } + @prev.map(&:clone).filter { |p| contains.include? p.shift.id }
 
     # do not execute if no contains requirements are given
     unless contains.empty?
@@ -120,23 +120,19 @@ class Scheduling::ShiftVertex
     next_steps = @next.to_set.union(@prev.to_set).to_a
 
     path.each do |p|
-      # Rails.logger.debug "🤒 #{p.to_s}"
-      # Rails.logger.debug "🤖 BE4 next_steps #{next_steps.map(&:to_s)}"
       next_steps = next_steps.to_set.intersection(p.get_next.to_set.union(p.prev.to_set)).to_a
-      # Rails.logger.debug "🤖 AFT next_steps #{next_steps.map(&:to_s)}"
     end
 
-    # Rails.logger.debug "🤑 Next steps #{next_steps.map(&:to_s)}"
-    max_length.times do
+    length.times do
       Rails.logger.debug "🥴 max_length times do"
       tmp_shift = SchedulingUtils.get_sample(next_steps, false)
 
       if tmp_shift.is_a? ShiftVertex
         path += [tmp_shift]
-
         next_steps = next_steps.to_set.intersection(tmp_shift.get_next.to_set.union(tmp_shift.prev.to_set)).to_a
       end
-      break if path.length == max_length
+
+      break if path.length == length
     end
 
     Rails.logger.debug "🤢 got Random NEXT: #{path.map(&:to_s)}"
@@ -156,7 +152,7 @@ class Scheduling::ShiftVertex
   end
 
   def to_s
-    "========== @shift #{@shifty.id} [max_path_length: #{max_path_length}]  [prev=> #{@prev.map { |prev| prev.shift.id }}, max_prev_count #{max_prev_steps}] [next=> #{@next.map { |prev| prev.shift.id }}, max_next_count #{max_next_steps}]"
+    "========== @shift #{@shift.id} [max_path_length: #{max_path_length}]  [prev=> #{@prev.map { |prev| prev.shift.id }}, max_prev_count #{max_prev_steps}] [next=> #{@next.map { |prev| prev.shift.id }}, max_next_count #{max_next_steps}]"
   end
 
 end
