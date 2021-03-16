@@ -21,10 +21,8 @@ class Scheduling::ShiftVertex
 
   def add_next(new_next)
     if new_next.is_a? Array
-      Rails.logger.debug "🦄 ADD NEXT is_a? Array true"
       @next += new_next
     elsif new_next.is_a? ShiftVertex
-      Rails.logger.debug "🦄 ADD NEXT is_a? ShiftVertex true"
       @next.push(new_next)
     end
     #update_max_next_steps
@@ -57,14 +55,14 @@ class Scheduling::ShiftVertex
     is_next = !get_next.map { |v| v.shift.id }.filter { |n| n == node.shift.id }.empty?
     is_prev = !is_next && !@prev.map { |v| v.shift.id }.filter { |n| n == node.shift.id }.empty?
     patterns = ShiftPatterns.new([])
-    Rails.logger.debug "👻 max steps between #{node} is_prev: #{is_prev} & is_next: #{is_next}"
     if is_next
       patterns = ShiftPatterns.new(node.prev.intersection(get_next).map { |s| s.shift })
     elsif is_prev
       patterns = ShiftPatterns.new(prev.intersection(node.get_next).map { |s| s.shift })
     end
     max_length = patterns.max_length || 0
-    return max_length
+    Rails.logger.debug "👻 max steps between #{node} and #{self.to_s} is_prev: #{is_prev} & is_next: #{is_next}: steps between #{max_length}"
+    max_length
   end
 
   def max_path_length
@@ -73,18 +71,16 @@ class Scheduling::ShiftVertex
 
   # We know that pattern can exist at this point…
   def random_path(params)
-    Rails.logger.debug "💜 #{@shift.id} -> random path params #{params}"
+    Rails.logger.debug "💜 [ShiftVertex::random_path] #{@shift.id} -> random path params #{params}"
 
     length = params[:length] || max_path_length
     contains = params[:contains] || []
     path = []
 
     if length > max_path_length
-      Rails.logger.debug "🖤 LENGTH TOO LONG "
+      Rails.logger.debug "🖤 [ShiftVertex::random_path] LENGTH TOO LONG "
       return nil
     end
-
-    path.push(self)
 
     next_params = { :length => length - path.length, :contains => contains }
     Rails.logger.debug "🦚 next_params #{next_params}"
@@ -93,22 +89,24 @@ class Scheduling::ShiftVertex
     length_match = path.length == length
     contains_all = contains.empty? || (contains.to_set.subset?(path.map { |s| s.shift.id }.to_set))
     unless length_match && contains_all
-      Rails.logger.debug "⛔️ Get Random Path did not succeed with #{path.map { |s| s.shift.id }}; length match: #{length_match} (#{length}, contains all (#{contains}): #{contains_all}"
+      Rails.logger.debug "⛔️ [ShiftVertex] Get Random Path did not succeed with #{path.map { |s| s.shift.id }}; length match: #{length_match} (#{length}, contains all (#{contains}): #{contains_all}"
       return nil
     end
 
-    path.map { |vertex| vertex.shift.id }.sort
+    path.get_shift_ids.sort
   end
 
 
   # We know that pattern can exist at this point…
   def compute_random_path(params)
     path = []
-    Rails.logger.debug "🦦 get_rnd_next #{params}"
+    Rails.logger.debug "🦦 [ShiftVertex] get_rnd_next #{params}"
     length = params[:length] || max_next_steps
     contains = params[:contains] || []
 
     return [] if length <= 0
+
+    path.push(self)
 
     contained_vertices = @next.map(&:clone).filter { |p| contains.include? p.shift.id } + @prev.map(&:clone).filter { |p| contains.include? p.shift.id }
 
@@ -117,25 +115,32 @@ class Scheduling::ShiftVertex
       path += contained_vertices
     end
 
-    next_steps = @next.to_set.union(@prev.to_set).to_a
+    @next.union(@prev).map do |vert|
+      Rails.logger.debug "🤩 [ShiftVertex(#{vert.shift.id})::compute_random_path] -> max steps with  #{SchedulingUtils.max_steps_with([self, vert])}"
+    end
+
+    next_steps = @next.union(@prev).filter { |vert| SchedulingUtils.max_steps_with([self, vert]) >= length }
 
     path.each do |p|
+      Rails.logger.debug "😔 [ShiftVertex::#{self.to_s}] #{p.to_s}"
       next_steps = next_steps.to_set.intersection(p.get_next.to_set.union(p.prev.to_set)).to_a
     end
 
     length.times do
-      Rails.logger.debug "🥴 max_length times do"
+      Rails.logger.debug "🥴 [ShiftVertex] max_length times do get_sample #{next_steps.map(&:to_s)}"
       tmp_shift = SchedulingUtils.get_sample(next_steps, false)
 
       if tmp_shift.is_a? ShiftVertex
+        Rails.logger.debug "🤢 [ShiftVertex -> #{self.shift.id}] got Random NEXT: #{tmp_shift.shift.id} FROM sample #{next_steps.get_shift_ids}; union: #{tmp_shift.get_next.union(tmp_shift.prev).get_shift_ids}"
         path += [tmp_shift]
-        next_steps = next_steps.to_set.intersection(tmp_shift.get_next.to_set.union(tmp_shift.prev.to_set)).to_a
+
+
+        next_steps = next_steps.intersection(tmp_shift.get_next.union(tmp_shift.prev)).to_a
       end
 
       break if path.length == length
     end
 
-    Rails.logger.debug "🤢 got Random NEXT: #{path.map(&:to_s)}"
     path
   end
 
@@ -152,7 +157,21 @@ class Scheduling::ShiftVertex
   end
 
   def to_s
-    "========== @shift #{@shift.id} [max_path_length: #{max_path_length}]  [prev=> #{@prev.map { |prev| prev.shift.id }}, max_prev_count #{max_prev_steps}] [next=> #{@next.map { |prev| prev.shift.id }}, max_next_count #{max_next_steps}]"
+    "🍺 shift #{@shift.id} [max_path_length: #{max_path_length}]  [prev=> #{@prev.map { |prev| prev.shift.id }}, max_prev_count #{max_prev_steps}] [next=> #{@next.map { |prev| prev.shift.id }}, max_next_count #{max_next_steps}]"
   end
 
+end
+
+class Array
+  def get_shift_ids
+    self.map { |vertex| vertex.shift.id }
+  end
+
+  def union(other)
+    self.to_set.union(other.to_set).to_a
+  end
+
+  def intersection(other)
+    self.to_set.intersection(other.to_set).to_a
+  end
 end

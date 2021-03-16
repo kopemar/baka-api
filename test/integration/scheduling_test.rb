@@ -68,4 +68,66 @@ class SchedulingTest < ActionDispatch::IntegrationTest
       assert_equal 0, response_body[:violations][:sanction]
     end
   end
+
+  test "Schedule for 6 shifts in 3 days" do
+    o = generate_organization
+
+    user = FactoryBot.create(:manager, organization: o)
+    @auth_tokens = auth_tokens_for_user(user)
+
+    18.times do
+      employee_active_contract
+    end
+
+    period = FactoryBot.create(:scheduling_period, organization_id: o.id)
+    templates = ShiftTemplateGenerator.call(
+        {
+            :id => period.id,
+            :working_days => [1, 2, 3],
+            :start_time => "04:00",
+            :end_time => "21:00",
+            :shift_hours => 9,
+            :break_minutes => 30,
+            :per_day => 2
+        }
+    )
+
+    assert_equal 6, templates.length
+
+    post "/periods/#{period.id}/calculations/generate-schedule",
+         headers: @auth_tokens
+
+    assert_response(:success)
+  end
+
+  test "Schedule for 35 shifts in 7 days" do
+    o = generate_organization
+
+    user = FactoryBot.create(:manager, organization: o)
+    @auth_tokens = auth_tokens_for_user(user)
+
+    18.times do
+      employee_active_contract
+    end
+
+    period = FactoryBot.create(:scheduling_period, organization_id: o.id)
+    templates = ShiftTemplateGenerator.call(
+        {
+            :id => period.id,
+            :working_days => [1, 2, 3, 4, 5, 6, 7],
+            :start_time => "09:00",
+            :end_time => "23:00",
+            :shift_hours => 8,
+            :break_minutes => 0,
+            :per_day => 5
+        }
+    )
+
+    assert_equal 35, templates.length
+
+    post "/periods/#{period.id}/calculations/generate-schedule",
+         headers: @auth_tokens
+
+    assert_response(:success)
+  end
 end

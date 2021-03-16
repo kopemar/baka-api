@@ -214,9 +214,9 @@ module Scheduling
     end
 
     def get_soft_constraint_violations(solution)
+      Rails.logger.debug "😘 get_soft_constraint_violations for #{solution}"
       violations = Hash.new
       violations[:no_empty_shifts] = NoEmptyShifts.get_violations_hash(@to_schedule, solution, @employees, @shift_duration, @priorities[:no_empty_shifts] || 0)  unless @priorities[:no_empty_shifts] == 0
-
 
       violations[:demand_fulfill] = DemandFulfill.get_violations_hash(@to_schedule, solution, @employee_groups, @shift_duration, @priorities[:demand_fulfill] || 0) unless @priorities[:demand_fulfill] == 0
 

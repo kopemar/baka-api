@@ -51,7 +51,7 @@ class Scheduling::ShiftPatterns
         return paths
       end
       count.times do
-
+        Rails.logger.debug "⚽️ count times do get sample"
         sample = SchedulingUtils.get_sample(possible_vertices, false)
 
         random_path = sample.nil? ? nil : sample.random_path({ :length => length, :contains => contains })
@@ -87,7 +87,7 @@ class Scheduling::ShiftPatterns
     end
     if can_exist
       # can build pattern with enough steps?
-      max_steps = vertices.first.max_prev_steps + vertices.last.max_next_steps + SchedulingUtils.max_next_steps_with(vertices) + 1
+      max_steps = SchedulingUtils.max_steps_with(vertices)
       Rails.logger.debug "🐮 can_exist but #{max_steps}"
       can_exist = max_steps >= length
     end
