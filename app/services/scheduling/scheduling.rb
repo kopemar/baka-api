@@ -207,7 +207,7 @@ module Scheduling
 
       violations[m] = (violation_factor += f)
 
-      violations_hash[violation_factor] = [] if violations_hash[violation_factor].nil?
+      violations_hash[violation_factor] ||= []
 
       violations_hash[violation_factor].push(m)
     end
