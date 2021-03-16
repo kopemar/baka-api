@@ -30,28 +30,29 @@ class Scheduling::ShiftPatterns
     end
 
     unless length.nil?
-      vertices = @vertices.filter { |vertex| vertex.max_path_length >= length - 1 }
-      count.times do
-        if !contains.is_a?(Array) || (!contains.empty? && contains.length > length)
-          Rails.logger.debug "😡 Contains malformed"
-          return paths
-        end
-        if contains.empty?
-          sample = SchedulingUtils.get_sample(vertices.filter { |v| v.max_path_length >= length }, false)
-        elsif can_exist?(contains)
-          Rails.logger.debug "🌵 CAN EXIST WITH #{contains}"
-          if contains.length == length
-            count.times do
-              paths.push(contains)
-            end
-            return paths
+      possible_vertices = @vertices.filter { |vertex| (vertex.max_path_length >= length) && (contains.empty? || contains.include?(vertex.shift.id)) }
+      Rails.logger.debug "🤗 #{possible_vertices.map(&:to_s)}"
+
+      if !contains.is_a?(Array) || (contains.length > length)
+        Rails.logger.debug "😡 Contains malformed (too long: #{contains.length > length})"
+        return paths
+      end
+
+      if contains.empty? || can_exist?(contains)
+        Rails.logger.debug "🌵 CAN EXIST WITH #{contains}"
+        if contains.length == length
+          count.times do
+            paths.push(contains)
           end
-          # todo might be even smarter, e.g. might contain all of them...  :)
-          sample = @hash_vertices[contains.first]
-        else
-          Rails.logger.debug "🌵 CANNOT EXIST"
           return paths
         end
+      else
+        Rails.logger.debug "🌵 CANNOT EXIST"
+        return paths
+      end
+      count.times do
+
+        sample = SchedulingUtils.get_sample(possible_vertices, false)
 
         random_path = sample.nil? ? nil : sample.random_path({ :length => length, :contains => contains })
 
