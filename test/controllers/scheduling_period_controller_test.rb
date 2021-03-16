@@ -238,11 +238,11 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     assert response_body["templates"].length == 20
 
     Time.zone = "London"
-    assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(5.days.after(Time.zone.now.monday)).to_time}
-    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(Time.zone.now.monday).to_time}
-    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 10.hours.after(2.days.after(Time.zone.now.monday)).to_time}
-    assert_not_empty response_body["templates"].select{ |shift| shift["end_time"].to_time == 18.hours.after(2.days.after(30.minutes.after(Time.zone.now.monday))).to_time}
-    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(40.minutes.after(4.days.after(Time.zone.now.monday))).to_time}
+    assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(5.days.after(period.start_date)).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(period.start_date).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 10.hours.after(2.days.after(period.start_date)).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["end_time"].to_time == 18.hours.after(2.days.after(30.minutes.after(period.start_date))).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(40.minutes.after(4.days.after(period.start_date))).to_time}
   end
 
   test "Scheduling templates gen - exclude" do
@@ -270,18 +270,17 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     response_body = response.parsed_body
     assert_response(201)
 
+    assert response_body["templates"].length == 18
 
-    # assert response_body["templates"].length == 18
-    #
-    # assert response_body["templates"].all? { |shift| shift["is_employment_contract"] }
-    #
-    # Time.zone = "London"
-    # assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(5.days.after(Time.zone.now.monday)).to_time}
-    # assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(Time.zone.now.monday).to_time}
-    # assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 10.hours.after(1.days.after(Time.zone.now.monday)).to_time}
-    # assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 10.hours.after(2.days.after(Time.zone.now.monday)).to_time}
-    # assert_not_empty response_body["templates"].select{ |shift| shift["end_time"].to_time == 18.hours.after(2.days.after(30.minutes.after(Time.zone.now.monday))).to_time}
-    # assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(40.minutes.after(4.days.after(Time.zone.now.monday))).to_time}
+    assert response_body["templates"].all? { |shift| shift["is_employment_contract"] }
+
+    Time.zone = "London"
+    assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(5.days.after(period.start_date)).to_time}
+    assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(period.start_date).to_time}
+    assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 10.hours.after(1.days.after(period.start_date)).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 10.hours.after(2.days.after(period.start_date)).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["end_time"].to_time == 18.hours.after(2.days.after(30.minutes.after(period.start_date))).to_time}
+    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(40.minutes.after(4.days.after(period.start_date))).to_time}
   end
 
   test "Scheduling period days" do
@@ -301,9 +300,9 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
     assert_empty parsed_response["days"].select { |d| d["id"] == 0 }
     assert_not_empty parsed_response["days"].select { |d| d["id"] == 7 }
-    assert_not_empty parsed_response["days"].select { |d| d["date"] == DateTime::now.monday.to_date.to_s }
+    assert_not_empty parsed_response["days"].select { |d| d["date"] == period.start_date.to_s }
 
-    assert_not_empty parsed_response["days"].select { |d| d["date"] == 2.days.after(DateTime::now.monday).to_date.to_s }
+    assert_not_empty parsed_response["days"].select { |d| d["date"] == 2.days.after(period.start_date).to_date.to_s }
   end
 
 
