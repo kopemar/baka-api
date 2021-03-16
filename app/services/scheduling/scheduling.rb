@@ -45,8 +45,8 @@ module Scheduling
     private def assign_shifts(schedule)
       Rails.logger.error schedule
       schedule.each do |employee_id, shift_ids|
-        employee = @employees.select { |e| e.id == employee_id }.first
-        templates = shift_ids.map { |id| @to_schedule.select { |template| template.id == id }.first }
+        employee = @employees.find { |e| e.id == employee_id }
+        templates = shift_ids.map { |id| @to_schedule.find { |template| template.id == id } }
 
         templates.each do |template|
           shift = Shift.from_template(template)
