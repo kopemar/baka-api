@@ -5,7 +5,7 @@ FactoryBot.define do
       sequence(:start_date, 1) { |n| (n - 1).weeks.after(DateTime::now.monday).to_date }
     end
 
-    start_date { DateTime::now.to_date }
+    start_date { 1.day.before(DateTime::now.to_date) }
     end_date { 1.day.before(1.week.after(start_date).to_date) }
 
     trait :past_2019 do
