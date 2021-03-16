@@ -28,7 +28,7 @@ module Scheduling
         @employees = Employee::with_employment_contract
                          .where(organization_id: @scheduling_period.organization_id)
 
-        Shift.where(scheduler_type: SCHEDULER_TYPES[:SYSTEM]).joins(:schedule).where(schedule_id: Schedule.select(:id).joins(:contract).where(contract_id: Contract.select(:id).joins(:employee).where(employee_id: @employees.map(&:id)))).delete_all
+        Shift.where(scheduler_type: SCHEDULER_TYPES[:SYSTEM]).joins(:shift_template).where(shift_template_id: @to_schedule.map(&:id)).delete_all
 
         schedule = get_first_solution(@employees)
         violations = get_soft_constraint_violations(schedule)
