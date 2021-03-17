@@ -1,6 +1,7 @@
 #days
 class SchedulingUnit < ApplicationRecord
   before_validation :add_scheduling_period
+  validates :start_time, :end_time, :overlap => {:exclude_edges => %w[start_time end_time], :scope => "scheduling_period_id"}
 
   belongs_to :scheduling_period
 
@@ -26,6 +27,10 @@ class SchedulingUnit < ApplicationRecord
         excluded: is_excluded
     )
   end
+
+  scope :in_scheduling_period, -> (period_id) {
+    where(scheduling_period_id: period_id)
+  }
 
   def is_day?
     true

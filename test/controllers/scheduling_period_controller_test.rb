@@ -212,30 +212,35 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
     period = FactoryBot.create(:scheduling_period, organization: org)
 
-    post "/periods/#{period.id}/shift-templates",
-        params: {
-            working_days: [1, 2, 3, 4, 5],
-            start_time: "08:00",
-            end_time: "18:30",
-            shift_hours: 8,
-            break_minutes: 30,
-            per_day: 4
-        },
-        headers: @auth_tokens
+    2.times do
+      post "/periods/#{period.id}/shift-templates",
+          params: {
+              working_days: [1, 2, 3, 4, 5],
+              start_time: "08:00",
+              end_time: "18:30",
+              shift_hours: 8,
+              break_minutes: 30,
+              per_day: 4
+          },
+          headers: @auth_tokens
 
-    response_body = response.parsed_body
-    assert_response(201)
+      response_body = response.parsed_body
+      assert_response(201)
 
-    assert response_body["templates"].all? { |shift| shift["is_employment_contract"] }
+      assert_equal 5, SchedulingUnit::in_scheduling_period(period.id).length
 
-    assert response_body["templates"].length == 20
+      assert response_body["templates"].all? { |shift| shift["is_employment_contract"] }
 
-    Time.zone = "London"
-    assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(5.days.after(period.start_date)).to_time}
-    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(period.start_date).to_time}
-    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 10.hours.after(2.days.after(period.start_date)).to_time}
-    assert_not_empty response_body["templates"].select{ |shift| shift["end_time"].to_time == 18.hours.after(2.days.after(30.minutes.after(period.start_date))).to_time}
-    assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(40.minutes.after(4.days.after(period.start_date))).to_time}
+      assert response_body["templates"].length == 20
+      assert_equal 20, ShiftTemplate::in_scheduling_period(period.id).length
+
+      Time.zone = "London"
+      assert_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(5.days.after(period.start_date)).to_time}
+      assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(period.start_date).to_time}
+      assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 10.hours.after(2.days.after(period.start_date)).to_time}
+      assert_not_empty response_body["templates"].select{ |shift| shift["end_time"].to_time == 18.hours.after(2.days.after(30.minutes.after(period.start_date))).to_time}
+      assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(40.minutes.after(4.days.after(period.start_date))).to_time}
+    end
   end
 
   test "Scheduling templates gen - exclude" do
