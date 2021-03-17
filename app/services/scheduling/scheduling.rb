@@ -4,15 +4,14 @@ module Scheduling
     class SchedulingError < StandardError; end
 
     def initialize(params)
-      @params = params
+      Rails.logger.debug "🦊 params: #{params}"
+      period_id = params[:id]
 
-      period_id = params["id"]
-      @priorities = get_priorities(params["priorities"]) || {
+      @priorities = get_priorities(params[:priorities]) || {
           :no_empty_shifts => 150,
           :demand_fulfill => 50
       }
 
-      raise SchedulingError.new("No ID of scheduling period") if period_id.nil?
       @scheduling_period = SchedulingPeriod.where(id: period_id).first
       raise SchedulingError.new("Invalid ID of scheduling period") if @scheduling_period.nil?
     end
@@ -28,7 +27,7 @@ module Scheduling
         @employees = Employee::with_employment_contract
                          .where(organization_id: @scheduling_period.organization_id)
 
-        Shift.where(scheduler_type: SCHEDULER_TYPES[:SYSTEM]).joins(:shift_template).where(shift_template_id: @to_schedule.map(&:id)).delete_all
+        Shift::in_scheduling_period(@scheduling_period.id).where(scheduler_type: SCHEDULER_TYPES[:SYSTEM]).delete_all
 
         schedule = get_first_solution(@employees)
         violations = get_soft_constraint_violations(schedule)

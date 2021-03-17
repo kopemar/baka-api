@@ -8,10 +8,6 @@ class ShiftTimesCalcService < ApplicationService
 
   # result is deterministic, that's why IDs should be valid anytime & can be used in API...
   def call
-    if @params[:start_time].nil? || @params[:end_time].nil? || @params[:shift_hours].nil? || @params[:break_minutes].nil?
-      raise ShiftServiceError.new("Some of the required params is missing.")
-    end
-
     start_time = @params[:start_time].to_time.beginning_of_minute
     end_time = @params[:end_time].to_time.beginning_of_minute
 

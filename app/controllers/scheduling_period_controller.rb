@@ -22,6 +22,9 @@ class SchedulingPeriodController < ApplicationController
   end
 
   def calculate_shift_times
+    params.require([:start_time, :end_time, :shift_hours, :break_minutes, :per_day])
+    params.permit(:night_shift)
+
     render :json => {:times => ShiftTimesCalcService.call(params)}
   rescue ShiftTimesCalcService::ShiftServiceError => e
     render :status => :bad_request, :json => {:errors => [e.message]}
@@ -49,7 +52,8 @@ class SchedulingPeriodController < ApplicationController
     unless current_user.is_manager?
       return render :status => :forbidden, :json => {:errors => ["Only managers can call this"]}
     end
-    result = Scheduling::Scheduling.new(params).call
+    permitted = params.permit(:id, priorities: [:no_empty_shifts, :demand_fulfill])
+    result = Scheduling::Scheduling.new(permitted).call
     render :json => {:errors => ["No errors, just test message"], :success => true, :violations => result}
   end
 

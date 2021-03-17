@@ -26,9 +26,20 @@ class ShiftPatternsTest < ActiveSupport::TestCase
   test "Shift Pattern break enough" do
     o = generate_organization
     p = FactoryBot.create(:scheduling_period, organization_id: o.id)
-    p.generate_scheduling_units
+    # p.generate_scheduling_units
 
-    templates = FactoryBot.create_list(:shift_template, 3, :sequence_24_h, { organization_id: o.id })
+    templates = ShiftTemplateGenerator.call(
+        {
+            :id=> p.id,
+            :working_days => [1, 2, 3],
+            :start_time => "08:00",
+            :end_time => "16:30",
+            :shift_hours => 8,
+            :break_minutes => 30,
+            :per_day => 1
+        }
+    )
+
     patterns = Scheduling::ShiftPatterns.new(templates)
 
     assert_empty patterns.patterns_of_params({ length: 4} )

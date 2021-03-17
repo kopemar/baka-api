@@ -3,21 +3,18 @@ class ShiftTemplateController < ApplicationController
   before_action :authenticate_user!
 
   def create_template
-    if !current_user.is_manager?
-      render :status => :forbidden, :json => {:errors => ["Forbidden"]}
-    elsif params[:start_time].nil? || params[:end_time].nil? || params[:break_minutes].nil?
-      return render :status => :unprocessable_entity, :json => {:errors => ["Something is missing"]}
-    else
-      template = ShiftTemplate.create!(
-          start_time: params[:start_time].to_datetime,
-          end_time: params[:end_time].to_datetime,
-          break_minutes: params[:break_minutes].to_i,
-          priority: params[:priority].to_i,
-          organization_id: current_user.organization_id,
-          is_employment_contract: false
-      )
-      render :json => {:data => template}
-    end
+    params.require([:start_time, :end_time, :break_minutes, :priority])
+    render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless !current_user.is_manager?
+
+    template = ShiftTemplate.create!(
+        start_time: params[:start_time].to_datetime,
+        end_time: params[:end_time].to_datetime,
+        break_minutes: params[:break_minutes].to_i,
+        priority: params[:priority].to_i ,
+        organization_id: current_user.organization_id,
+        is_employment_contract: false
+    )
+    render :json => {:data => template}
   end
 
   def in_unit
@@ -29,6 +26,7 @@ class ShiftTemplateController < ApplicationController
   end
 
   def get_templates
+    params
     templates = if params[:unit_id].nil?
       get_unassigned_shifts
     else

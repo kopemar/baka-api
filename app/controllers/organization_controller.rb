@@ -1,6 +1,7 @@
 class OrganizationController < ApplicationController
   def get_employees
-    organization = Organization.where(id: params["id"]).first
+    permitted = params.permit(:id)
+    organization = Organization.where(id: permitted[:id]).first
     return render :status => :not_found, :json => {:errors => ["Invalid Organization ID"]} if organization.nil?
 
     # todo pagination
