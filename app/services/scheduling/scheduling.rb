@@ -87,9 +87,9 @@ module Scheduling
       utilization = ScheduleStatistics.get_shifts_utilization(@to_schedule.map(&:id), solution)
 
       if type == :no_empty_shifts
-        improve_empty_shifts(solution, violations[type][:violations], utilization)
+        solution = Strategy::NoEmptyShiftsStrategy.new.try_to_improve(solution, violations[type][:violations], utilization, @patterns)
       elsif type == :demand_fulfill
-        improve_demand_fulfill(solution, violations[type][:violations])
+        solution = Strategy::DemandFulfillStrategy.new.try_to_improve(solution, violations[type][:violations], @patterns, @employee_groups, @employees, @shift_duration)
       end
 
       new_sanction = get_soft_constraint_violations(solution)[:sanction]
@@ -99,118 +99,7 @@ module Scheduling
       old_sanction >= new_sanction ? solution : old_solution
     end
 
-    # Improves solution based on NoEmptyShifts constraint.
-    # Finds random pattern where empty shift is present and assigns it to some employee.
-    def improve_empty_shifts(solution, violations, utilization)
-      Rails.logger.info "📦 Improve empty shifts"
-      exclude = utilization.filter { |_, v| v == 1 }.map { |k, _| k }.to_set
-
-      # todo this won't be good enough
-      employees = solution.filter { |_, v| !v.to_set.intersect?(exclude) }.map { |k, _| k }
-
-      if employees.empty?
-        employees = solution.map { |k, _| k }
-      end
-
-      Rails.logger.debug "🌡 employees #{employees}"
-
-      shifts_to_assign = violations.map { |k, _| k }
-
-      Rails.logger.debug "🦠 shifts_to_assign #{shifts_to_assign} "
-
-      assign_empty_shifts(solution, {:employees => employees, :shifts => shifts_to_assign})
-    end
-
-    def assign_empty_shifts(solution, params)
-      employees = params[:employees]
-      shifts = params[:shifts]
-
-      remaining_shifts = shifts.map(&:clone).to_set
-      division_factor = 1
-
-      shifts.length.times do
-        minimum = [remaining_shifts.length, 5].min
-        combination_count = (minimum.to_d / division_factor).ceil
-
-        found_any = analyze_combinations(remaining_shifts, combination_count, solution, employees)
-
-        division_factor = found_any ? 1 : division_factor + 1
-        Rails.logger.debug "🤥 Remaining: #{remaining_shifts}"
-
-        break if remaining_shifts.empty?
-      end
-    end
-
-    private def analyze_combinations(remaining_shifts, combination_count, solution, employees)
-      remaining_shifts.to_a.reverse.combination(combination_count).to_a.each do |slice|
-        # fixme smarter length, not just 5
-        patterns = @patterns.patterns_of_params({:contains => slice, :length => 5})
-        Rails.logger.debug "🤥 COMBINED #{patterns} (slice: #{slice})"
-        unless patterns.first.nil?
-          # todo not enough employees?
-          solution[employees.pop] = patterns.first
-          remaining_shifts = remaining_shifts.subtract(patterns.first.to_set)
-          return true
-        end
-      end
-      false
-    end
     #
-    def improve_demand_fulfill(solution, violations)
-      Rails.logger.debug "😂 IMPROVE DEMAND FULFILL"
-      employees = Hash.new
-      violations_hash = Hash.new
-      violations_copy = Hash.new.deep_merge(violations)
-
-      violations.group_by { |_, v| v }.map do |group, values|
-        violations_hash[group] = values.map(&:first)
-      end
-
-      solution.each do |employee, schedule|
-        # fixme
-        employees[employee] = schedule.map { |shift| (violations[shift] || 0) > 0 ? violations[shift] : 0 }.reduce(:+)
-      end
-
-      Rails.logger.debug "🪖 #{employees}"
-
-      employees.filter { |_, v| v > 0 }.each do |id|
-        min_violations = violations_hash.keys.min
-        break if min_violations == 0
-
-        shift_count = get_shift_count(get_employee_workload(id.first))
-
-        Rails.logger.debug "🍄 EMPLOYEE #{id.first} shift_count: #{shift_count}"
-        Rails.logger.debug "🐶 #{violations_hash} / #{violations_copy}"
-
-        pattern = @patterns.patterns_of_params({length: shift_count, contains: violations_hash[min_violations].combination(shift_count).to_a.sample}).first
-        unless pattern.nil?
-          Rails.logger.debug "🍄 CHANGING #{id.first} ========= #{solution[id.first]} TO #{pattern}"
-          modify_demand_hash(violations, violations_hash, solution[id.first], pattern)
-          solution[id.first] = pattern
-        end
-      end
-      solution
-    end
-
-    private def modify_demand_hash(violations, violations_hash, removed, added)
-      modify_demand_hash_helper(violations, violations_hash, removed, -1 )
-      modify_demand_hash_helper(violations, violations_hash, added, 1 )
-    end
-
-    private def modify_demand_hash_helper(violations, violations_hash, modified, f)
-    modified.each do |m|
-      Rails.logger.debug "😋 modify #{m}: #{f} / #{violations_hash}"
-      violation_factor = violations[m] || 0
-      violations_hash[violation_factor].delete(m) unless violations_hash[violation_factor].nil?
-      violations_hash.delete(violation_factor) if !violations_hash[violation_factor].nil? && violations_hash[violation_factor].empty?
-
-      violations[m] = (violation_factor += f)
-
-      violations_hash[violation_factor] ||= []
-
-      violations_hash[violation_factor].push(m)
-    end
-    end
 
     def get_soft_constraint_violations(solution)
       Rails.logger.debug "😘 get_soft_constraint_violations for #{solution}"
@@ -235,7 +124,7 @@ module Scheduling
       @patterns = ShiftPatterns.new(@to_schedule)
 
       @employee_groups.each do |work_load, employees|
-        shift_count = get_shift_count(work_load)
+        shift_count = ScheduleStatistics.get_shift_count(work_load, @shift_duration, @patterns)
         Rails.logger.debug "========= shift_count #{shift_count} ==========="
         tmp_patterns = @patterns.patterns_of_params({length: shift_count, count: employees.length})
         # todo if already assigned
@@ -244,10 +133,6 @@ module Scheduling
         }
       end
       schedule
-    end
-
-    def get_shift_count(work_load)
-      [((work_load * WEEKLY_WORKING_HOURS).to_d / @shift_duration).ceil, @patterns.max_length].min
     end
 
     def get_employee_workload(employee)
