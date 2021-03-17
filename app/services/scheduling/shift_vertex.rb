@@ -1,29 +1,19 @@
 class Scheduling::ShiftVertex
   include Scheduling
 
+  attr_reader :prev, :nexts, :shift
+
   def initialize(shift, prev_patterns = [], next_patterns = [])
     @shift = shift
     @prev = prev_patterns
-    @next = next_patterns
-  end
-
-  def shift
-    @shift
-  end
-
-  def prev
-    @prev
-  end
-
-  def get_next
-    @next
+    @nexts = next_patterns
   end
 
   def add_next(new_next)
     if new_next.is_a? Array
-      @next += new_next
+      @nexts += new_next
     elsif new_next.is_a? ShiftVertex
-      @next.push(new_next)
+      @nexts.push(new_next)
     end
     #update_max_next_steps
   end
@@ -52,13 +42,13 @@ class Scheduling::ShiftVertex
 
   def max_steps_between(node)
     return nil if node.nil?
-    is_next = !get_next.map { |v| v.shift.id }.filter { |n| n == node.shift.id }.empty?
+    is_next = !nexts.map { |v| v.shift.id }.filter { |n| n == node.shift.id }.empty?
     is_prev = !is_next && !@prev.map { |v| v.shift.id }.filter { |n| n == node.shift.id }.empty?
     patterns = ShiftPatterns.new([])
     if is_next
-      patterns = ShiftPatterns.new(node.prev.intersection(get_next).map { |s| s.shift })
+      patterns = ShiftPatterns.new(node.prev.intersection(nexts).map { |s| s.shift })
     elsif is_prev
-      patterns = ShiftPatterns.new(prev.intersection(node.get_next).map { |s| s.shift })
+      patterns = ShiftPatterns.new(prev.intersection(node.nexts).map { |s| s.shift })
     end
     max_length = patterns.max_length || 0
     Rails.logger.debug "👻 max steps between #{node} and #{self.to_s} is_prev: #{is_prev} & is_next: #{is_next}: steps between #{max_length}"
@@ -108,18 +98,18 @@ class Scheduling::ShiftVertex
 
     path.push(self)
 
-    contained_vertices = @next.map(&:clone).filter { |p| contains.include? p.shift.id } + @prev.map(&:clone).filter { |p| contains.include? p.shift.id }
+    contained_vertices = @nexts.map(&:clone).filter { |p| contains.include? p.shift.id } + @prev.map(&:clone).filter { |p| contains.include? p.shift.id }
 
     # do not execute if no contains requirements are given
     unless contains.empty?
       path += contained_vertices
     end
 
-    next_steps = @next.union(@prev)
+    next_steps = @nexts.union(@prev)
     next_steps = next_steps.filter { |vert| SchedulingUtils.max_steps_with([self, vert]) >= length } unless max_path_length > length
 
     path.each do |p|
-      next_steps = next_steps.to_set.intersection(p.get_next.to_set.union(p.prev.to_set)).to_a
+      next_steps = next_steps.to_set.intersection(p.nexts.to_set.union(p.prev.to_set)).to_a
     end
 
     length.times do
@@ -127,7 +117,7 @@ class Scheduling::ShiftVertex
 
       if tmp_shift.is_a? ShiftVertex
         path += [tmp_shift]
-        next_steps = next_steps.intersection(tmp_shift.get_next.union(tmp_shift.prev)).to_a
+        next_steps = next_steps.intersection(tmp_shift.nexts.union(tmp_shift.prev)).to_a
       end
 
       break if path.length == length
@@ -139,7 +129,7 @@ class Scheduling::ShiftVertex
   # ====================================
 
   private def update_max_next_steps
-    first = @next.min { |_, b| b.shift.start_time }
+    first = @nexts.min { |_, b| b.shift.start_time }
     @max_next_steps = first.nil? ? 0 : first.max_next_steps + 1
   end
 
@@ -149,7 +139,7 @@ class Scheduling::ShiftVertex
   end
 
   def to_s
-    "🍺 shift #{@shift.id} [max_path_length: #{max_path_length}]  [prev=> #{@prev.map { |prev| prev.shift.id }}, max_prev_count #{max_prev_steps}] [next=> #{@next.map { |prev| prev.shift.id }}, max_next_count #{max_next_steps}]"
+    "🍺 shift #{@shift.id} [max_path_length: #{max_path_length}]  [prev=> #{@prev.map { |prev| prev.shift.id }}, max_prev_count #{max_prev_steps}] [next=> #{@nexts.map { |prev| prev.shift.id }}, max_next_count #{max_next_steps}]"
   end
 
 end
