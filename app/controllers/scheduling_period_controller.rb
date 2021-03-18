@@ -31,6 +31,8 @@ class SchedulingPeriodController < ApplicationController
   end
 
   def generate_shift_templates
+    params.require([:start_time, :end_time, :shift_hours, :break_minutes, :per_day])
+    params.permit(:night_shift)
     render :status => :created, :json => {:templates => ShiftTemplateGenerator.call(params)}
   end
 
@@ -69,5 +71,19 @@ class SchedulingPeriodController < ApplicationController
       return render :status => :forbidden, :json => {:errors => ["Only managers and higher can access this resource."]}
     end
     render :json => period
+  end
+
+  def submit
+    unless current_user.is_manager?
+      return render :status => :forbidden, :json => {:errors => ["Only managers can call this"]}
+    end
+    period = SchedulingPeriod.where(id: params[:id]).first
+    if period.nil?
+      return render :status => :not_found, :json => {:errors => ["Schedule period does not exist."]}
+    end
+
+    period.submitted = true
+    period.save!
+    render :status => :ok, :json => { :data => period }
   end
 end

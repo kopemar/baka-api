@@ -36,4 +36,6 @@ Rails.application.routes.draw do
   post "periods/:id/shift-templates", to: "scheduling_period#generate_shift_templates"
 
   post "periods/:id/calculations/generate-schedule", to: "scheduling_period#generate_schedule"
+
+  post "periods/:id/submit", to: "scheduling_period#submit"
 end

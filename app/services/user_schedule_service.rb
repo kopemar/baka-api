@@ -13,14 +13,16 @@ class UserScheduleService < ApplicationService
         set.add(contract.schedule.id)
     end
 
+    shifts = Shift.where(schedule_id: set)
     if !@start_date.nil? && !@end_date.nil?
-      Shift.where(schedule_id: set).planned_between(@start_date, @end_date)
-    elsif @start_date.nil?
-      Shift.where(schedule_id: set).planned_before(@end_date)
-    elsif @end_date.nil?
-      Shift.where(schedule_id: set).planned_after(@start_date)
+      shifts = shifts.planned_between(@start_date, @end_date)
+    elsif @start_date.nil? && !@end_date.nil?
+      shifts = shifts.planned_before(@end_date)
+    elsif @end_date.nil? && !@start_date.nil?
+      shifts = shifts.planned_after(@start_date)
     end
 
+    shifts.joins(:shift_template).where(shift_templates: { scheduling_unit: SchedulingUnit.joins(:scheduling_period).where(scheduling_periods: { organization: @user.organization, submitted: true } ) })
   end
 
 end

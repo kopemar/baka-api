@@ -107,3 +107,21 @@ def create_employee_shifts_past
     end
   end
 end
+
+def generate_shift_templates(period, auth_tokens)
+  post "/periods/#{period.id}/shift-templates",
+       params: {
+           working_days: [1, 2, 3, 4, 5],
+           start_time: "08:00",
+           end_time: "16:30",
+           shift_hours: 8,
+           break_minutes: 30,
+           per_day: 1
+       },
+       headers: auth_tokens
+end
+
+def generate_schedule_basic(period, auth_tokens)
+  post "/periods/#{period.id}/calculations/generate-schedule",
+       headers: auth_tokens
+end
