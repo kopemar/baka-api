@@ -83,7 +83,8 @@ class SchedulingPeriodController < ApplicationController
     end
 
     period.submitted = true
+    # todo already submitted?
     period.save!
-    render :status => :ok, :json => { :data => period }
+    render :status => :ok, :json => { :success => true, :data => period }
   end
 end
