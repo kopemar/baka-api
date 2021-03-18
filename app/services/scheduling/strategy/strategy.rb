@@ -1,10 +1,26 @@
 module Scheduling
   module Strategy
     class Strategy
+      attr_reader :violations, :solution, :patterns, :utilization, :employee_groups, :employees, :shift_duration
 
-      def try_to_improve(args)
-
+      def initialize(params)
+        parse_params(params)
       end
+
+      def self.try_to_improve(params, strategy)
+        strategy.new(params).try_to_improve
+      end
+
+      def parse_params(params = {})
+        @violations = params.fetch(:violations)
+        @solution = params.fetch(:solution)
+        @patterns = params.fetch(:patterns)
+        @utilization = params.fetch(:utilization, nil)
+        @employee_groups = params.fetch(:employee_groups, nil)
+        @employees = params.fetch(:employees, nil)
+        @shift_duration = params.fetch(:shift_duration, nil)
+      end
+
     end
   end
 end

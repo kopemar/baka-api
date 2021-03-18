@@ -1,8 +1,11 @@
 module Scheduling
   module Strategy
     class NoEmptyShiftsStrategy < Strategy
-      def try_to_improve(solution, violations, utilization, patterns)
-        @patterns = patterns
+      def initialize(params)
+        super(params)
+      end
+
+      def try_to_improve
         Rails.logger.info "📦 Improve empty shifts"
         exclude = utilization.filter { |_, v| v == 1 }.map { |k, _| k }.to_set
 

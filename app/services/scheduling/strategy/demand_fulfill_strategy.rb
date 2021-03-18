@@ -1,11 +1,13 @@
 module Scheduling
   module Strategy
     class DemandFulfillStrategy < Strategy
-      def try_to_improve(solution, violations, patterns, employee_groups, all_employees, shift_duration)
+      def initialize(params)
+        super(params)
+      end
+
+      def try_to_improve
         Rails.logger.debug "😂 IMPROVE DEMAND FULFILL"
-        @employee_groups = employee_groups
-        @employees = all_employees
-        employees = Hash.new
+        valid_employees = Hash.new
         violations_hash = Hash.new
         violations_copy = Hash.new.deep_merge(violations)
 
@@ -15,12 +17,12 @@ module Scheduling
 
         solution.each do |employee, schedule|
           # fixme
-          employees[employee] = schedule.map { |shift| (violations[shift] || 0) > 0 ? violations[shift] : 0 }.reduce(:+)
+          valid_employees[employee] = schedule.map { |shift| (violations[shift] || 0) > 0 ? violations[shift] : 0 }.reduce(:+)
         end
 
-        Rails.logger.debug "🪖 #{employees}"
+        Rails.logger.debug "🪖 #{valid_employees}"
 
-        employees.filter { |_, v| v > 0 }.each do |id|
+        valid_employees.filter { |_, v| v > 0 }.each do |id|
           min_violations = violations_hash.keys.min
           break if min_violations == 0
 
@@ -62,10 +64,10 @@ module Scheduling
       private def get_employee_workload(employee)
         tmp_employee = employee
         if employee.is_a? Integer
-          tmp_employee = @employees.find { |e| e.id == employee }
+          tmp_employee = employees.find { |e| e.id == employee }
         end
-        @employee_groups.select { |key|
-          @employee_groups[key].select { |e| e == tmp_employee }.first.nil? == false
+        employee_groups.select { |key|
+          employee_groups[key].select { |e| e == tmp_employee }.first.nil? == false
         }.keys.first
       end
 
