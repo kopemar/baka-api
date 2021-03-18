@@ -38,4 +38,5 @@ Rails.application.routes.draw do
   post "periods/:id/calculations/generate-schedule", to: "scheduling_period#generate_schedule"
 
   post "periods/:id/submit", to: "scheduling_period#submit"
+  post "users/fcm-token", to: "user#save_fcm_token"
 end
