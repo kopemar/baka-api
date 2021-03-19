@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   devise :database_authenticatable, :recoverable, :rememberable
   include DeviseTokenAuth::Concerns::User
+  has_many :fcm_tokens
 
   belongs_to :organization
 
@@ -31,4 +32,6 @@ class User < ApplicationRecord
     hash = super(*args)
     hash.merge({manager: is_manager?, organization_name: self.organization.name, organization_id: self.organization_id})
   end
+
+
 end

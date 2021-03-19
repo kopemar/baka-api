@@ -50,3 +50,4 @@ gem 'validates_overlap'
 
 gem 'will_paginate'
 gem 'fcm'
+gem 'active_record_upsert'

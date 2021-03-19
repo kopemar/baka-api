@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_03_18_220445) do
+ActiveRecord::Schema.define(version: 2021_03_19_095808) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -38,6 +38,14 @@ ActiveRecord::Schema.define(version: 2021_03_18_220445) do
     t.date "start_date"
     t.date "end_date"
     t.index ["start_time", "end_time", "specialization"], name: "index_demands_on_start_time_and_end_time_and_specialization", unique: true
+  end
+
+  create_table "fcm_tokens", force: :cascade do |t|
+    t.integer "user_id"
+    t.string "fcm_token"
+    t.string "client"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "managers", force: :cascade do |t|
@@ -126,7 +134,6 @@ ActiveRecord::Schema.define(version: 2021_03_18_220445) do
     t.string "type", default: "User", null: false
     t.integer "role", default: 0
     t.integer "organization_id", default: 1
-    t.string "fcm_token", default: [], null: false, array: true
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
