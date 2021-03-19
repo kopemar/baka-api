@@ -1,7 +1,7 @@
 module Scheduling
   module Strategy
     class Strategy
-      attr_reader :violations, :solution, :patterns, :utilization, :employee_groups, :assigned_employees, :shift_duration
+      attr_reader :violations, :solution, :patterns, :utilization, :employee_groups, :employees, :shift_duration
 
       def initialize(params)
         parse_params(params)

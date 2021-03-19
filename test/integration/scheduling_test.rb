@@ -130,4 +130,36 @@ class SchedulingTest < ActionDispatch::IntegrationTest
 
     assert_response(:success)
   end
+
+  test "Schedule for 21 10-hour shifts in 7 days" do
+    o = generate_organization
+
+    user = FactoryBot.create(:manager, organization: o)
+    @auth_tokens = auth_tokens_for_user(user)
+
+    18.times do
+      employee_active_contract
+    end
+
+    period = FactoryBot.create(:scheduling_period, organization_id: o.id)
+    templates = ShiftTemplateGenerator.call(
+        {
+            :id => period.id,
+            :working_days => [1, 2, 3, 4, 5, 6, 7],
+            :start_time => "09:00",
+            :end_time => "21:00",
+            :shift_hours => 10,
+            :break_minutes => 0,
+            :per_day => 3
+        }
+    )
+
+    assert_equal 21, templates.length
+
+    post "/periods/#{period.id}/calculations/generate-schedule",
+         headers: @auth_tokens
+
+    assert_response(:success)
+  end
+
 end
