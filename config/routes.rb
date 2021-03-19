@@ -3,12 +3,12 @@ Rails.application.routes.draw do
 
   get "periods/:id/calculations/schedule", to: "schedule#schedule"
 
-  get "shifts", to: "shift#get_shifts"
-
-  get "employees", to: "employee#get_all"
+  get "employees/:id", to: "employee#by_id"
+  get "employees/:id/shifts", to: "employee#shifts"
 
   get "contracts", to: "contract#get_current_user_contracts"
 
+  get "shifts", to: "shift#get_shifts"
   get "shift/:id/schedules", to: "shift#get_possible_schedules"
 
   post "shifts", to: "shift#assign_shift"
