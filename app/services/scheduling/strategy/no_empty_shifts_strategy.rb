@@ -22,12 +22,12 @@ module Scheduling
 
         Rails.logger.debug "🦠 shifts_to_assign #{shifts_to_assign} "
 
-        assign_empty_shifts(solution, {:employees => employees, :shifts => shifts_to_assign})
+        assign_empty_shifts(solution, {:assigned_employees => employees, :shifts => shifts_to_assign})
         solution
       end
 
       private def assign_empty_shifts(solution, params)
-        employees = params[:employees]
+        employees = params[:assigned_employees]
         shifts = params[:shifts]
 
         remaining_shifts = shifts.map(&:clone).to_set

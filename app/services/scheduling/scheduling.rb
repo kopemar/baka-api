@@ -86,11 +86,11 @@ module Scheduling
 
       utilization = ScheduleStatistics.get_shifts_utilization(@to_schedule.map(&:id), solution)
 
-      strategy_params = { utilization: utilization, solution: solution, violations: violations[type][:violations], patterns: @patterns, employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration }
+      strategy_params = {utilization: utilization, solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration }
       if type == :no_empty_shifts
         solution = Strategy::NoEmptyShiftsStrategy.new(strategy_params).try_to_improve
       elsif type == :demand_fulfill
-        solution = Strategy::DemandFulfillStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration}).try_to_improve
+        solution = Strategy::DemandFulfillStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration}).try_to_improve
       end
 
       new_sanction = get_soft_constraint_violations(solution)[:sanction]

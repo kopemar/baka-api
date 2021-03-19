@@ -3,6 +3,14 @@ class SchedulingPeriod < ApplicationRecord
   belongs_to :organization
   has_many :scheduling_units
 
+  def assigned_employees
+    Employee.joins(:contracts).where(contracts: {
+        schedule_id: Shift.select(:schedule_id).joins(:shift_template).where(
+            shift_templates: {
+                scheduling_unit: self.scheduling_units
+            }).map(&:schedule_id)}).to_a
+  end
+
   def generate_scheduling_units
     ((self.end_date - self.start_date).to_i + 1).times do |i|
       SchedulingUnit.create(start_time: i.days.after(self.start_date).to_datetime.midnight, end_time: i.days.after(self.start_date).to_datetime.end_of_day, scheduling_period: self, organization_id: self.organization_id)

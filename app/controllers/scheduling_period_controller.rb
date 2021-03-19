@@ -82,9 +82,23 @@ class SchedulingPeriodController < ApplicationController
       return render :status => :not_found, :json => {:errors => ["Schedule period does not exist."]}
     end
 
+    employees = period.assigned_employees
+
     period.submitted = true
     # todo already submitted?
     period.save!
-    render :status => :ok, :json => { :success => true, :data => period }
+
+    NotificationHelpers.send_notification(
+        employees,
+        {
+            priority: "high",
+            notification: {
+                body: "New schedule submitted!",
+                title: "Schedule for #{period.start_date} - #{period.end_date} was submitted"
+            }
+        }
+    )
+
+    render :status => :ok, :json => {:success => true, :data => period}
   end
 end

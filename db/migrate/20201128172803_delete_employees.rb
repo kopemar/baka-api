@@ -1,5 +1,5 @@
 class DeleteEmployees < ActiveRecord::Migration[6.0]
   def change
-    drop_table :employees
+    drop_table :assigned_employees
   end
 end
