@@ -3,6 +3,7 @@ class Contract < ApplicationRecord
   belongs_to :employee, optional: true
 
   has_one :schedule
+  has_and_belongs_to_many :specializations
 
   def type_to_id
     if self.type == "EmploymentContract"

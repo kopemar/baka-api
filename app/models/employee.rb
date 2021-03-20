@@ -7,6 +7,10 @@ class Employee < User
 
   attr_accessor :last
 
+  def specializations
+    Specialization.joins(:contracts).where(contracts: { employee_id: self.id })
+  end
+
   def get_last_scheduled_shift_before(date)
     logger.debug "Last scheduled shift before: #{date} is #{self.last}"
     self.last ||= last_scheduled_shift_helper(date)
