@@ -10,8 +10,17 @@ class EmployeeController < ApplicationController
 
   def shifts
     params.require(:id)
-    shifts = Shift.where(schedule: Schedule.where(contract: Contract.where(employee_id: params[id])))
+    params.permit(:upcoming)
 
-    render json: { :data => shifts }
+    @shifts = Shift.filter(shift_filtering_params(params)).where(schedule: Schedule.where(contract: Contract.where(employee_id: params[:id]))).sort_by(&:start_time)
+
+    render json: { :data => @shifts }
+  end
+
+  private
+
+  # A list of the param names that can be used for filtering the S list
+  def shift_filtering_params(params)
+    params.slice(:upcoming)
   end
 end

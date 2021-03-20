@@ -2,16 +2,13 @@ class ShiftController < ApplicationController
   before_action :authenticate_user!
 
   def get_shifts
+    params.permit(:past, :upcoming)
+
+    # todo - shifts
     schedule = if params[:unassigned] == true.to_s
                  get_unassigned_shifts
-               elsif params[:start_date].nil? && params[:end_date].nil?
-                 UserScheduleService.call(current_user).order(:start_time)
-               elsif params[:start_date].nil?
-                 UserScheduleService.call(current_user, nil, params[:end_date].to_datetime).order('shifts.start_time DESC')
-               elsif params[:end_date].nil?
-                 UserScheduleService.call(current_user, params[:start_date].to_datetime, nil).order('start_time')
                else
-                 UserScheduleService.call(current_user, params[:start_date].to_date, params[:end_date].to_datetime).order(:start_time)
+                 Shift.filter(shift_filtering_params(params)).where(schedule: Schedule.where(contract: Contract.where(employee_id: current_user.id))).submitted.order('start_time')
                end
 
     render json: {
@@ -34,7 +31,7 @@ class ShiftController < ApplicationController
       if !assignment.nil?
         render :json => assignment
       else
-        render :status => :unprocessable_entity, json: { errors: ["Could not assign shift"] }
+        render :status => :unprocessable_entity, json: {errors: ["Could not assign shift"]}
       end
     end
   end
@@ -65,5 +62,9 @@ class ShiftController < ApplicationController
       schedules = Schedule.where(id: Contract::active_agreements::where(employee_id: current_user.id).map { |c| c.schedule_id })
       render json: {:schedules => schedules}
     end
+  end
+
+  def shift_filtering_params(params)
+    params.slice(:upcoming)
   end
 end

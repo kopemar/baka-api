@@ -1,4 +1,6 @@
 class Shift < ApplicationRecord
+  include Filterable
+
   validates :start_time, :end_time,
             :overlap => {:exclude_edges => %w[start_time end_time],
                          :scope => "schedule_id"}
@@ -37,6 +39,17 @@ class Shift < ApplicationRecord
 
   scope :planned_after, -> (start_time) {
     where("shifts.start_time >= ? ", start_time)
+  }
+
+  scope :submitted, -> (is_submitted = true) {
+    joins(:shift_template).where(shift_templates: {scheduling_unit: SchedulingUnit.joins(:scheduling_period).where(scheduling_periods: { submitted: is_submitted })})
+  }
+
+  scope :filter_by_upcoming, -> (add) {
+    if add
+      return where("shifts.start_time >= ? ", DateTime.now)
+    end
+    where.not("shifts.start_time >= ? ", DateTime.now)
   }
 
   scope :for_user, -> (user) {
