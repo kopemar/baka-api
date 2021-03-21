@@ -7,6 +7,16 @@ class Employee < User
 
   attr_accessor :last
 
+  #todo remove, test only
+  def self.notify_all
+    NotificationHelpers.send_notification(all.to_a, {
+        notification: {
+            title: "Test",
+            body: "Hey #{DateTime.now}!"
+        }
+    })
+  end
+
   def specializations
     Specialization.joins(:contracts).where(contracts: { employee_id: self.id })
   end
