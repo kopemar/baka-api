@@ -19,6 +19,11 @@ after 'development:organizations' do
         end_date { 3.weeks.from_now.sunday.to_date }
       end
 
+      trait :four_weeks do
+        start_date { 4.weeks.from_now.monday.to_date }
+        end_date { 4.weeks.from_now.sunday.to_date }
+      end
+
     end
   end
 
