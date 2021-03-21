@@ -18,6 +18,5 @@ class SpecializationTest < ActiveSupport::TestCase
     assert_equal s, e1.specializations.first
 
     assert_equal s, o.specializations.first
-
   end
 end
