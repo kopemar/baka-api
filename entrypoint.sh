@@ -1,2 +1,5 @@
 #!/bin/bash
-rails s
+
+set -e
+rm -f /baka-api/tmp/pids/server.pid
+exec "$@"

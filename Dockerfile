@@ -1,16 +1,13 @@
 FROM ruby:2.7.1
+RUN apt-get update -qq && apt-get install -y postgresql-common
+WORKDIR /app
+COPY Gemfile /app/Gemfile
+COPY Gemfile.lock /app/Gemfile.lock
+RUN bundle install
+COPY . /app
 
-WORKDIR /home/app
 
-ENV PORT 3000
-
-EXPOSE $PORT
-
-COPY ./entrypoint.sh /usr/local/bin/dev-entrypoint.sh
-RUN chmod +x /usr/local/bin/dev-entrypoint.sh
-
-RUN gem install rake
-RUN gem install rails bundler
-RUN gem install rails
-
-ENTRYPOINT [ "dev-entrypoint.sh" ]
+COPY entrypoint.sh /usr/bin/
+RUN chmod +x /usr/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
+EXPOSE 3000
