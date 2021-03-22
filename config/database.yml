@@ -1,6 +1,16 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  host: db
+  username: postgres
+  password: password
+  pool: 5
+
 development:
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_development?') %>
+  <<: *default
+  database: app_development
+
+
 test:
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_test?') %>
-production:
-  url: <%= ENV['DATABASE_URL'].gsub('?', '_production?') %>
+  <<: *default
+  database: app_test
