@@ -6,6 +6,10 @@ default: &default
   password: password
   pool: 5
 
+production:
+  <<: *default
+  database: baka_api
+
 development:
   <<: *default
   database: app_development
