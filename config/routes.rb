@@ -2,6 +2,8 @@ Rails.application.routes.draw do
   resources :specializations
   mount_devise_token_auth_for 'User', at: 'auth', :controllers => { sessions: 'users/sessions'}
 
+  get "specializations/:id/contracts", to: "specializations#get_possible_contracts"
+
   get "periods/:id/calculations/schedule", to: "schedule#schedule"
 
   get "employees/:id", to: "employee#by_id"

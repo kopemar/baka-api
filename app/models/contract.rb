@@ -18,7 +18,15 @@ class Contract < ApplicationRecord
   end
 
   def active
-    (end_date.after?(Date.today) && start_date.before?(Date.today)) || end_date == nil
+    self.end_date.nil? || (end_date.after?(Date.today) && start_date.before?(Date.today))
+  end
+
+  def get_specializations
+    Specialization.select('contracts.id').left_joins(:contracts).to_a
+  end
+
+  def employee
+    Employee.where(id: self.employee_id).first
   end
 
   scope :active_employment_contracts, -> { where(type: "EmploymentContract")
@@ -37,7 +45,6 @@ class Contract < ApplicationRecord
 
   def as_json(*args)
     hash = super(*args)
-    hash.merge!(active: self.active)
-    hash.merge!(type: type_to_id)
+    hash.merge(active: self.active).merge( { first_name: self.employee.first_name, last_name: self.employee.last_name, }).merge!(type: type_to_id)
   end
 end
