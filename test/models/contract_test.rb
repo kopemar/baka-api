@@ -24,4 +24,19 @@ class ContractTest < ActiveSupport::TestCase
     assert_not_nil Contract.shifts_planned(8.hours.ago, 8.hours.from_now).find_by(id: c1.id)
     assert_nil Contract.shifts_planned(8.hours.ago, 8.hours.from_now).find_by(id: c2.id)
   end
+
+  test "Agreement Hours" do
+    # employee doesn't matter if not necessary
+    contract = AgreementToCompleteAJob.create
+
+    shift = Shift.from_template(get_shift_now)
+    shift.schedule_id = contract.schedule_id
+    shift.save!
+
+    shift2 = Shift.from_template(get_shift_2019)
+    shift2.schedule_id = contract.schedule_id
+    shift2.save!
+
+    assert_equal 8, contract.hours_per_year(shift.start_time.year)
+  end
 end

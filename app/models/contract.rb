@@ -1,6 +1,7 @@
 class Contract < ApplicationRecord
   validates :schedule_id, uniqueness: true
   belongs_to :employee, optional: true
+  after_create :create_schedule
 
   has_one :schedule
   has_and_belongs_to_many :specializations
@@ -14,6 +15,15 @@ class Contract < ApplicationRecord
       3
     else
       0
+    end
+  end
+
+  def create_schedule
+    Rails.logger.debug "🍷 Created Contract #{self.schedule_id}"
+    if self.schedule.nil?
+      Rails.logger.debug "🍷 Schedule is created #{self.id}"
+      self.schedule_id = Schedule.create!(contract_id: self.id).id
+      self.save!
     end
   end
 

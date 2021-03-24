@@ -15,11 +15,7 @@ after 'development:users' do
   Organization.all.each { |org|
     FactoryBot.create_list(:employee, 20) do |employee|
       employee.organization = org
-      FactoryBot.create(:employment_contract) do |contract|
-        contract.employee = employee
-        contract.schedule_id = Schedule.create(contract_id: contract.id).id
-        contract.save!
-      end
+      FactoryBot.create(:employment_contract, employee_id: employee.id)
       employee.save!
     end
   }

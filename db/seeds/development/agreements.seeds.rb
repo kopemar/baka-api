@@ -26,21 +26,13 @@ after 'development:users' do
   Organization.all.each { |org|
     FactoryBot.create_list(:employee, 10) do |employee|
       employee.organization = org
-        FactoryBot.create(:agreement_to_complete_a_job, :valid) do |contract|
-          contract.employee = employee
-          contract.schedule_id = Schedule.create(contract_id: contract.id).id
-          contract.save!
-        end
+      FactoryBot.create(:agreement_to_complete_a_job, :valid, employee_id: employee)
         employee.save!
     end
 
     FactoryBot.create_list(:employee, 10) do |employee|
       employee.organization = org
-      FactoryBot.create(:agreement_to_perform_a_job, :valid) do |contract|
-        contract.employee = employee
-        contract.schedule_id = Schedule.create(contract_id: contract.id).id
-        contract.save!
-      end
+      FactoryBot.create(:agreement_to_perform_a_job, :valid, employee_id: employee)
       employee.save!
     end
   }

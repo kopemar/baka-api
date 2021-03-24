@@ -35,7 +35,6 @@ FactoryBot.define do
 
   factory :contract, class: EmploymentContract do
     start_date { "2019-01-01" }
-    employee
     work_load { 1.0 }
     working_days { [1, 2, 3] }
 
@@ -64,45 +63,27 @@ end
 
 def employee_with_contracts
   o = generate_organization
-  FactoryBot.build(:employee) do |e|
-    e.organization_id = o.id
-    FactoryBot.create(:contract, :inactive, employee: e) do |c|
-      FactoryBot.create(:schedule, contract: c) do |s|
-        c.schedule_id = s.id
-        c.save
-      end
-      e.save
-    end
-    FactoryBot.build(:contract, :active, employee: e) do |c|
-      e.organization_id = o.id
-      FactoryBot.create(:schedule, contract: c) do |s|
-        c.schedule_id = s.id
-        c.save
-      end
-    end
-  end
+  employee = FactoryBot.create(:employee, organization_id: o.id)
+
+  FactoryBot.create(:contract, :inactive, employee_id: employee.id)
+  FactoryBot.create(:contract, :active, employee_id: employee.id)
+  return employee
 end
 
 def employee_active_contract(o = generate_organization)
-  FactoryBot.build(:employee) do |e|
-    e.organization_id = o.id
-    FactoryBot.create(:contract, :active, employee: e) do |c|
-      FactoryBot.create(:schedule, contract: c) do |s|
-        c.schedule_id = s.id
-        c.save
-      end
-    end
-    e.save
-  end
+  employee = FactoryBot.create(:employee, organization_id: o.id)
+  employee.contracts.push(  FactoryBot.create(:contract, :active, employee_id: employee.id) )
+  employee.save
+  return employee
 end
 
 def employee_inactive_contracts
   FactoryBot.build(:employee) do |e|
     FactoryBot.create_list(:contract, 2, :inactive, employee: e) do |c|
-      FactoryBot.create(:schedule, contract: c) do |s|
-        c.schedule_id = s.id
-        c.save
-      end
+      # FactoryBot.create(:schedule, contract: c) do |s|
+      #   c.schedule_id = s.id
+      #   c.save
+      # end
     end
   end
 end
@@ -128,14 +109,9 @@ def employee_shift_now
   tmp = get_shift_now
   FactoryBot.build(:employee, organization_id: tmp.organization_id) do |e|
     FactoryBot.create(:contract, :active, employee: e) do |c|
-      FactoryBot.create(:schedule, contract: c) do |s|
-        c.schedule_id = s.id
-        c.save
-
         shift = Shift.from_template(tmp)
-        shift.schedule = s
+        shift.schedule = c.schedule
         shift.save!
-      end
     end
     e.save
   end
@@ -146,12 +122,12 @@ def employee_shift_past
   FactoryBot.build(:employee) do |e|
     e.organization_id = o.id
     FactoryBot.create(:contract, :active, employee: e) do |c|
-      FactoryBot.create(:schedule, contract: c) do |s|
-        FactoryBot.create(:shift_template, :past, schedule: s)
-        c.schedule_id = s.id
-        c.save
+      # FactoryBot.create(:schedule, contract: c) do |s|
+        FactoryBot.create(:shift_template, :past, schedule: c.schedule_id)
+        # c.schedule_id = c.schedule.id
+        # c.save
       end
-    end
+    # end
     e.save
   end
 end

@@ -61,7 +61,7 @@ class SpecializationsControllerTest < ActionDispatch::IntegrationTest
     contracts = Contract.where(employee_id: [e1.id]).to_a
     patch "/specializations/#{m1_specialization_id}", params: {employees: contracts.map(&:id)}, headers: m1_tokens
 
-    get "/specializations/#{m1_specialization_id}/contracts", headers: m1_tokens
+    get "/specializations/#{m1_specialization_id}/calculations/contracts", headers: m1_tokens
     Rails.logger.debug response.parsed_body.deep_symbolize_keys
 
     assert_not_empty response.parsed_body.deep_symbolize_keys[:data]

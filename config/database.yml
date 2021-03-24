@@ -14,6 +14,10 @@ development:
   <<: *default
   database: app_development
 
+local:
+  <<: *default
+  host: localhost
+  database: baka_api_development
 
 test:
   <<: *default

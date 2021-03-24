@@ -5,7 +5,7 @@ class Shift < ApplicationRecord
             :overlap => {:exclude_edges => %w[start_time end_time],
                          :scope => "schedule_id"}
 
-  validates_presence_of :schedule_id
+  # validates_presence_of :schedule_id
 
   belongs_to :schedule, optional: true
   belongs_to :shift_template
