@@ -35,8 +35,8 @@ class Contract < ApplicationRecord
     Specialization.select('contracts.id').left_joins(:contracts).to_a
   end
 
-  def employee
-    Employee.where(id: self.employee_id).first
+  def hours_per_year(year = Date.now.year.to_i)
+    Shift.where(schedule: Schedule.joins(:contract).where(contract_id: self.id))::planned_between("#{year}-01-01", "#{year}-12-31").sum('shifts.duration')
   end
 
   scope :active_employment_contracts, -> { where(type: "EmploymentContract")
