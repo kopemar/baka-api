@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  resources :specializations
+  resources :specializations, :shift_template => "templates"
   mount_devise_token_auth_for 'User', at: 'auth', :controllers => { sessions: 'users/sessions'}
 
   get "specializations/:id/calculations/contracts", to: "specializations#get_possible_contracts"
@@ -20,10 +20,13 @@ Rails.application.routes.draw do
   delete "shift/:id/schedule", to: "shift#remove_from_schedule"
 
   post "templates", to: "shift_template#create_template"
+  put "templates/:id", to: "shift_template#update"
 
   get "organization/:id/employees", to: "organization#get_employees"
 
   get "templates", to: "shift_template#get_templates"
+  post "templates/:id/specialized", to: "shift_template#create_specialized_template"
+  get "templates/:id/calculations/specializations", to: "shift_template#get_specializations"
 
   get "templates/:id/employees", to: "shift_template#get_employees"
 

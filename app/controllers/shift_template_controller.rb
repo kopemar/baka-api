@@ -2,15 +2,39 @@ class ShiftTemplateController < ApplicationController
   include DeviseTokenAuth::Concerns::SetUserByToken
   before_action :authenticate_user!
 
+  # @POST templates/{id}/specialized
+  def create_specialized_template
+    params.require([:id, :specialization_id])
+    return render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless current_user.is_manager?
+
+    parent_template = ShiftTemplate.where(id: params[:id]).first
+    specialization = Specialization.where(id: params[:specialization_id]).first
+
+    return render :status => :not_found if parent_template.nil? || specialization.nil? || !parent_template.specialization_id.nil?
+
+    template = ShiftTemplate.create!(
+        start_time: parent_template.start_time,
+        end_time: parent_template.end_time,
+        break_minutes: parent_template.break_minutes,
+        priority: parent_template.priority,
+        organization_id: current_user.organization_id,
+        is_employment_contract: false,
+        parent_template_id: parent_template.id,
+        specialization_id: specialization.id
+    )
+
+    render :status => :created, :json => template
+  end
+
   def create_template
     params.require([:start_time, :end_time, :break_minutes, :priority])
-    render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless !current_user.is_manager?
+    render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless current_user.is_manager?
 
     template = ShiftTemplate.create!(
         start_time: params[:start_time].to_datetime,
         end_time: params[:end_time].to_datetime,
         break_minutes: params[:break_minutes].to_i,
-        priority: params[:priority].to_i ,
+        priority: params[:priority].to_i,
         organization_id: current_user.organization_id,
         is_employment_contract: false
     )
@@ -28,18 +52,50 @@ class ShiftTemplateController < ApplicationController
   def get_templates
     params
     templates = if params[:unit_id].nil?
-      get_unassigned_shifts
-    else
-      in_unit
-    end
+                  get_unassigned_shifts
+                else
+                  in_unit
+                end
     render :json => {:templates => templates}
+  end
+
+  def update
+    params.require(:id)
+    params.permit(:priority)
+
+    template = ShiftTemplate.where(id: params[:id]).first
+
+    return render :status => :not_found if template.nil?
+
+    priority = params[:priority]
+
+    unless priority.nil?
+      template.priority = priority
+      template.save!
+    end
+
+    render :json => template
+  end
+
+  def get_specializations
+    params.require(:id)
+
+    return render :status => :forbidden unless current_user.is_manager?
+
+    template = ShiftTemplate.where(id: params[:id]).first
+    return render :status => :not_found if template.nil?
+    return render :status => :unprocessable_entity unless template.specialization_id.nil?
+
+    specializations = Specialization.joins(:organization).where(organizations: { id: current_user.organization_id })
+
+    render :json => { data: specializations }
   end
 
   def get_employees
     template = ShiftTemplate.where(id: params["id"]).first
     return render :status => :bad_request, :json => {:errors => ["No ID"]} if template.nil?
 
-    render :json => { :employees => Contract.where(schedule_id: Shift.where(shift_template_id: template.id).map(&:schedule_id)).map(&:employee).as_json(:only => [:id, :first_name, :last_name, :username]) }
+    render :json => {:employees => Contract.where(schedule_id: Shift.where(shift_template_id: template.id).map(&:schedule_id)).map(&:employee).as_json(:only => [:id, :first_name, :last_name, :username])}
   end
 
   def get_unassigned_shifts

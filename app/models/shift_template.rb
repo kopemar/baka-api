@@ -1,11 +1,20 @@
 class ShiftTemplate < ApplicationRecord
   before_validation :count_duration, :add_to_scheduling_unit
-  validate :validate_time, :validate_duration
+  validate :validate_time, :validate_duration, :validate_priority
 
   belongs_to :scheduling_unit
 
+  belongs_to :specialization, required: false
+  has_one :parent_template, class_name: 'ShiftTemplate'
+
   def count_duration
     self.duration = ((end_time - start_time - break_minutes.minutes).to_f / 1.hour)
+  end
+
+  def validate_priority
+    if self.priority > 5 || self.priority < 0
+      errors.add("Priority is too big")
+    end
   end
 
   def validate_duration
@@ -53,6 +62,8 @@ class ShiftTemplate < ApplicationRecord
   end
 
   def as_json(*args)
-    super(*args).merge({ shifts_count: Shift.where(shift_template_id: self.id).count })
+    s = nil
+    s = specialization.name unless specialization.nil?
+    super(*args).merge({ shifts_count: Shift.where(shift_template_id: self.id).count, specialization: s })
   end
 end

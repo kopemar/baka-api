@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_03_20_213222) do
+ActiveRecord::Schema.define(version: 2021_03_24_150209) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -88,6 +88,8 @@ ActiveRecord::Schema.define(version: 2021_03_20_213222) do
     t.integer "organization_id", null: false
     t.boolean "is_employment_contract"
     t.boolean "excluded"
+    t.integer "specialization_id"
+    t.integer "parent_template_id"
   end
 
   create_table "shifts", force: :cascade do |t|
