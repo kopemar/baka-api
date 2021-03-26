@@ -18,6 +18,19 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
 
     assert_equal 5, templates.length
 
+    specialization = Specialization.create(name: "Clown", organization_id: @org.id)
+
+    templates.each do |template|
+      post "/templates/#{template[:id]}/specialized?specialization_id=#{specialization.id}",
+           headers: @auth_tokens
+
+      this_template = ShiftTemplate.where(id: template[:id]).first
+      this_template.priority = 0
+      this_template.save!
+    end
+
+    # @to_schedule = period.scheduling_units.joins(:shift_templates)
+    Scheduling::Scheduling.new({ id: period.id }).call
   end
 
 end

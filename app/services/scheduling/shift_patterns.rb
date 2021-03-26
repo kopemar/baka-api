@@ -69,7 +69,7 @@ class Scheduling::ShiftPatterns
 
   private def can_exist?(contains, length = contains.length)
     # all contained vertices, sorted by shift start time ASC
-    vertices = contains.map { |id| @hash_vertices[id] }.sort { |v| v.shift.start_time}
+    vertices = contains.map { |id| @hash_vertices[id] }.sort { |v| v.shift.start_time }
     can_exist = true
     Rails.logger.debug "🐮 #{contains}"
     # first check – does the path even exist?
@@ -101,15 +101,25 @@ class Scheduling::ShiftPatterns
 
     hash[:start] = @shift_templates.sort_by { |s| s.start_time }.map(&:id)
 
+    @grouped_templates = @shift_templates.group_by(&:parent_template_id)
 
+    Rails.logger.debug "👻 Groups #{@grouped_templates}"
 
-    grouped_templates = @shift_templates.group_by(&:specialization_id)
-
-    Rails.logger.debug "👻 Groups #{grouped_templates}"
-
-    map_to_paths(grouped_templates[nil]) unless grouped_templates[nil].nil?
+    map_to_paths(@grouped_templates[nil]) unless @grouped_templates[nil].nil?
 
     @max_length = get_max_path_length(@hash_vertices)
+
+    @grouped_templates.each do |k, v|
+      unless @hash_vertices[k].nil?
+        v.each { |item|
+          @hash_vertices[item.id] = @hash_vertices[k]
+          @hash_vertices[k].specialized.push(item)
+        }
+      end
+
+    end
+
+    Rails.logger.debug "😘 hash vertices #{@hash_vertices.map { |k, v| "#{k} => #{v.to_s}"}}"
 
     # @hash_vertices = hash_vertices
     @vertices = @hash_vertices.map { |_, v| v }

@@ -2,11 +2,13 @@ class Scheduling::ShiftVertex
   include Scheduling
 
   attr_reader :prev, :nexts, :shift
+  attr_accessor :specialized
 
-  def initialize(shift, prev_patterns = [], next_patterns = [])
+  def initialize(shift, specialized = [], prev_patterns = [], next_patterns = [])
     @shift = shift
     @prev = prev_patterns
     @nexts = next_patterns
+    @specialized = specialized || []
   end
 
   def add_next(new_next)
@@ -139,7 +141,7 @@ class Scheduling::ShiftVertex
   end
 
   def to_s
-    "🍺 shift #{@shift.id} [max_path_length: #{max_path_length}]  [prev=> #{@prev.map { |prev| prev.shift.id }}, max_prev_count #{max_prev_steps}] [next=> #{@nexts.map { |prev| prev.shift.id }}, max_next_count #{max_next_steps}]"
+    "🍺 shift #{@shift.id} [max_path_length: #{max_path_length}]  [prev=> #{@prev.map { |prev| prev.shift.id }}, max_prev_count #{max_prev_steps}] [next=> #{@nexts.map { |prev| prev.shift.id }}, max_next_count #{max_next_steps}], [specialized #{specialized.map { |v| v.id}}]"
   end
 
 end

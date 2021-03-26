@@ -4,6 +4,7 @@ class SchedulingUnit < ApplicationRecord
   validates :start_time, :end_time, :overlap => {:exclude_edges => %w[start_time end_time], :scope => "scheduling_period_id"}
 
   belongs_to :scheduling_period
+  has_many :shift_templates, foreign_key: :scheduling_unit_id
 
   # after_save :generate_shift_templates
 

@@ -33,7 +33,8 @@ class Scheduling::DemandFulfill < Constraint
       employees_count = average[prio]
 
       shifts.each do |shift|
-        difference = utilization[shift] - employees_count
+        Rails.logger.debug "UTILIZATION #{utilization}, SHIFT #{shift}"
+        difference = utilization[shift] - (employees_count || 0)
         violations[shift] = difference if difference != 0
       end
     end

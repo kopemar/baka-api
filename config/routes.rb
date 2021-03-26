@@ -19,7 +19,6 @@ Rails.application.routes.draw do
 
   delete "shift/:id/schedule", to: "shift#remove_from_schedule"
 
-  post "templates", to: "shift_template#create_template"
   put "templates/:id", to: "shift_template#update"
 
   get "organization/:id/employees", to: "organization#get_employees"

@@ -26,7 +26,8 @@ class ShiftTemplateController < ApplicationController
     render :status => :created, :json => template
   end
 
-  def create_template
+  # todo remove this
+  def create
     params.require([:start_time, :end_time, :break_minutes, :priority])
     render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless current_user.is_manager?
 
