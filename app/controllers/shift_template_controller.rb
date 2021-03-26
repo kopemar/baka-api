@@ -56,7 +56,7 @@ class ShiftTemplateController < ApplicationController
                 else
                   in_unit
                 end
-    render :json => {:templates => templates}
+    render :json => {:data => templates}
   end
 
   def update
