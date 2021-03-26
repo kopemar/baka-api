@@ -19,7 +19,6 @@ class Scheduling::ShiftPatterns
     length = params[:length] || get_max_path_length(@hash_vertices)
     count = params[:count] || 1
 
-    # todo smarter contains
     contains = (params[:contains] || []).sort
 
     # todo excludes
@@ -98,34 +97,44 @@ class Scheduling::ShiftPatterns
     @paths = []
 
     # todo make global here
-    hash_vertices = Hash.new
+    @hash_vertices = Hash.new
 
     hash[:start] = @shift_templates.sort_by { |s| s.start_time }.map(&:id)
 
-    @shift_templates.each do |template|
-      hash_vertices[template.id] = ShiftVertex.new(template)
-    end
 
-    @shift_templates.each do |template|
-      hash_vertices[template.id].add_prev @shift_templates.filter { |tmpl|
-        shift_difference_hours(tmpl, template) > MINIMUM_BREAK_HOURS_UNDERAGE
-      }.map { |prev_template| hash_vertices[prev_template.id] }
-    end
 
-    @shift_templates.reverse.each do |template|
-      Rails.logger.debug "🐸 build patterns #{template.start_time}"
-      hash_vertices[template.id].add_next @shift_templates.filter { |tmpl|
-        shift_difference_hours(template, tmpl) > MINIMUM_BREAK_HOURS_UNDERAGE
-      }.map { |next_template| hash_vertices[next_template.id] }
-    end
+    grouped_templates = @shift_templates.group_by(&:specialization_id)
 
-    @max_length = get_max_path_length(hash_vertices)
+    Rails.logger.debug "👻 Groups #{grouped_templates}"
 
-    @hash_vertices = hash_vertices
+    map_to_paths(grouped_templates[nil]) unless grouped_templates[nil].nil?
+
+    @max_length = get_max_path_length(@hash_vertices)
+
+    # @hash_vertices = hash_vertices
     @vertices = @hash_vertices.map { |_, v| v }
   end
 
   private
+  def map_to_paths(shift_templates)
+    shift_templates.each do |template|
+      @hash_vertices[template.id] = ShiftVertex.new(template)
+    end
+
+    shift_templates.each do |template|
+      @hash_vertices[template.id].add_prev shift_templates.filter { |tmpl|
+        shift_difference_hours(tmpl, template) > MINIMUM_BREAK_HOURS_UNDERAGE
+      }.map { |prev_template| @hash_vertices[prev_template.id] }
+    end
+
+    shift_templates.reverse.each do |template|
+      Rails.logger.debug "🐸 build patterns #{template.start_time}"
+      @hash_vertices[template.id].add_next shift_templates.filter { |tmpl|
+        shift_difference_hours(template, tmpl) > MINIMUM_BREAK_HOURS_UNDERAGE
+      }.map { |next_template| @hash_vertices[next_template.id] }
+    end
+  end
+
   # todo refactor this
   def random_combination(path, length)
     set = Set.new

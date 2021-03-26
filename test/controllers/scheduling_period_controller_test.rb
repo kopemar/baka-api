@@ -239,7 +239,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
       assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(period.start_date).to_time}
       assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 10.hours.after(2.days.after(period.start_date)).to_time}
       assert_not_empty response_body["templates"].select{ |shift| shift["end_time"].to_time == 18.hours.after(2.days.after(30.minutes.after(period.start_date))).to_time}
-      assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(40.minutes.after(4.days.after(period.start_date))).to_time}
+      assert_not_empty response_body["templates"].select{ |shift| shift["start_time"].to_time == 8.hours.after(40.minutes.after(3.days.after(period.start_date))).to_time}
     end
   end
 
