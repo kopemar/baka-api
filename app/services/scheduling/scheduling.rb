@@ -19,9 +19,13 @@ module Scheduling
     def call
       ActiveRecord::Base.transaction do
         days = @scheduling_period.scheduling_units
+
+        # nothing to be scheduled
         return if days.empty?
 
         @to_schedule = ShiftTemplate::to_be_auto_scheduled.where(scheduling_unit_id: days.map(&:id))
+
+        # All shifts have the same duration (? todo add to SchedulingPeriod?)
         @shift_duration = @to_schedule.first.duration
 
         @employees = Employee::with_employment_contract
