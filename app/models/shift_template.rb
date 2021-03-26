@@ -50,12 +50,18 @@ class ShiftTemplate < ApplicationRecord
     where("start_time >= ? ", start_time)
   }
 
-  scope :can_be_user_scheduled, -> { where(is_employment_contract: false) }
+  scope :can_be_user_scheduled, -> { where(is_employment_contract: false).or(joins(:scheduling_unit).where(scheduling_units: {scheduling_period: SchedulingPeriod.where(submitted: true) })) }
 
   scope :to_be_auto_scheduled, -> { where(is_employment_contract: true) }
 
   scope :in_scheduling_period, -> (period_id) {
     where(scheduling_unit_id: SchedulingPeriod.where(id: period_id).first.scheduling_units.map(&:id))
+  }
+
+  scope :for_organization, -> (org_id) {
+    joins(:scheduling_unit).where(scheduling_units: {
+        scheduling_period: SchedulingPeriod.where(organization_id: org_id)
+    })
   }
 
   def add_to_scheduling_unit
@@ -66,6 +72,6 @@ class ShiftTemplate < ApplicationRecord
   def as_json(*args)
     s = nil
     s = specialization.name unless specialization.nil?
-    super(*args).merge({ shifts_count: Shift.where(shift_template_id: self.id).count, specialization: s })
+    super(*args).merge({shifts_count: Shift.where(shift_template_id: self.id).count, specialization: s})
   end
 end

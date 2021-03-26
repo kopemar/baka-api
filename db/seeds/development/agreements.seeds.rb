@@ -26,13 +26,13 @@ after 'development:users' do
   Organization.all.each { |org|
     FactoryBot.create_list(:employee, 10) do |employee|
       employee.organization = org
-      FactoryBot.create(:agreement_to_complete_a_job, :valid, employee_id: employee)
+      FactoryBot.create(:agreement_to_complete_a_job, :valid, employee_id: employee.id)
         employee.save!
     end
 
     FactoryBot.create_list(:employee, 10) do |employee|
       employee.organization = org
-      FactoryBot.create(:agreement_to_perform_a_job, :valid, employee_id: employee)
+      FactoryBot.create(:agreement_to_perform_a_job, :valid, employee_id: employee.id)
       employee.save!
     end
   }

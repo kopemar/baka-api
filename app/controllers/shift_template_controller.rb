@@ -7,7 +7,7 @@ class ShiftTemplateController < ApplicationController
     params.require([:id, :specialization_id])
     return render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless current_user.is_manager?
 
-    parent_template = ShiftTemplate.where(id: params[:id]).first
+    parent_template = ShiftTemplate::for_organization(current_user.organization_id).where(id: params[:id]).first
     specialization = Specialization.where(id: params[:specialization_id]).first
 
     return render :status => :not_found if parent_template.nil? || specialization.nil? || !parent_template.specialization_id.nil?
@@ -18,7 +18,7 @@ class ShiftTemplateController < ApplicationController
         break_minutes: parent_template.break_minutes,
         priority: parent_template.priority,
         organization_id: current_user.organization_id,
-        is_employment_contract: false,
+        is_employment_contract: parent_template.is_employment_contract,
         parent_template_id: parent_template.id,
         specialization_id: specialization.id
     )
