@@ -4,11 +4,11 @@ class SpecializationsController < ApplicationController
   # GET /specializations
   # Get all speci in scope of manager organization
   def index
-
     unless current_user.is_manager?
       return render :status => :forbidden
     end
-    @specializations = Specialization.where(organization_id: current_user.organization_id)
+
+    @specializations = Specialization.filter(filtering_params(params)).for_organization(current_user.organization_id)
 
     render :json => {:data => @specializations}
   end
@@ -93,5 +93,9 @@ class SpecializationsController < ApplicationController
   # Only allow a trusted parameter "white list" through.
   def specialization_params
     params.fetch(:name, {})
+  end
+
+  def filtering_params(params)
+    params.slice(:for_template)
   end
 end

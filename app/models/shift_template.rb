@@ -3,9 +3,11 @@ class ShiftTemplate < ApplicationRecord
   validate :validate_time, :validate_duration, :validate_priority
 
   belongs_to :scheduling_unit
-
   belongs_to :specialization, required: false
-  has_one :parent_template, class_name: 'ShiftTemplate'
+
+  has_many :sub_templates, class_name: 'ShiftTemplate', foreign_key: :parent_template_id
+
+  belongs_to :parent_template, class_name: 'ShiftTemplate', optional: true
 
   def count_duration
     self.duration = ((end_time - start_time - break_minutes.minutes).to_f / 1.hour)
