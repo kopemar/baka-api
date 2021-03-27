@@ -86,6 +86,21 @@ class Scheduling::ShiftVertex
       return nil
     end
 
+    unless specializations.empty?
+      path = path.map { |p|
+        if p.specialized.empty?
+          p
+        else
+          samples = p.specialized.filter { |template| specializations.include? template.specialization_id }
+          samples += [nil] if p.shift.priority > 0
+          sample = samples.sample
+          sample.nil? ? p : ShiftVertex.new(sample)
+        end
+      }
+
+      Rails.logger.debug "😳 paths #{path.map(&:to_s)}"
+    end
+
     path.get_shift_ids.sort
   end
 
