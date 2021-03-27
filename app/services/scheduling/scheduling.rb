@@ -48,7 +48,7 @@ module Scheduling
     private def assign_shifts(schedule)
       Rails.logger.error schedule
       schedule.each do |employee_id, shift_ids|
-        employee = @employees.find { |e| e.id == employee_id }
+        employee = @employees.find(employee_id)
         templates = shift_ids.map { |id| @to_schedule.find { |template| template.id == id } }
 
         templates.each do |template|
@@ -90,11 +90,11 @@ module Scheduling
 
       utilization = ScheduleStatistics.get_shifts_utilization(@to_schedule.map(&:id), solution)
 
-      strategy_params = {utilization: utilization, solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration }
+      strategy_params = {utilization: utilization, solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups[:by_workload], shift_duration: @shift_duration }
       if type == :no_empty_shifts
         solution = Strategy::NoEmptyShiftsStrategy.new(strategy_params).try_to_improve
       elsif type == :demand_fulfill
-        solution = Strategy::DemandFulfillStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration}).try_to_improve
+        solution = Strategy::DemandFulfillStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups[:by_workload], shift_duration: @shift_duration}).try_to_improve
       end
 
       new_sanction = get_soft_constraint_violations(solution)[:sanction]
@@ -111,7 +111,7 @@ module Scheduling
       violations = Hash.new
       violations[:no_empty_shifts] = NoEmptyShifts.get_violations_hash(@to_schedule, solution, @employees, @shift_duration, @priorities[:no_empty_shifts] || 0)  unless @priorities[:no_empty_shifts] == 0
 
-      violations[:demand_fulfill] = DemandFulfill.get_violations_hash(@to_schedule, solution, @employee_groups, @shift_duration, @priorities[:demand_fulfill] || 0) unless @priorities[:demand_fulfill] == 0
+      violations[:demand_fulfill] = DemandFulfill.get_violations_hash(@to_schedule, solution, @employee_groups[:by_workload], @shift_duration, @priorities[:demand_fulfill] || 0) unless @priorities[:demand_fulfill] == 0
 
       overall_sanction = violations.map { |_, violation| violation[:sanction] }.reduce(:+)
       violations[:sanction] = overall_sanction
@@ -121,14 +121,16 @@ module Scheduling
     def get_first_solution(employee_array)
       schedule = Hash.new
 
-      @employee_groups =
+      @employee_groups = Hash.new
+
+      @employee_groups[:by_workload] =
           employee_array.group_by { |employee|
             employee.contracts.active_employment_contracts.first.work_load
           }
 
       @patterns = ShiftPatterns.new(@to_schedule)
 
-      @employee_groups.each do |work_load, employees|
+      @employee_groups[:by_workload].each do |work_load, employees|
         shift_count = ScheduleStatistics.get_shift_count(work_load, @shift_duration, @patterns)
         Rails.logger.debug "========= shift_count #{shift_count} ==========="
         tmp_patterns = @patterns.patterns_of_params({length: shift_count, count: employees.length})
@@ -145,8 +147,8 @@ module Scheduling
       if employee.is_a? Integer
         tmp_employee = @employees.find { |e| e.id == employee }
       end
-      @employee_groups.select { |key|
-        @employee_groups[key].select { |e| e == tmp_employee }.first.nil? == false
+      @employee_groups[:by_workload].select { |key|
+        @employee_groups[:by_workload][key].select { |e| e == tmp_employee }.first.nil? == false
       }.keys.first
     end
 
