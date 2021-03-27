@@ -18,6 +18,7 @@ class Scheduling::ShiftPatterns
     paths = []
     length = params[:length] || get_max_path_length(@hash_vertices)
     count = params[:count] || 1
+    specializations = params[:specializations] || []
 
     contains = (params[:contains] || []).sort
 
@@ -52,7 +53,7 @@ class Scheduling::ShiftPatterns
         Rails.logger.debug "⚽️ count times do get sample"
         sample = SchedulingUtils.get_sample(possible_vertices, false)
 
-        random_path = sample.nil? ? nil : sample.random_path({ :length => length, :contains => contains })
+        random_path = sample.nil? ? nil : sample.random_path({ :length => length, :contains => contains, :specializations => specializations })
 
         if random_path.nil?
           return []

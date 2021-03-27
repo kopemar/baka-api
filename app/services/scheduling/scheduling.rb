@@ -134,7 +134,7 @@ module Scheduling
         Rails.logger.debug "🥶 key #{key}"
         shift_count = ScheduleStatistics.get_shift_count(key[:work_load], @shift_duration, @patterns)
         Rails.logger.debug "========= shift_count #{shift_count} ==========="
-        tmp_patterns = @patterns.patterns_of_params({length: shift_count, count: employees.length})
+        tmp_patterns = @patterns.patterns_of_params({length: shift_count, count: employees.length, specializations: (key[:specializations] || []) })
         # todo if already assigned
         employees.each { |employee|
           schedule[employee.id] = tmp_patterns.sample

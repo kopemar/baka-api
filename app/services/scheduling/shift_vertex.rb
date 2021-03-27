@@ -67,6 +67,7 @@ class Scheduling::ShiftVertex
 
     length = params[:length] || max_path_length
     contains = params[:contains] || []
+    specializations = params[:specializations]
     path = []
 
     if length > max_path_length
