@@ -8,8 +8,12 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
   end
 
   test "Assign specialized shifts" do
+    specialization = Specialization.create(name: "Clown", organization_id: @org.id)
+
     5.times do
-      employee_active_contract(@org)
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(specialization)
+      e.save!
     end
 
     period = FactoryBot.create(:scheduling_period, organization: @org)
@@ -17,8 +21,6 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
     templates = generate_shift_templates(period, @auth_tokens)
 
     assert_equal 5, templates.length
-
-    specialization = Specialization.create(name: "Clown", organization_id: @org.id)
 
     templates.each do |template|
       post "/templates/#{template[:id]}/specialized?specialization_id=#{specialization.id}",
@@ -29,8 +31,10 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
       this_template.save!
     end
 
-    # @to_schedule = period.scheduling_units.joins(:shift_templates)
     Scheduling::Scheduling.new({ id: period.id }).call
+
+    # all specialized shifts must be assigned in this context
+    assert ShiftTemplate::in_scheduling_period(period.id).joins(:specialization).none? { |s| s.shifts.empty? }
   end
 
 end
