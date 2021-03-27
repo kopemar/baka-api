@@ -104,8 +104,6 @@ module Scheduling
       old_sanction >= new_sanction ? solution : old_solution
     end
 
-    #
-
     def get_soft_constraint_violations(solution)
       Rails.logger.debug "😘 get_soft_constraint_violations for #{solution}"
       violations = Hash.new
@@ -127,6 +125,12 @@ module Scheduling
           employee_array.group_by { |employee|
             employee.contracts.active_employment_contracts.first.work_load
           }
+
+      @employee_groups[:by_specialization] = employee_array.group_by { |employee|
+        employee.specializations.to_a.map(&:id)
+      }
+
+      Rails.logger.debug "🤫 employee groups #{@employee_groups[:by_specialization]}"
 
       @patterns = ShiftPatterns.new(@to_schedule)
 
