@@ -68,7 +68,7 @@ module Scheduling
         end
         employee_groups.select { |key|
           employee_groups[key].select { |e| e == tmp_employee }.first.nil? == false
-        }.keys.first
+        }.keys.first[:work_load]
       end
 
     end

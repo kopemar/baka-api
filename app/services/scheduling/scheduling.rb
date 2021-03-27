@@ -94,7 +94,7 @@ module Scheduling
       if type == :no_empty_shifts
         solution = Strategy::NoEmptyShiftsStrategy.new(strategy_params).try_to_improve
       elsif type == :demand_fulfill
-        solution = Strategy::DemandFulfillStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups[:by_workload], shift_duration: @shift_duration}).try_to_improve
+        solution = Strategy::DemandFulfillStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups[:by_both], shift_duration: @shift_duration}).try_to_improve
       end
 
       new_sanction = get_soft_constraint_violations(solution)[:sanction]
@@ -121,21 +121,27 @@ module Scheduling
 
       @employee_groups = Hash.new
 
-      @employee_groups[:by_workload] =
-          employee_array.group_by { |employee|
-            employee.contracts.active_employment_contracts.first.work_load
-          }
+      # @employee_groups[:by_workload] =
+      #     employee_array.group_by { |employee|
+      #       employee.contracts.active_employment_contracts.first.work_load
+      #     }
+      #
+      # @employee_groups[:by_specialization] = employee_array.group_by { |employee|
+      #   employee.specializations.to_a.map(&:id)
+      # }
 
-      @employee_groups[:by_specialization] = employee_array.group_by { |employee|
-        employee.specializations.to_a.map(&:id)
+      @employee_groups[:by_both] = employee_array.group_by { |employee|
+        active_contract = employee.contracts.active_employment_contracts.first
+        { work_load: active_contract.work_load, specializations: active_contract.specializations.map(&:id) }
       }
 
-      Rails.logger.debug "🤫 employee groups #{@employee_groups[:by_specialization]}"
+      Rails.logger.debug "🤫 employee groups #{@employee_groups[:by_both]}"
 
       @patterns = ShiftPatterns.new(@to_schedule)
 
-      @employee_groups[:by_workload].each do |work_load, employees|
-        shift_count = ScheduleStatistics.get_shift_count(work_load, @shift_duration, @patterns)
+      @employee_groups[:by_both].each do |key, employees|
+        Rails.logger.debug "🥶 key #{key}"
+        shift_count = ScheduleStatistics.get_shift_count(key[:work_load], @shift_duration, @patterns)
         Rails.logger.debug "========= shift_count #{shift_count} ==========="
         tmp_patterns = @patterns.patterns_of_params({length: shift_count, count: employees.length})
         # todo if already assigned
@@ -151,8 +157,8 @@ module Scheduling
       if employee.is_a? Integer
         tmp_employee = @employees.find { |e| e.id == employee }
       end
-      @employee_groups[:by_workload].select { |key|
-        @employee_groups[:by_workload][key].select { |e| e == tmp_employee }.first.nil? == false
+      @employee_groups.select { |key|
+        @employee_groups[key][:work_load].select { |e| e == tmp_employee }.first.nil? == false
       }.keys.first
     end
 
