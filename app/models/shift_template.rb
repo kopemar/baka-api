@@ -7,6 +7,8 @@ class ShiftTemplate < ApplicationRecord
   belongs_to :scheduling_unit
   belongs_to :specialization, required: false
 
+  has_many :shifts
+
   has_many :sub_templates, class_name: 'ShiftTemplate', foreign_key: :parent_template_id
 
   belongs_to :parent_template, class_name: 'ShiftTemplate', optional: true
