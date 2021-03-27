@@ -36,7 +36,9 @@ class SubmitScheduleTest < ActionDispatch::IntegrationTest
 
     assert_equal 0, shifts[:shifts].length
 
-    post "/periods/#{period.id}/submit", headers: manager_tokens
+    put "/periods/#{period.id}",
+        params: { submitted: true },
+        headers: manager_tokens
 
     Rails.logger.debug "🐿 shifts: #{Shift.all.to_a}"
 
