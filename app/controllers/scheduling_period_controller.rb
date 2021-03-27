@@ -4,7 +4,7 @@ class SchedulingPeriodController < ApplicationController
   include DeviseTokenAuth::Concerns::SetUserByToken
   before_action :authenticate_user!
 
-  def all
+  def index
     unless params[:from].nil?
       return render json: {
           :periods => @collection = SchedulingPeriod.where(organization_id: current_user.organization_id).where("end_date >= ?", params[:from]).paginate(page: params[:page], per_page: params[:per_page].nil? ? 30 : params[:per_page]),
@@ -19,6 +19,14 @@ class SchedulingPeriodController < ApplicationController
         :total_pages => @collection.total_pages,
         :has_next => @collection.next_page.present?
     }
+  end
+
+  def update
+    @scheduling_period = SchedulingPeriod::filter_by_organization(current_user.organization_id).find(params[:id])
+
+    @scheduling_period.update! permitted_params
+
+    render :status => :ok, :json => { data: @scheduling_period }
   end
 
   def calculate_shift_times
@@ -59,11 +67,8 @@ class SchedulingPeriodController < ApplicationController
     render :json => {:errors => ["No errors, just test message"], :success => true, :violations => result}
   end
 
-  def by_id
-    period = SchedulingPeriod.where(id: params[:id]).first
-    if period.nil?
-      return render :status => :not_found
-    end
+  def show
+    period = SchedulingPeriod.find(params[:id])
     if period.organization_id != current_user.organization_id
       return render :status => :forbidden, :json => {:errors => ["This period is not within your organization."]}
     end
@@ -101,4 +106,11 @@ class SchedulingPeriodController < ApplicationController
 
     render :status => :ok, :json => {:success => true, :data => period}
   end
+
+  private
+
+  def permitted_params
+    params.permit(:submitted)
+  end
+
 end

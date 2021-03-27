@@ -30,4 +30,8 @@ class SchedulingPeriod < ApplicationRecord
   def is_week?
     true
   end
+
+  scope :filter_by_organization, -> (organization_id) {
+    where(organization_id: organization_id)
+  }
 end

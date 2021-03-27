@@ -2,12 +2,11 @@ class ShiftTemplateController < ApplicationController
   include DeviseTokenAuth::Concerns::SetUserByToken
   before_action :authenticate_user!
 
-  # @POST templates/{id}/specialized
   def create_specialized_template
     params.require([:id, :specialization_id])
     return render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless current_user.is_manager?
 
-    parent_template = ShiftTemplate::for_organization(current_user.organization_id).where(id: params[:id]).first
+    parent_template = ShiftTemplate::filter_by_organization(current_user.organization_id).where(id: params[:id]).first
     specialization = Specialization.where(id: params[:specialization_id]).first
 
     return render :status => :not_found if parent_template.nil? || specialization.nil? || !parent_template.specialization_id.nil?
@@ -26,6 +25,14 @@ class ShiftTemplateController < ApplicationController
     render :status => :created, :json => template
   end
 
+  def index
+    params.permit(:unit, :unassigned)
+
+    @templates = ShiftTemplate.filter(filtering_params(params)).filter_by_organization(current_user.organization_id)
+
+    render :json => {:data => @templates}
+  end
+
   # todo remove this
   def create
     params.require([:start_time, :end_time, :break_minutes, :priority])
@@ -40,24 +47,6 @@ class ShiftTemplateController < ApplicationController
         is_employment_contract: false
     )
     render :json => {:data => template}
-  end
-
-  def in_unit
-    if params[:unit_id].nil?
-      render :status => :unprocessable_entity, :json => {:errors => ["Unit Id is missing"]}
-    else
-      ShiftTemplate.where(scheduling_unit_id: params[:unit_id]).all
-    end
-  end
-
-  def get_templates
-    params
-    templates = if params[:unit_id].nil?
-                  get_unassigned_shifts
-                else
-                  in_unit
-                end
-    render :json => {:data => templates}
   end
 
   def update
@@ -127,5 +116,9 @@ class ShiftTemplateController < ApplicationController
         ShiftTemplate::can_be_user_scheduled::planned_between(params[:start_date].to_datetime, params[:end_date].to_datetime).where.not(overlaps).where(organization_id: current_user.organization_id).order('start_time')
       end
     end
+  end
+
+  def filtering_params(params)
+    params.slice(:unit)
   end
 end

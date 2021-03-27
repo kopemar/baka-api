@@ -1,4 +1,6 @@
 class ShiftTemplate < ApplicationRecord
+  include Filterable
+
   before_validation :count_duration, :add_to_scheduling_unit
   validate :validate_time, :validate_duration, :validate_priority
 
@@ -58,10 +60,18 @@ class ShiftTemplate < ApplicationRecord
     where(scheduling_unit_id: SchedulingPeriod.where(id: period_id).first.scheduling_units.map(&:id))
   }
 
-  scope :for_organization, -> (org_id) {
+  scope :filter_by_organization, -> (org_id) {
     joins(:scheduling_unit).where(scheduling_units: {
         scheduling_period: SchedulingPeriod.where(organization_id: org_id)
     })
+  }
+
+  scope :filter_by_unassigned, -> (value) {
+
+  }
+
+  scope :filter_by_unit, -> (unit_id) {
+    where(scheduling_unit_id: unit_id)
   }
 
   def add_to_scheduling_unit
