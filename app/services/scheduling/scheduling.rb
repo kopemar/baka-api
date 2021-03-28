@@ -46,13 +46,15 @@ module Scheduling
     end
 
     private def assign_shifts(schedule)
-      Rails.logger.error schedule
+      Rails.logger.debug "🫖 schedule: #{schedule}"
       schedule.each do |employee_id, shift_ids|
         employee = @employees.find(employee_id)
         templates = shift_ids.map { |id| @to_schedule.find { |template| template.id == id } }
 
         templates.each do |template|
           shift = Shift.from_template(template)
+          Rails.logger.debug "🫖 template to: #{employee.contracts.active_employment_contracts.first.schedule.shifts.to_a}"
+          Rails.logger.debug "🫖 template shift: ID -> #{template.id} #{shift.start_time.to_s}, specialization -> #{template.specialization_id || "nil"} "
           shift.schedule_id = employee.contracts.active_employment_contracts.first.schedule_id
           shift.scheduler_type = SCHEDULER_TYPES[:SYSTEM]
           shift.save!
@@ -90,12 +92,13 @@ module Scheduling
 
       utilization = ScheduleStatistics.get_shifts_utilization(@to_schedule.map(&:id), solution)
 
-      strategy_params = {utilization: utilization, solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups[:by_workload], shift_duration: @shift_duration }
+      strategy_params = {utilization: utilization, solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration }
       if type == :no_empty_shifts
         solution = Strategy::NoEmptyShiftsStrategy.new(strategy_params).try_to_improve
-      elsif type == :demand_fulfill
-        solution = Strategy::DemandFulfillStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration}).try_to_improve
       end
+      # if type == :demand_fulfill
+      #   solution = Strategy::DemandFulfillStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration}).try_to_improve
+      # end
 
       new_sanction = get_soft_constraint_violations(solution)[:sanction]
 
@@ -107,7 +110,9 @@ module Scheduling
     def get_soft_constraint_violations(solution)
       Rails.logger.debug "😘 get_soft_constraint_violations for #{solution}"
       violations = Hash.new
-      violations[:no_empty_shifts] = NoEmptyShifts.get_violations_hash(@to_schedule, solution, @employees, @shift_duration, @priorities[:no_empty_shifts] || 0)  unless @priorities[:no_empty_shifts] == 0
+
+      # exclude shifts with no priority
+      violations[:no_empty_shifts] = NoEmptyShifts.get_violations_hash(@to_schedule.filter { |s| s.priority > 0 }, solution, @employees, @shift_duration, @priorities[:no_empty_shifts] || 0)  unless @priorities[:no_empty_shifts] == 0
 
       violations[:demand_fulfill] = DemandFulfill.get_violations_hash(@to_schedule, solution, @employee_groups[:by_workload], @shift_duration, @priorities[:demand_fulfill] || 0) unless @priorities[:demand_fulfill] == 0
 

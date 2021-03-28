@@ -76,6 +76,7 @@ class Scheduling::ShiftPatterns
     # first check – does the path even exist?
     vertices.each do |vertex|
       contains.each do |id|
+        return false unless vertex.shift.priority > 0
         unless vertex.shift.id == id || vertex.nexts.any? { |v| v.shift.id == id} || vertex.prev.any? { |v| v.shift.id == id }
           p "🎈 NOT contains #{id}"
           can_exist = false
