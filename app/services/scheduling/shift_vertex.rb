@@ -67,7 +67,7 @@ class Scheduling::ShiftVertex
 
     length = params[:length] || max_path_length
     contains = params[:contains] || []
-    specializations = params[:specializations]
+    specializations = params[:specializations] || []
     path = []
 
     if length > max_path_length
@@ -75,7 +75,7 @@ class Scheduling::ShiftVertex
       return nil
     end
 
-    next_params = { :length => length - path.length, :contains => contains }
+    next_params = { :length => length - path.length, :contains => contains, :specializations => specializations }
     Rails.logger.debug "🦚 next_params #{next_params}"
     path += compute_random_path(next_params)
 
@@ -111,6 +111,7 @@ class Scheduling::ShiftVertex
     Rails.logger.debug "🦦 [ShiftVertex] get_rnd_next #{params}"
     length = params[:length] || max_next_steps
     contains = params[:contains] || []
+    specializations = params[:specializations] || []
 
     return [] if length <= 0
 
@@ -124,7 +125,14 @@ class Scheduling::ShiftVertex
     end
 
     next_steps = @nexts.union(@prev)
-    next_steps = next_steps.filter { |vert| SchedulingUtils.max_steps_with([self, vert]) >= length } unless max_path_length > length
+    next_steps = next_steps.filter { |vert|
+
+      Rails.logger.debug "🥨 specialization intersection #{vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations)}"
+      SchedulingUtils.max_steps_with([self, vert]) >= length &&
+          ( (vert.shift.priority > 0 && vert.specialized.empty?) || vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations) )
+    } unless max_path_length > length
+
+    Rails.logger.debug "🫑 next_steps #{next_steps.map(&:to_s)}"
 
     path.each do |p|
       next_steps = next_steps.to_set.intersection(p.nexts.to_set.union(p.prev.to_set)).to_a
@@ -173,5 +181,9 @@ class Array
 
   def intersection(other)
     self.to_set.intersection(other.to_set).to_a
+  end
+
+  def intersect?(other)
+    ! self.to_set.intersection(other.to_set).empty?
   end
 end
