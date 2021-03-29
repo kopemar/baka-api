@@ -9,8 +9,9 @@ module Scheduling
         # Umim zjistit, jaky smeny to porusujou nejvic
         employee_groups.filter { |k, _| !k[:specializations].empty? }.each do |k, v|
           sample = templates.find { |template| template.id == violations.keys.sample }
+          Rails.logger.debug "🐧 sample #{sample}"
           unless sample.nil? || sample.sub_templates.empty?
-            analyze_combinations(v.map(&:id), k[:specializations])
+            analyze_combinations(v.map(&:id), k[:specializations], [ sample.id ])
           end
         end
         solution
@@ -18,8 +19,8 @@ module Scheduling
 
       private
 
-      def analyze_combinations(employees, specializations)
-        patterns = @patterns.patterns_of_params({:length => 5, :specializations => specializations, :count => employees.length})
+      def analyze_combinations(employees, specializations, contains)
+        patterns = @patterns.patterns_of_params({:length => 5, :contains => contains, :specializations => specializations, :count => employees.length})
 
         unless patterns.first.nil? || employees.empty?
           employees.each do |e|
