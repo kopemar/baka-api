@@ -9,7 +9,8 @@ module Scheduling
 
       @priorities = get_priorities(params[:priorities]) || {
           :no_empty_shifts => 150,
-          :demand_fulfill => 50
+          :demand_fulfill => 50,
+          :specialized_preferred => 60
       }
 
       @scheduling_period = SchedulingPeriod.where(id: period_id).first
@@ -77,6 +78,7 @@ module Scheduling
       Rails.logger.debug "🎁 OLD SOLUTION #{old_solution}"
       Rails.logger.debug "🎁 NEW SOLUTION #{solution}"
       solution = try_to_improve(solution, violations, :demand_fulfill) unless @priorities[:demand_fulfill].nil? || @priorities[:demand_fulfill] < 1
+      solution = try_to_improve(solution, violations, :specialized_preferred) unless @priorities[:specialized_preferred].nil? || @priorities[:specialized_preferred] < 1
       solution
     end
 
@@ -97,6 +99,8 @@ module Scheduling
         solution = Strategy::NoEmptyShiftsStrategy.new(strategy_params).try_to_improve
       elsif type == :demand_fulfill
         solution = Strategy::DemandFulfillStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration}).try_to_improve
+      elsif type == :specialized_preferred
+        solution = Strategy::SpecializedPreferredStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration, templates: @to_schedule}).try_to_improve
       end
 
       new_sanction = get_soft_constraint_violations(solution)[:sanction]
@@ -115,7 +119,7 @@ module Scheduling
 
       violations[:demand_fulfill] = DemandFulfill.get_violations_hash(@to_schedule.filter { |s| s.priority > 0 }, solution, @employee_groups[:by_workload], @shift_duration, @priorities[:demand_fulfill] || 0) unless (@priorities[:demand_fulfill] || 0) == 0
 
-      violations[:specialized_preferred] =  SpecializedPreferred.get_violation_hash(@to_schedule.filter { |s| s.priority > 0 }, solution)
+      violations[:specialized_preferred] =  SpecializedPreferred.get_violation_hash(@to_schedule.filter { |s| s.priority > 0 }, solution) unless (@priorities[:specialized_preferred] || 0) == 0
 
       overall_sanction = violations.map { |_, violation| violation[:sanction] }.reduce(:+)
       violations[:sanction] = overall_sanction

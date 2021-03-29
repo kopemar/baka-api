@@ -7,21 +7,19 @@ module Scheduling
 
       def try_to_improve
         Rails.logger.info "📦 Improve empty shifts"
+        # Nema smysl to menit u tech, ktery maji presne jednoho zamestnance
         exclude = utilization.filter { |_, v| v == 1 }.map { |k, _| k }.to_set
 
-        # todo this won't be good enough
+        # vyberu nekteryho ze zamestnancu, kterej ma smysl dle predchoziho (tedy nema ani jednu smenu, na ktery je sam)
         employees = solution.filter { |_, v| !v.to_set.intersect?(exclude) }.map { |k, _| k }
 
-        if employees.empty?
-          employees = solution.map { |k, _| k }
-        end
+        # pokud nemam zadnyho takovyho zamestnance, tak vezmu vsechny a nahodnyho z nich
+        employees = solution.map { |k, _| k } if employees.empty?
 
-        Rails.logger.debug "🌡 employees #{employees}"
-
+        # vyberu vsechny prazdny smeny
         shifts_to_assign = violations.map { |k, _| k }
 
-        Rails.logger.debug "🦠 shifts_to_assign #{shifts_to_assign} "
-
+        # rozradim prazdny smeny mezi zamestnance
         assign_empty_shifts(solution, {:assigned_employees => employees, :shifts => shifts_to_assign})
         solution
       end
@@ -34,6 +32,7 @@ module Scheduling
         division_factor = 1
 
         shifts.length.times do
+          # todo !!! hardcoded 5 -> kolik je workload?
           minimum = [remaining_shifts.length, 5].min
           combination_count = (minimum.to_d / division_factor).ceil
 
@@ -49,9 +48,10 @@ module Scheduling
       private def analyze_combinations(remaining_shifts, combination_count, solution, employees)
         remaining_shifts.to_a.reverse.combination(combination_count).to_a.each do |slice|
           # fixme smarter length, not just 5
+          # employee = employees.last -> vzit delku podle toho posledniho
           patterns = @patterns.patterns_of_params({:contains => slice, :length => 5})
           Rails.logger.debug "🤥 COMBINED #{patterns} (slice: #{slice})"
-          unless patterns.first.nil?
+          unless patterns.first.nil? || employees.empty?
             # todo not enough employees?
             solution[employees.pop] = patterns.first
             remaining_shifts = remaining_shifts.subtract(patterns.first.to_set)

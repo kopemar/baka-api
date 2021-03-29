@@ -1,10 +1,37 @@
 module Scheduling
   module Strategy
-    class NoEmptyShiftsStrategy < Strategy
-      def try_to_improve
-        # TODO
+    class SpecializedPreferredStrategy < Strategy
+      def initialize(params)
+        super(params)
       end
+
+      def try_to_improve
+        # Umim zjistit, jaky smeny to porusujou nejvic
+        employee_groups.filter { |k, _| !k[:specializations].empty? }.each do |k, v|
+          sample = templates.find { |template| template.id == violations.keys.sample }
+          unless sample.nil? || sample.sub_templates.empty?
+            analyze_combinations(v.map(&:id), k[:specializations])
+          end
+        end
+        solution
+      end
+
+      private
+
+      def analyze_combinations(employees, specializations)
+        patterns = @patterns.patterns_of_params({:length => 5, :specializations => specializations, :count => employees.length})
+
+        unless patterns.first.nil? || employees.empty?
+          employees.each do |e|
+            sample = patterns.sample
+            Rails.logger.debug "🙈 EMPLOYEE #{e} to #{sample}"
+            solution[e] = sample
+          end
+
+          return true
+        end
+      end
+      false
     end
   end
 end
-
