@@ -160,6 +160,60 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
       assert_equal 5, shifts.length
       assert shifts.all? { |s| s.shift_template.specialization_id == s2.id || s.shift_template.specialization_id == s1.id }
     end
+  end
 
+  test "Greater Organization with multiple specializations" do
+    s1 = Specialization.create(name: "Clown", organization_id: @org.id)
+    s2 = Specialization.create(name: "Cook", organization_id: @org.id)
+    s3 = Specialization.create(name: "Waiter", organization_id: @org.id)
+    s4 = Specialization.create(name: "Bartender", organization_id: @org.id)
+    s5 = Specialization.create(name: "Barista", organization_id: @org.id)
+
+    specializations = [s1, s2, s3, s4, s5]
+
+    3.times do
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(s1)
+      e.contracts.first.specializations.push(s2)
+      e.save!
+    end
+
+    4.times do
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(s2)
+      e.contracts.first.specializations.push(s3)
+      e.save!
+    end
+
+    6.times do
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(s4)
+      e.save!
+    end
+
+    2.times do
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(s1)
+      e.contracts.first.specializations.push(s2)
+      e.contracts.first.specializations.push(s5)
+      e.save!
+    end
+
+    8.times do
+      employee_active_contract(@org)
+    end
+
+    period = FactoryBot.create(:scheduling_period, organization: @org)
+
+    templates = generate_more_shift_templates(period, @auth_tokens)
+
+    12.times do
+      template = templates.sample
+
+      post "/templates/#{template[:id]}/specialized?specialization_id=#{specializations.sample.id}",
+           headers: @auth_tokens
+    end
+
+    Scheduling::Scheduling.new({ id: period.id }).call
   end
 end

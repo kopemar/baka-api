@@ -33,4 +33,20 @@ class ActiveSupport::TestCase
 
     response.parsed_body.deep_symbolize_keys[:data]
   end
+
+
+  def generate_more_shift_templates(period, auth_tokens)
+    post "/periods/#{period.id}/templates",
+         params: {
+             working_days: [1, 2, 3, 4, 5, 6, 7],
+             start_time: "08:00",
+             end_time: "22:30",
+             shift_hours: 8,
+             break_minutes: 30,
+             per_day: 3
+         },
+         headers: auth_tokens
+
+    response.parsed_body.deep_symbolize_keys[:data]
+  end
 end
