@@ -80,4 +80,86 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
     assert ShiftTemplate::in_scheduling_period(period.id).where(specialization_id: s1.id).all? { |s| s.shifts.length == 3 }
   end
 
+
+  test "Assign specialized shifts 3 - employees with multiple specializations" do
+    s1 = Specialization.create(name: "Clown", organization_id: @org.id)
+    s2 = Specialization.create(name: "Cook", organization_id: @org.id)
+
+    # e1 = employee_active_contract(@org)
+    # e1.contracts.first.specializations.push(s1)
+    # e1.save!
+
+    employees = { s1.id => [], s2.id => [], :both => [] }
+
+    3.times do
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(s1)
+      e.save!
+      employees[s1.id].push(e)
+    end
+
+    3.times do
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(s2)
+      e.save!
+      employees[s2.id].push(e)
+    end
+
+    3.times do
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(s1)
+      e.contracts.first.specializations.push(s2)
+      e.save!
+      employees[:both].push(e)
+    end
+
+    period = FactoryBot.create(:scheduling_period, organization: @org)
+
+    templates = generate_shift_templates(period, @auth_tokens)
+
+    assert_equal 5, templates.length
+
+    templates.each do |template|
+      post "/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
+           headers: @auth_tokens
+
+      post "/templates/#{template[:id]}/specialized?specialization_id=#{s2.id}",
+           headers: @auth_tokens
+
+      this_template = ShiftTemplate.where(id: template[:id]).first
+      this_template.update(priority: 0)
+    end
+
+    Scheduling::Scheduling.new({ id: period.id }).call
+
+    # all specialized shifts must be assigned in this context
+    assert ShiftTemplate::in_scheduling_period(period.id).joins(:specialization).none? { |s| s.shifts.empty? }
+
+    assert ShiftTemplate::in_scheduling_period(period.id).where(specialization_id: nil).all? { |s| s.shifts.empty? }
+
+    assert ShiftTemplate::in_scheduling_period(period.id).where(specialization_id: s1.id).all? { |s| s.shifts.length >= 3 }
+    assert ShiftTemplate::in_scheduling_period(period.id).where(specialization_id: s2.id).all? { |s| s.shifts.length >= 3 }
+
+    employees[s1.id].each do |employee|
+      shifts =  Employee.find(employee.id).contracts.first.schedule.shifts
+
+      assert_equal 5, shifts.length
+      assert shifts.all? { |s| s.shift_template.specialization_id == s1.id }
+    end
+
+    employees[s2.id].each do |employee|
+      shifts =  Employee.find(employee.id).contracts.first.schedule.shifts
+
+      assert_equal 5, shifts.length
+      assert shifts.all? { |s| s.shift_template.specialization_id == s2.id }
+    end
+
+    employees[:both].each do |employee|
+      shifts =  Employee.find(employee.id).contracts.first.schedule.shifts
+
+      assert_equal 5, shifts.length
+      assert shifts.all? { |s| s.shift_template.specialization_id == s2.id || s.shift_template.specialization_id == s1.id }
+    end
+
+  end
 end
