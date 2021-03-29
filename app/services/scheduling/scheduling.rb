@@ -111,11 +111,11 @@ module Scheduling
       violations = Hash.new
 
       # exclude shifts with no priority
-      violations[:no_empty_shifts] = NoEmptyShifts.get_violations_hash(@to_schedule.filter { |s| s.priority > 0 }, solution, @employees, @shift_duration, @priorities[:no_empty_shifts] || 0)  unless @priorities[:no_empty_shifts] == 0
+      violations[:no_empty_shifts] = NoEmptyShifts.get_violations_hash(@to_schedule.filter { |s| s.priority > 0 }, solution, @employees, @shift_duration, @priorities[:no_empty_shifts] || 0)  unless (@priorities[:no_empty_shifts] || 0) == 0
 
-      violations[:demand_fulfill] = DemandFulfill.get_violations_hash(@to_schedule.filter { |s| s.priority > 0 }, solution, @employee_groups[:by_workload], @shift_duration, @priorities[:demand_fulfill] || 0) unless @priorities[:demand_fulfill] == 0
+      violations[:demand_fulfill] = DemandFulfill.get_violations_hash(@to_schedule.filter { |s| s.priority > 0 }, solution, @employee_groups[:by_workload], @shift_duration, @priorities[:demand_fulfill] || 0) unless (@priorities[:demand_fulfill] || 0) == 0
 
-      SpecializedPreferred.get_violation_hash(@to_schedule.filter { |s| s.priority > 0 }, solution)
+      violations[:specialized_preferred] =  SpecializedPreferred.get_violation_hash(@to_schedule.filter { |s| s.priority > 0 }, solution)
 
       overall_sanction = violations.map { |_, violation| violation[:sanction] }.reduce(:+)
       violations[:sanction] = overall_sanction
@@ -137,6 +137,7 @@ module Scheduling
       @patterns = ShiftPatterns.new(@to_schedule)
 
       @employee_groups.each do |key, employees|
+
         Rails.logger.debug "🥶 key #{key}"
         shift_count = ScheduleStatistics.get_shift_count(key[:work_load], @shift_duration, @patterns)
         Rails.logger.debug "========= shift_count #{shift_count} ==========="

@@ -129,7 +129,7 @@ class Scheduling::ShiftVertex
 
       Rails.logger.debug "🥨 specialization intersection #{vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations)}"
       SchedulingUtils.max_steps_with([self, vert]) >= length &&
-          ( (vert.shift.priority > 0 && vert.specialized.empty?) || vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations) )
+          (vert.shift.priority > 0 || (vert.shift.priority > 0 && specializations.empty?) || (vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations)))
     } unless max_path_length > length
 
     Rails.logger.debug "🫑 next_steps #{next_steps.map(&:to_s)}"
