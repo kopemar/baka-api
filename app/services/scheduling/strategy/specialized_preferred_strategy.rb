@@ -20,6 +20,7 @@ module Scheduling
       private
 
       def analyze_combinations(employees, specializations, contains)
+        # todo length
         patterns = @patterns.patterns_of_params({:length => 5, :contains => contains, :specializations => specializations, :count => employees.length})
 
         unless patterns.first.nil? || employees.empty?

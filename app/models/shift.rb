@@ -4,6 +4,7 @@ class Shift < ApplicationRecord
   validates :start_time, :end_time,
             :overlap => {:exclude_edges => %w[start_time end_time],
                          :scope => "schedule_id"}
+  validate :validate_specialization
 
   # validates_presence_of :schedule_id
 
@@ -16,10 +17,17 @@ class Shift < ApplicationRecord
     self.duration = ((end_time - start_time).to_i / 1.hour)
   end
 
-  def self.from_template(template)
+  def validate_specialization
+    template_specialization = self.shift_template.specialization
+    unless template_specialization.nil?
+      errors.add("Could not save shift with this specialization") unless self.schedule.contract.specializations.map(&:id).include? template_specialization.id
+    end
+  end
+
+  def self.from_template(template, start_time = template.start_time, end_time = template.end_time)
     Shift.new(
-        start_time: template.start_time,
-        end_time: template.end_time,
+        start_time: start_time,
+        end_time: end_time,
         shift_template_id: template.id,
         break_minutes: template.break_minutes
     )
