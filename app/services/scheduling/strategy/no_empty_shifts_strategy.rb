@@ -32,7 +32,6 @@ module Scheduling
         division_factor = 1
 
         shifts.length.times do
-          # todo !!! hardcoded 5 -> kolik je workload?
           minimum = [remaining_shifts.length, 5].min
           combination_count = (minimum.to_d / division_factor).ceil
 
@@ -47,10 +46,14 @@ module Scheduling
 
       private def analyze_combinations(remaining_shifts, combination_count, solution, employees)
         remaining_shifts.to_a.reverse.combination(combination_count).to_a.each do |slice|
-          # fixme smarter length, not just 5
-          # employee = employees.last -> vzit delku podle toho posledniho
-          patterns = @patterns.patterns_of_params({:contains => slice, :length => 5})
+          employee = employees.last # -> vzit delku podle toho posledniho
+
+          length = 5
+          length = solution[employee].length unless employee.nil?
+          slice = slice.sample(length) if slice.length > length
+          patterns = @patterns.patterns_of_params({:contains => slice, :length => length})
           Rails.logger.debug "🤥 COMBINED #{patterns} (slice: #{slice})"
+
           unless patterns.first.nil? || employees.empty?
             # todo not enough employees?
             solution[employees.pop] = patterns.first

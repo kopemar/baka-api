@@ -12,7 +12,7 @@ module Scheduling
       end
 
       def parse_params(params = {})
-        @templates = params.fetch(:templates)
+        @templates = params.fetch(:templates, nil)
         @violations = params.fetch(:violations)
         @solution = params.fetch(:solution)
         @patterns = params.fetch(:patterns)

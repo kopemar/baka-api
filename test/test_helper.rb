@@ -34,6 +34,15 @@ class ActiveSupport::TestCase
     response.parsed_body.deep_symbolize_keys[:data]
   end
 
+  def get_period_as_schedule(period)
+    schedule = {}
+    Shift.where(shift_template: ShiftTemplate::in_scheduling_period(period.id)).to_a.group_by { |shift|
+      shift.schedule_id
+    }.each { |k, v|
+      schedule[k] = v.map(&:shift_template_id)
+    }
+    schedule
+  end
 
   def generate_more_shift_templates(period, auth_tokens)
     post "/periods/#{period.id}/templates",

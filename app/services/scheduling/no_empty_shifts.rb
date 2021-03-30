@@ -19,7 +19,7 @@ class Scheduling::NoEmptyShifts < Constraint
     value_per_violation * get_empty_shifts(shifts, schedule).length
   end
 
-  def self.get_violations_hash(shifts, schedule, employees, shift_duration, value_per_violation = 10)
+  def self.get_violations_hash(shifts, schedule, value_per_violation = 10)
     hash = Hash.new
 
     hash[:violations] = get_empty_shifts(shifts.map(&:id), schedule)
