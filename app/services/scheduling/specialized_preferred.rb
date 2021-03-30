@@ -10,9 +10,7 @@ class Scheduling::SpecializedPreferred < Constraint
     Rails.logger.debug "🎃 shifts_by specialization #{shifts_by_specialization}"
 
     violation_shifts = ScheduleStatistics.get_shifts_utilization(shifts.filter { |s| s.priority > 0 }, schedule).filter { |shift|
-      found = shifts.find { |s| s.id == shift }
-      Rails.logger.debug "🎃 violation #{found.id}" unless found.nil?
-      (!found.sub_templates.empty? unless found.nil?) && shifts_by_specialization[nil].include?(shift)
+      shifts_by_specialization[nil].include?(shift)
     }
 
     violations_count = violation_shifts.sum { |_, v| v }
