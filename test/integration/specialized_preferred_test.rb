@@ -43,21 +43,21 @@ class SpecializedPreferredTest < ActionDispatch::IntegrationTest
   test "Specialized Preferred Improve" do
     s1 = Specialization.create(name: "Clown", organization_id: @org.id)
     s2 = Specialization.create(name: "Cook", organization_id: @org.id)
-    s3 = Specialization.create(name: "Waiter", organization_id: @org.id)
+    # s3 = Specialization.create(name: "Waiter", organization_id: @org.id)
     period = FactoryBot.create(:scheduling_period, organization: @org)
     templates = generate_more_shift_templates(period, @auth_tokens)
 
     3.times do
       e = employee_active_contract(@org)
       e.contracts.first.specializations.push(s1)
-      e.contracts.first.specializations.push(s2)
+      # e.contracts.first.specializations.push(s2)
       e.save!
     end
 
     4.times do
       e = employee_active_contract(@org)
       e.contracts.first.specializations.push(s2)
-      e.contracts.first.specializations.push(s3)
+      # e.contracts.first.specializations.push(s3)
       e.save!
     end
 
@@ -66,20 +66,20 @@ class SpecializedPreferredTest < ActionDispatch::IntegrationTest
     # end
 
     original_templates = ShiftTemplate::in_scheduling_period(period.id).to_a
-    original_templates.each do |template|
+    original_templates.first(15).each do |template|
       post "/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
            headers: @auth_tokens
     end
 
-    original_templates.each do |template|
+    original_templates.last(15).each do |template|
       post "/templates/#{template[:id]}/specialized?specialization_id=#{s2.id}",
            headers: @auth_tokens
     end
 
-    original_templates.each do |template|
-      post "/templates/#{template[:id]}/specialized?specialization_id=#{s3.id}",
-           headers: @auth_tokens
-    end
+    # original_templates.sample(15).each do |template|
+    #   post "/templates/#{template[:id]}/specialized?specialization_id=#{s3.id}",
+    #        headers: @auth_tokens
+    # end
 
     Scheduling::Scheduling.new({ id: period.id, priorities: {}}).call
 

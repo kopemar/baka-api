@@ -19,7 +19,8 @@ class Scheduling::ShiftPatterns
       # prirad specializovany protejsek smeny
       specialized = vertex.specialized.filter { |shift| specializations.include?(shift.specialization_id) }
 
-      new_path[index] = specialized.sample.id || path[index]
+      sample = specialized.sample
+      new_path[index] = sample.nil? ? path[index] : sample.id
     end
 
     Rails.logger.debug "🐯 PATH #{path} -> #{new_path}"
