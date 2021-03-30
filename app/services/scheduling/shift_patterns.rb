@@ -11,6 +11,20 @@ class Scheduling::ShiftPatterns
     @max_length
   end
 
+  def try_to_specialize(path, specializations)
+    new_path = []
+    path.each_with_index do |id, index|
+      vertex = @hash_vertices[id]
+
+      # prirad specializovany protejsek smeny
+      specialized = vertex.specialized.filter { |shift| specializations.include?(shift.specialization_id) }
+
+      new_path[index] = specialized.sample || path[index]
+    end
+
+    new_path
+  end
+
   def patterns_of_params(params)
     Rails.logger.debug "🐲 PATTERNS_OF_PARAMS #{params}"
     paths = []
