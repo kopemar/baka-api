@@ -14,17 +14,9 @@ module Scheduling
         viable_employees.each do |k, v|
           Rails.logger.debug "🐼 #{v}"
           specializations = employee_groups.filter { |_, value| value.map(&:id).include? k }.keys.first[:specializations]
-          patterns.try_to_specialize(v, specializations)
+          solution[k] = patterns.try_to_specialize(v, specializations)
         end
 
-        # Umim zjistit, jaky smeny to porusujou nejvic
-        # employee_groups.filter { |k, _| !k[:specializations].empty? }.each do |k, v|
-        #   sample = templates.find { |template| template.id == violations.keys.sample }
-        #   Rails.logger.debug "🐧 sample #{sample}"
-        #   unless sample.nil? || sample.sub_templates.empty?
-        #     analyze_combinations(v.map(&:id), k[:specializations], [ sample.id ])
-        #   end
-        # end
         solution
       end
 
