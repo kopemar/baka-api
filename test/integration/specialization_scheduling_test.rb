@@ -51,13 +51,25 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
   #   Rails.logger.debug "INITIAL: #{initial_sanction}, SANCTION: #{sanction}"
   #   assert initial_sanction > sanction || sanction == 0
   # end
+  #
+  #
+  test "10A E No Empty Shifts Fix the solution with specialization" do
+    s1 = Specialization.create(name: "Clown", organization_id: @org.id)
 
-  test "10 E Empty Shifts Fix the solution" do
     10.times do
-      employee_active_contract(@org)
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(s1)
+      e.save!
     end
 
-    generate_more_shift_templates(@period, @auth_tokens)
+    templates = generate_more_shift_templates(@period, @auth_tokens)
+
+    templates.each do |template|
+      post "/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
+           headers: @auth_tokens
+
+      ShiftTemplate.find(template[:id]).update(priority: 0)
+    end
 
     Scheduling::Scheduling.new({ id: @period.id, priorities: {} }).call
 
@@ -66,6 +78,42 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
     initial_sanction = initial_violations[:sanction]
 
     Scheduling::Scheduling.new({ id: @period.id, priorities: { :no_empty_shifts => 10} }).call
+
+    schedule = get_period_as_schedule(@period)
+    violations = Scheduling::NoEmptyShifts.get_violations_hash(ShiftTemplate::in_scheduling_period(@period.id), schedule)
+    sanction = violations[:sanction]
+    Rails.logger.debug "INITIAL: #{initial_sanction}, SANCTION: #{sanction}"
+    assert initial_sanction > sanction || sanction == 0
+  end
+
+  test "10B Empty Shifts Fix the solution with specialization" do
+    s1 = Specialization.create(name: "Clown", organization_id: @org.id)
+
+    10.times do
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(s1)
+      e.save!
+    end
+
+    # 10.times do
+    #   employee_active_contract(@org)
+    # end
+
+    templates = generate_more_shift_templates(@period, @auth_tokens)
+
+    templates.sample(10).each do |template|
+          post "/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
+               headers: @auth_tokens
+          ShiftTemplate.find(template[:id]).update(priority: 0)
+        end
+
+    Scheduling::Scheduling.new({ id: @period.id, priorities: {} }).call
+
+    schedule = get_period_as_schedule(@period)
+    initial_violations = Scheduling::NoEmptyShifts.get_violations_hash(ShiftTemplate::in_scheduling_period(@period.id), schedule)
+    initial_sanction = initial_violations[:sanction]
+
+    Scheduling::Scheduling.new({ id: @period.id, priorities: { :no_empty_shifts => 10 } }).call
 
     schedule = get_period_as_schedule(@period)
     violations = Scheduling::NoEmptyShifts.get_violations_hash(ShiftTemplate::in_scheduling_period(@period.id), schedule)

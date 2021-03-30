@@ -79,13 +79,6 @@ class Scheduling::ShiftVertex
     Rails.logger.debug "🦚 next_params #{next_params}"
     path += compute_random_path(next_params)
 
-    length_match = path.length == length
-    contains_all = contains.empty? || (contains.to_set.subset?(path.map { |s| s.shift.id }.to_set))
-    unless length_match && contains_all
-      Rails.logger.debug "⛔️ [ShiftVertex] Get Random Path did not succeed with #{path.map { |s| s.shift.id }}; length match: #{length_match} (#{length}, contains all (#{contains}): #{contains_all}"
-      return nil
-    end
-
     unless specializations.empty?
       path = path.map { |p|
         if p.specialized.empty?
@@ -99,6 +92,13 @@ class Scheduling::ShiftVertex
       }
 
       Rails.logger.debug "😳 paths #{path.map(&:to_s)}"
+    end
+
+    length_match = path.length == length
+    contains_all = contains.empty? || (contains.to_set.subset?(path.map { |s| s.shift.id }.to_set))
+    unless length_match && contains_all
+      Rails.logger.debug "⛔️ [ShiftVertex] Get Random Path did not succeed with #{path.map { |s| s.shift.id }}; length match: #{length_match} (#{length}, contains all (#{contains}): #{contains_all}"
+      return nil
     end
 
     path.get_shift_ids.sort

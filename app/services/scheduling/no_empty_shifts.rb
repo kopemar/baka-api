@@ -22,7 +22,7 @@ class Scheduling::NoEmptyShifts < Constraint
   def self.get_violations_hash(shifts, schedule, value_per_violation = 10)
     hash = Hash.new
 
-    hash[:violations] = get_empty_shifts(shifts.map(&:id), schedule)
+    hash[:violations] = get_empty_shifts(shifts.filter { |it| it.priority > 0 }.map(&:id), schedule)
     hash[:sanction] = get_sanction_from_array(hash[:violations], value_per_violation)
     hash
   end

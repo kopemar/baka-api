@@ -31,31 +31,32 @@ module Scheduling
         remaining_shifts = shifts.map(&:clone).to_set
         division_factor = 1
 
-        shifts.length.times do
+        employees.length.times do
           minimum = [remaining_shifts.length, 5].min
           combination_count = (minimum.to_d / division_factor).ceil
 
           found_any = analyze_combinations(remaining_shifts, combination_count, solution, employees)
 
           division_factor = found_any ? 1 : division_factor + 1
-          Rails.logger.debug "🤥 Remaining: #{remaining_shifts}"
 
           break if remaining_shifts.empty?
+          Rails.logger.debug "🤥 Remaining: #{remaining_shifts}"
         end
       end
 
       private def analyze_combinations(remaining_shifts, combination_count, solution, employees)
         remaining_shifts.to_a.reverse.combination(combination_count).to_a.each do |slice|
           employee = employees.last # -> vzit delku podle toho posledniho
-
+          specializations = employee_groups.filter { |_, v| v.map(&:id).include? employee }.keys.first[:specializations]
+          Rails.logger.debug "🐸 specializace: #{specializations}"
           length = 5
           length = solution[employee].length unless employee.nil?
           slice = slice.sample(length) if slice.length > length
-          patterns = @patterns.patterns_of_params({:contains => slice, :length => length})
-          Rails.logger.debug "🤥 COMBINED #{patterns} (slice: #{slice})"
+          patterns = @patterns.patterns_of_params({:contains => slice, :length => length, :specializations => specializations })
+          # Rails.logger.debug "🤥 COMBINED #{patterns} (slice: #{slice})"
 
-          unless patterns.first.nil? || employees.empty?
-            # todo not enough employees?
+          unless patterns.empty? || employees.empty?
+            Rails.logger.debug "🐸🤥 for #{employees.last} COMBINED #{patterns.first}"
             solution[employees.pop] = patterns.first
             remaining_shifts = remaining_shifts.subtract(patterns.first.to_set)
             return true

@@ -1,7 +1,5 @@
 class Scheduling::ShiftPatterns
   include Scheduling
-  # fixme move to another file...
-
 
   def initialize(shift_templates)
     Rails.logger.debug "🥝 new ShiftPatterns with #{shift_templates.map(&:start_time)}"
@@ -30,14 +28,23 @@ class Scheduling::ShiftPatterns
     end
 
     unless length.nil?
-      possible_vertices = @vertices.filter { |vertex| (vertex.max_path_length >= length) && (contains.empty? || contains.include?(vertex.shift.id)) }
+      possible_vertices = @vertices.filter { |vertex|
+        (vertex.max_path_length >= length && (contains.empty? || contains.include?(vertex.shift.id) ||
+                vertex.specialized.one? { |s|
+                  Rails.logger.debug "🦁 FILTERING specializations #{vertex.to_s} #{specializations} #{}"
+                  contains.include?(s.id) && specializations.include?(s.specialization_id)
+                  }
+            )
+        )
+
+      }
 
       if !contains.is_a?(Array) || (contains.length > length)
         Rails.logger.debug "😡 Contains malformed (too long: #{contains.length > length})"
         return paths
       end
 
-      if contains.empty? || can_exist?(contains)
+      if contains.empty? || can_exist?(contains, specializations)
         Rails.logger.debug "🌵 CAN EXIST WITH #{contains}"
         if contains.length == length
           count.times do
@@ -50,7 +57,7 @@ class Scheduling::ShiftPatterns
         return paths
       end
       count.times do
-        Rails.logger.debug "⚽️ count times do get sample"
+        Rails.logger.debug "⚽️ count times do get sample #{possible_vertices.map { |it| it.shift.id }}"
         sample = SchedulingUtils.get_sample(possible_vertices, false)
 
         random_path = sample.nil? ? nil : sample.random_path({ :length => length, :contains => contains, :specializations => specializations })
@@ -68,7 +75,7 @@ class Scheduling::ShiftPatterns
     paths
   end
 
-  private def can_exist?(contains, length = contains.length)
+  private def can_exist?(contains, specializations = [], length = contains.length)
     # all contained vertices, sorted by shift start time ASC
     vertices = contains.map { |id| @hash_vertices[id] }.sort { |v| v.shift.start_time }
     can_exist = true
@@ -76,22 +83,29 @@ class Scheduling::ShiftPatterns
     # first check – does the path even exist?
     vertices.each do |vertex|
       contains.each do |id|
-        return false unless vertex.shift.priority > 0
-        unless vertex.shift.id == id || vertex.nexts.any? { |v| v.shift.id == id} || vertex.prev.any? { |v| v.shift.id == id }
-          p "🎈 NOT contains #{id}"
+        return false unless vertex.shift.priority > 0 || !vertex.specialized.find { |it| it.id == id && it.priority > 0 }.nil?
+        unless contains_or_is(vertex, id, contains) || vertex.nexts.any? { |v| contains_or_is(v, id, contains) } || vertex.prev.any? { |v| contains_or_is(v, id, contains) }
+          Rails.logger.debug "#{vertex.shift.id} 🎈 NOT contains #{id}"
           can_exist = false
           break
         end
       end
       break unless can_exist
     end
+
     if can_exist
       # can build pattern with enough steps?
       max_steps = SchedulingUtils.max_steps_with(vertices)
       Rails.logger.debug "🐮 can_exist but #{max_steps}"
       can_exist = max_steps >= length
     end
+
     can_exist
+  end
+
+  private def contains_or_is(vertex, id, contains)
+    Rails.logger.debug "vertex.shift.id #{vertex.shift.id} / id: #{id}"
+    (vertex.shift.id == id && !vertex.specialized.map(&:id).intersect?(contains)) || (vertex.specialized.map(&:id).include?(id) && !contains.include?(vertex.shift.id))
   end
 
   private def build_patterns
