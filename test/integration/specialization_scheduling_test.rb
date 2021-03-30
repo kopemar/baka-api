@@ -104,7 +104,7 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
     templates.sample(10).each do |template|
           post "/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
                headers: @auth_tokens
-          ShiftTemplate.find(template[:id]).update(priority: 0)
+          # ShiftTemplate.find(template[:id]).update(priority: 0)
         end
 
     Scheduling::Scheduling.new({ id: @period.id, priorities: {} }).call
