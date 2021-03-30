@@ -1,7 +1,7 @@
 class Scheduling::SpecializedPreferred < Constraint
   include Scheduling
 
-  def self.get_violation_hash(shifts, schedule, value_per_violation = 10)
+  def self.get_violations_hash(shifts, schedule, value_per_violation = 10)
     shifts_by_specialization = group_shifts_by_specialization(shifts)
     if shifts_by_specialization.keys.length < 2 || shifts_by_specialization[nil].nil?
       return {:sanction => 0, :violations => {}}
