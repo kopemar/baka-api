@@ -47,7 +47,7 @@ class Scheduling::ShiftPatterns
       possible_vertices = @vertices.filter { |vertex|
         (vertex.max_path_length >= length && (contains.empty? || contains.include?(vertex.shift.id) ||
                 vertex.specialized.one? { |s|
-                  Rails.logger.debug "🦁 FILTERING specializations #{vertex.to_s} #{specializations} #{}"
+                  # Rails.logger.debug "🦁 FILTERING specializations #{vertex.to_s} #{specializations} #{}"
                   contains.include?(s.id) && specializations.include?(s.specialization_id)
                   }
             )

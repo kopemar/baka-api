@@ -35,10 +35,10 @@ module Scheduling
         Shift::in_scheduling_period(@scheduling_period.id).where(scheduler_type: SCHEDULER_TYPES[:SYSTEM]).delete_all
 
         schedule = get_first_solution(@employees)
-        violations = get_soft_constraint_violations(schedule)
+        # violations = get_soft_constraint_violations(schedule)
 
         Rails.logger.debug "📊 IMPROVE SOLUTION "
-        schedule = try_to_improve_solution(schedule, violations)
+        schedule = try_to_improve_solution(schedule)
 
         Rails.logger.debug "📅 SCHEDULE: #{schedule} "
         assign_shifts(schedule)
@@ -65,7 +65,8 @@ module Scheduling
 
     private
 
-    def try_to_improve_solution(solution, violations)
+    def try_to_improve_solution(solution)
+      violations = get_soft_constraint_violations(solution)
       old_sanction = violations[:sanction]
       return solution if old_sanction == 0
       old_solution = Hash.new
@@ -75,10 +76,16 @@ module Scheduling
 
       solution = try_to_improve(solution, violations, :no_empty_shifts) unless @priorities[:no_empty_shifts].nil? || @priorities[:no_empty_shifts] < 1
 
-      Rails.logger.debug "🎁 OLD SOLUTION #{old_solution}"
-      Rails.logger.debug "🎁 NEW SOLUTION #{solution}"
+      violations = get_soft_constraint_violations(solution)
       solution = try_to_improve(solution, violations, :demand_fulfill) unless @priorities[:demand_fulfill].nil? || @priorities[:demand_fulfill] < 1
+
+      old_solution = Hash.new
+      solution.map { |k, v| old_solution[k] = v.clone }
+
+      violations = get_soft_constraint_violations(solution)
       solution = try_to_improve(solution, violations, :specialized_preferred) unless @priorities[:specialized_preferred].nil? || @priorities[:specialized_preferred] < 1
+      old_solution = Hash.new
+      solution.map { |k, v| old_solution[k] = v.clone }
       solution
     end
 
@@ -94,7 +101,7 @@ module Scheduling
 
       utilization = ScheduleStatistics.get_shifts_utilization(@to_schedule.map(&:id), solution)
 
-      strategy_params = {utilization: utilization, solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration }
+      strategy_params = {utilization: utilization, solution: solution, violations: violations[type][:violations], templates: @to_schedule, patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration }
       if type == :no_empty_shifts
         solution = Strategy::NoEmptyShiftsStrategy.new(strategy_params).try_to_improve
       elsif type == :demand_fulfill

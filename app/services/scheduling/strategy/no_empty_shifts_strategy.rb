@@ -29,7 +29,7 @@ module Scheduling
         shifts = params[:shifts]
 
         remaining_shifts = shifts.map(&:clone).to_set
-        division_factor = 1
+        division_factor = 2
 
         employees.length.times do
           minimum = [remaining_shifts.length, 5].min
@@ -37,7 +37,7 @@ module Scheduling
 
           found_any = analyze_combinations(remaining_shifts, combination_count, solution, employees)
 
-          division_factor = found_any ? 1 : division_factor + 1
+          division_factor = found_any ? 2 : division_factor + 1
 
           break if remaining_shifts.empty?
           Rails.logger.debug "🤥 Remaining: #{remaining_shifts}"
@@ -45,14 +45,20 @@ module Scheduling
       end
 
       private def analyze_combinations(remaining_shifts, combination_count, solution, employees)
+        Rails.logger.debug "🐱 employee groups: #{employee_groups}"
         remaining_shifts.to_a.reverse.combination(combination_count).to_a.each do |slice|
           employee = employees.last # -> vzit delku podle toho posledniho
-          specializations = employee_groups.filter { |_, v| v.map(&:id).include? employee }.keys.first[:specializations]
-          Rails.logger.debug "🐸 specializace: #{specializations}"
+          specializations = employee_groups.filter { |_, v| v.map(&:id).include? employee }.keys.first#[:specializations]
+
           length = 5
           length = solution[employee].length unless employee.nil?
           slice = slice.sample(length) if slice.length > length
-          patterns = @patterns.patterns_of_params({:contains => slice, :length => length, :specializations => specializations })
+
+          makes_sense = templates.filter { |s| slice.include?(s.id) }.all? { |s| (specializations[:specializations] + [nil] ).include?(s.specialization_id) }
+
+          Rails.logger.debug "🐱 makes_sense: #{makes_sense} / ?"
+          patterns = makes_sense ? @patterns.patterns_of_params({:contains => slice, :length => length, :specializations => specializations[:specializations] }) : []
+
           # Rails.logger.debug "🤥 COMBINED #{patterns} (slice: #{slice})"
 
           unless patterns.empty? || employees.empty?
