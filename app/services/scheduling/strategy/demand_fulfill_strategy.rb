@@ -38,9 +38,10 @@ module Scheduling
           i = 0
           while pattern.nil? && combination_count > 0
             i += 1
-            i_divided = (i / 8.to_d).floor
+            i_divided = (i / 3.to_d).floor
             combination_count = shift_count - i_divided
-            sample = get_shifts_sample(violations_hash, combination_count)
+            sample = get_shifts_sample(violations_hash, combination_count, specializations)
+            Rails.logger.debug "🍄 get shifts sample #{sample} #{specializations}"
             pattern = patterns.patterns_of_params({length: shift_count, contains: sample, specializations: specializations }).first
             unless pattern.nil?
               Rails.logger.debug "🍄 CHANGING #{employee} ========= #{solution[employee]} TO #{pattern}"
@@ -52,14 +53,14 @@ module Scheduling
         solution
       end
 
-      private def get_shifts_sample(violations_hash, length)
+      private def get_shifts_sample(violations_hash, length, specializations)
         shifts = []
 
         violations_hash.each do |k, v|
-          shifts += v if k < 0
+          shifts += v.filter { templates.filter { |t| (specializations + [nil]).include?(t.specialization_id) }} if !v.nil? && k < 0
         end
 
-        shifts.sample(length)
+        shifts.sample(length) || []
       end
 
       private def modify_demand_hash(violations, violations_hash, removed, added)

@@ -20,7 +20,7 @@ class Shift < ApplicationRecord
   def validate_specialization
     template_specialization = self.shift_template.specialization
     unless template_specialization.nil?
-      errors.add("Could not save shift with this specialization") unless self.schedule.contract.specializations.map(&:id).include? template_specialization.id
+      errors.add("Could not save shift #{shift_template_id} with this specialization #{template_specialization.id}, must be: #{self.schedule.contract.specializations.map(&:id)}") unless self.schedule.contract.specializations.map(&:id).include? template_specialization.id
     end
   end
 

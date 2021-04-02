@@ -93,14 +93,14 @@ class Scheduling::ShiftPatterns
 
   private def can_exist?(contains, specializations = [], length = contains.length)
     # all contained vertices, sorted by shift start time ASC
-    vertices = contains.map { |id| @hash_vertices[id] }.sort { |v| v.shift.start_time }
-    can_exist = true
-    Rails.logger.debug "🐮 #{contains}"
+    vertices = contains.map { |id| @hash_vertices[id] }.sort { |v| v.shift.start_time }.uniq { |v| v.shift.id }
+    can_exist = vertices.length == contains.length
+    # Rails.logger.debug "🐮 #{contains} #{can_exist}"
     # first check – does the path even exist?
     vertices.each do |vertex|
       contains.each do |id|
-        return false unless vertex.shift.priority > 0 || !vertex.specialized.find { |it| it.id == id && it.priority > 0 }.nil?
-        unless contains_or_is(vertex, id, contains) || vertex.nexts.any? { |v| contains_or_is(v, id, contains) } || vertex.prev.any? { |v| contains_or_is(v, id, contains) }
+        return false if vertex.shift.priority <= 0 && vertex.specialized.find { |it| it.id == id && it.priority > 0 }.nil?
+        unless contains_or_is(vertex, id, contains, specializations) || vertex.nexts.any? { |v| contains_or_is(v, id, contains, specializations) } || vertex.prev.any? { |v| contains_or_is(v, id, contains, specializations) }
           Rails.logger.debug "#{vertex.shift.id} 🎈 NOT contains #{id}"
           can_exist = false
           break
@@ -119,8 +119,8 @@ class Scheduling::ShiftPatterns
     can_exist
   end
 
-  private def contains_or_is(vertex, id, contains)
-    (vertex.shift.id == id && !vertex.specialized.map(&:id).intersect?(contains)) || (vertex.specialized.map(&:id).include?(id) && !contains.include?(vertex.shift.id))
+  private def contains_or_is(vertex, id, contains, specializations)
+    (vertex.shift.id == id && !vertex.specialized.map(&:id).intersect?(contains)) || (vertex.specialized.filter { |shift| specializations.include?(shift.specialization_id) }.map(&:id).include?(id) && !contains.include?(vertex.shift.id))
   end
 
   private def build_patterns

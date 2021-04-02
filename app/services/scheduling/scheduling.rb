@@ -105,7 +105,7 @@ module Scheduling
       if type == :no_empty_shifts
         solution = Strategy::NoEmptyShiftsStrategy.new(strategy_params).try_to_improve
       elsif type == :demand_fulfill
-        solution = Strategy::DemandFulfillStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration}).try_to_improve
+        solution = Strategy::DemandFulfillStrategy.new({solution: solution, violations: violations[type][:violations], templates: @to_schedule, patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration}).try_to_improve
       elsif type == :specialized_preferred
         solution = Strategy::SpecializedPreferredStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration, templates: @to_schedule}).try_to_improve
       end

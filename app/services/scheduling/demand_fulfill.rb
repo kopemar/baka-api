@@ -51,12 +51,12 @@ class Scheduling::DemandFulfill < Constraint
     factor = 10.to_d
     demand = Hash.new
 
-    medium_assignments = (assignments_per_average * (1 + ((medium_demand_value - average_demand) / factor).to_d)).round
+    medium_assignments = (assignments_per_average * (1 + ((medium_demand_value - average_demand) / (factor)).to_d)).round
 
     (1..5).each do |i|
       demand[i] = (medium_assignments * (1 - ((medium_demand_value - i) / factor).to_d)).round
     end
-
+    Rails.logger.debug "🐌 #{demand}, #{assignments_per_average}, #{average_demand}"
     demand
   end
 

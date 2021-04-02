@@ -47,21 +47,21 @@ class SpecializedPreferredTest < ActionDispatch::IntegrationTest
     period = FactoryBot.create(:scheduling_period, organization: @org)
     templates = generate_more_shift_templates(period, @auth_tokens)
 
-    3.times do
+    8.times do
       e = employee_active_contract(@org)
       e.contracts.first.specializations.push(s1)
       e.save!
     end
 
-    4.times do
+    8.times do
       e = employee_active_contract(@org)
       e.contracts.first.specializations.push(s2)
       e.save!
     end
 
-    # 4.times do
-    #   employee_active_contract(@org)
-    # end
+    8.times do
+      employee_active_contract(@org)
+    end
 
     original_templates = ShiftTemplate::in_scheduling_period(period.id).to_a
     original_templates.first(15).each do |template|
@@ -88,14 +88,14 @@ class SpecializedPreferredTest < ActionDispatch::IntegrationTest
       schedule[k] = v.map(&:shift_template_id)
     }
 
-    violations_hash_no_empty_1 = Scheduling::NoEmptyShifts.get_violations_hash(ShiftTemplate::in_scheduling_period(period.id), schedule, 20)
+    violations_hash_no_empty_1 = Scheduling::DemandFulfill.get_violations_hash(ShiftTemplate::in_scheduling_period(period.id), schedule, 20)
     violations_hash_1 = Scheduling::SpecializedPreferred.get_violations_hash(ShiftTemplate::in_scheduling_period(period.id), schedule)
     Rails.logger.debug "😑 schedule: #{schedule} #{violations_hash_1}"
 
     initial_sanction = violations_hash_1[:sanction] + violations_hash_no_empty_1[:sanction]
 
 
-    Scheduling::Scheduling.new({ id: period.id, priorities: { :specialized_preferred => 10, :no_empty_shifts => 20 }}).call
+    Scheduling::Scheduling.new({ id: period.id, priorities: { :specialized_preferred => 10, :demand_fulfill => 20 }}).call
     schedule = {}
     Shift.where(shift_template: ShiftTemplate::in_scheduling_period(period.id)).to_a.group_by { |shift|
       shift.schedule_id
@@ -103,13 +103,13 @@ class SpecializedPreferredTest < ActionDispatch::IntegrationTest
       schedule[k] = v.map(&:shift_template_id)
     }
 
-    violations_hash_no_empty_2 = Scheduling::NoEmptyShifts.get_violations_hash(ShiftTemplate::in_scheduling_period(period.id), schedule, 20)
+    violations_hash_no_empty_2 = Scheduling::DemandFulfill.get_violations_hash(ShiftTemplate::in_scheduling_period(period.id), schedule, 20)
     violations_hash_2 = Scheduling::SpecializedPreferred.get_violations_hash(ShiftTemplate::in_scheduling_period(period.id), schedule)
     Rails.logger.debug "😑 schedule: #{schedule} #{violations_hash_2}"
 
     new_sanction = violations_hash_2[:sanction] + violations_hash_no_empty_2[:sanction]
 
-    Rails.logger.debug "🐻‍❄️ SANCTION #{initial_sanction} [:NO EMPTY #{violations_hash_no_empty_1[:sanction]} + :SPECIALIZED #{violations_hash_1[:sanction]}] / #{new_sanction} [:NO EMPTY #{violations_hash_no_empty_2[:sanction]} + :SPECIALIZED #{violations_hash_2[:sanction]}]"
+    Rails.logger.debug "🐻‍❄️ SANCTION #{initial_sanction} [:DEMAND #{violations_hash_no_empty_1[:sanction]} + :SPECIALIZED #{violations_hash_1[:sanction]}] / #{new_sanction} [:DEMAND #{violations_hash_no_empty_2[:sanction]} + :SPECIALIZED #{violations_hash_2[:sanction]}]"
     # can fail
     assert initial_sanction > new_sanction
   end
