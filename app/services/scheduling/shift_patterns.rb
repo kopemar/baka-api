@@ -120,7 +120,6 @@ class Scheduling::ShiftPatterns
   end
 
   private def contains_or_is(vertex, id, contains)
-    Rails.logger.debug "vertex.shift.id #{vertex.shift.id} / id: #{id}"
     (vertex.shift.id == id && !vertex.specialized.map(&:id).intersect?(contains)) || (vertex.specialized.map(&:id).include?(id) && !contains.include?(vertex.shift.id))
   end
 

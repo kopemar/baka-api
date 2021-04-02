@@ -48,16 +48,16 @@ module Scheduling
         Rails.logger.debug "🐱 employee groups: #{employee_groups}"
         remaining_shifts.to_a.reverse.combination(combination_count).to_a.each do |slice|
           employee = employees.last # -> vzit delku podle toho posledniho
-          specializations = employee_groups.filter { |_, v| v.map(&:id).include? employee }.keys.first#[:specializations]
+          specializations = employee_groups.filter { |_, v| v.map(&:id).include? employee }.keys.first[:specializations]
 
           length = 5
           length = solution[employee].length unless employee.nil?
           slice = slice.sample(length) if slice.length > length
 
-          makes_sense = templates.filter { |s| slice.include?(s.id) }.all? { |s| (specializations[:specializations] + [nil] ).include?(s.specialization_id) }
+          makes_sense = templates.filter { |s| slice.include?(s.id) }.all? { |s| (specializations + [nil] ).include?(s.specialization_id) }
 
           Rails.logger.debug "🐱 makes_sense: #{makes_sense} / ?"
-          patterns = makes_sense ? @patterns.patterns_of_params({:contains => slice, :length => length, :specializations => specializations[:specializations] }) : []
+          patterns = makes_sense ? @patterns.patterns_of_params({:contains => slice, :length => length, :specializations => specializations }) : []
 
           # Rails.logger.debug "🤥 COMBINED #{patterns} (slice: #{slice})"
 

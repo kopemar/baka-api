@@ -22,23 +22,44 @@ module Scheduling
 
         Rails.logger.debug "🪖 #{valid_employees}"
 
-        valid_employees.filter { |_, v| v > 0 }.each do |id|
+        valid_employees.each do |employee, _|
+          specializations = employee_groups.filter { |_, v| v.map(&:id).include? employee }.keys.first[:specializations]
+
           min_violations = violations_hash.keys.min
-          break if min_violations == 0
+          break if min_violations >= 0
 
-          shift_count = ScheduleStatistics.get_shift_count(get_employee_workload(id.first), shift_duration, patterns)
+          shift_count = solution[employee].length
+          combination_count = shift_count
 
-          Rails.logger.debug "🍄 EMPLOYEE #{id.first} shift_count: #{shift_count}"
+          Rails.logger.debug "🍄 EMPLOYEE #{employee} shift_count: #{shift_count}"
           Rails.logger.debug "🐶 #{violations_hash} / #{violations_copy}"
 
-          pattern = patterns.patterns_of_params({length: shift_count, contains: violations_hash[min_violations].combination(shift_count).to_a.sample}).first
-          unless pattern.nil?
-            Rails.logger.debug "🍄 CHANGING #{id.first} ========= #{solution[id.first]} TO #{pattern}"
-            modify_demand_hash(violations, violations_hash, solution[id.first], pattern)
-            solution[id.first] = pattern
+          pattern = nil
+          i = 0
+          while pattern.nil? && combination_count > 0
+            i += 1
+            i_divided = (i / 8.to_d).floor
+            combination_count = shift_count - i_divided
+            sample = get_shifts_sample(violations_hash, combination_count)
+            pattern = patterns.patterns_of_params({length: shift_count, contains: sample, specializations: specializations }).first
+            unless pattern.nil?
+              Rails.logger.debug "🍄 CHANGING #{employee} ========= #{solution[employee]} TO #{pattern}"
+              modify_demand_hash(violations, violations_hash, solution[employee], pattern)
+              solution[employee] = pattern
+            end
           end
         end
         solution
+      end
+
+      private def get_shifts_sample(violations_hash, length)
+        shifts = []
+
+        violations_hash.each do |k, v|
+          shifts += v if k < 0
+        end
+
+        shifts.sample(length)
       end
 
       private def modify_demand_hash(violations, violations_hash, removed, added)
