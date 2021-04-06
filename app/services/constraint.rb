@@ -4,8 +4,8 @@ class Constraint
     super()
   end
 
-  def self.is_violated
-    false
+  def self.get_violations_hash
+    { sanction: 0, violations: {} }
   end
 
 end
