@@ -14,3 +14,5 @@ SCHEDULER_TYPES = {
     MANAGER: 2,
     EMPLOYEE: 3
 }.freeze
+
+TWO_DAYS_HOURS = 48.freeze

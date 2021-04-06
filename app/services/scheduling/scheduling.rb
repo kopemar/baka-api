@@ -10,7 +10,8 @@ module Scheduling
       @priorities = get_priorities(params[:priorities]) || {
           :no_empty_shifts => 150,
           :demand_fulfill => 50,
-          :specialized_preferred => 60
+          :specialized_preferred => 60,
+          :free_days => 100
       }
 
       @scheduling_period = SchedulingPeriod.where(id: period_id).first
@@ -84,8 +85,16 @@ module Scheduling
 
       violations = get_soft_constraint_violations(solution)
       solution = try_to_improve(solution, violations, :specialized_preferred) unless @priorities[:specialized_preferred].nil? || @priorities[:specialized_preferred] < 1
+
       old_solution = Hash.new
       solution.map { |k, v| old_solution[k] = v.clone }
+
+      violations = get_soft_constraint_violations(solution)
+      solution = try_to_improve(solution, violations, :free_days) unless @priorities[:free_days].nil? || @priorities[:free_days] < 1
+
+      old_solution = Hash.new
+      solution.map { |k, v| old_solution[k] = v.clone }
+
       solution
     end
 
@@ -108,6 +117,8 @@ module Scheduling
         solution = Strategy::DemandFulfillStrategy.new({solution: solution, violations: violations[type][:violations], templates: @to_schedule, patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration}).try_to_improve
       elsif type == :specialized_preferred
         solution = Strategy::SpecializedPreferredStrategy.new({solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration, templates: @to_schedule}).try_to_improve
+      elsif type == :free_days
+        solution = Strategy::FreeDaysInRowStrategy.new({period: @scheduling_period, solution: solution, violations: violations[type][:violations], patterns: @patterns, assigned_employees: @employees, employee_groups: @employee_groups, shift_duration: @shift_duration, templates: @to_schedule}).try_to_improve
       end
 
       new_sanction = get_soft_constraint_violations(solution)[:sanction]
@@ -127,6 +138,8 @@ module Scheduling
       violations[:demand_fulfill] = DemandFulfill.get_violations_hash(@to_schedule.filter { |s| s.priority > 0 }, solution, @priorities[:demand_fulfill] || 0) unless (@priorities[:demand_fulfill] || 0) == 0
 
       violations[:specialized_preferred] =  SpecializedPreferred.get_violations_hash(@to_schedule.filter { |s| s.priority > 0 }, solution) unless (@priorities[:specialized_preferred] || 0) == 0
+
+      violations[:free_days] = FreeDaysInRow.get_violations_hash(@to_schedule, solution, @scheduling_period) unless (@priorities[:free_days] || 0) == 0
 
       overall_sanction = violations.map { |_, violation| violation[:sanction] }.reduce(:+)
       violations[:sanction] = overall_sanction

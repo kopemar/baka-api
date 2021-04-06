@@ -1,7 +1,7 @@
 module Scheduling
   module Strategy
     class Strategy
-      attr_reader :violations, :solution, :patterns, :utilization, :employee_groups, :employees, :shift_duration, :templates
+      attr_reader :violations, :solution, :patterns, :utilization, :employee_groups, :employees, :shift_duration, :templates, :period
 
       def initialize(params)
         parse_params(params)
@@ -12,6 +12,7 @@ module Scheduling
       end
 
       def parse_params(params = {})
+        @period = params.fetch(:period, nil)
         @templates = params.fetch(:templates, nil)
         @violations = params.fetch(:violations)
         @solution = params.fetch(:solution)
