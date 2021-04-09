@@ -14,6 +14,7 @@ class ScheduleHelpers
   end
 
   def self.difference_between_shifts(period, shifts)
+    Rails.logger.debug "🦄 DIFFERENCE BETWEEN SHIFTS: #{shifts}"
     shifts = shifts.sort_by { |s| s.start_time }
     free_hours = []
     shifts.each_with_index do |_, i|

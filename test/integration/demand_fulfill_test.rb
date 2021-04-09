@@ -55,6 +55,8 @@ class DemandFulfillTest < ActionDispatch::IntegrationTest
     initial_violations = Scheduling::FreeDaysInRow.get_violations_hash(ShiftTemplate::in_scheduling_period(@period.id), schedule, @period)
     initial_sanction = initial_violations[:sanction]
 
+    assert schedule.all? { |_, v| v.length == 5 }
+
     Scheduling::Scheduling.new({ id: @period.id, priorities: { :free_days => 10 } }).call
 
     schedule = get_period_as_schedule(@period)
@@ -62,6 +64,8 @@ class DemandFulfillTest < ActionDispatch::IntegrationTest
     sanction = violations[:sanction]
     Rails.logger.debug "INITIAL: #{initial_sanction}, SANCTION: #{sanction}"
     assert initial_sanction > sanction || sanction == 0
+
+    assert schedule.all? { |_, v| v.length == 5 }
   end
 
 end

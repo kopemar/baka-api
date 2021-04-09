@@ -55,8 +55,8 @@ module Scheduling
 
         templates.each do |template|
           shift = Shift.from_template(template)
-          Rails.logger.debug "🫖 template to: #{employee.contracts.active_employment_contracts.first.schedule.shifts.to_a}"
-          Rails.logger.debug "🫖 template shift: ID -> #{template.id} #{shift.start_time.to_s}, specialization -> #{template.specialization_id || "nil"} "
+          Rails.logger.debug "🫖 #{employee_id} - template to: #{employee.contracts.active_employment_contracts.first.schedule.shifts.to_a}"
+          Rails.logger.debug "🫖 #{employee_id} - template shift: ID -> #{template.id} #{shift.start_time.to_s}, specialization -> #{template.specialization_id || "nil"} "
           shift.schedule_id = employee.contracts.active_employment_contracts.first.schedule_id
           shift.scheduler_type = SCHEDULER_TYPES[:SYSTEM]
           shift.save!
@@ -139,7 +139,7 @@ module Scheduling
 
       violations[:specialized_preferred] =  SpecializedPreferred.get_violations_hash(@to_schedule.filter { |s| s.priority > 0 }, solution) unless (@priorities[:specialized_preferred] || 0) == 0
 
-      violations[:free_days] = FreeDaysInRow.get_violations_hash(@to_schedule, solution, @scheduling_period) unless (@priorities[:free_days] || 0) == 0
+      violations[:free_days] = FreeDaysInRow.get_violations_hash(@to_schedule.filter { |s| s.priority > 0 }, solution, @scheduling_period) unless (@priorities[:free_days] || 0) == 0
 
       overall_sanction = violations.map { |_, violation| violation[:sanction] }.reduce(:+)
       violations[:sanction] = overall_sanction

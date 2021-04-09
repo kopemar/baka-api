@@ -27,6 +27,41 @@ class Scheduling::ShiftPatterns
     new_path
   end
 
+  def find_shifts_between(first = nil, last = nil, specializations = [])
+    Rails.logger.debug "🍥 find_shifts_between #{first} and #{last}"
+    shifts = []
+    shifts += [first] unless first.nil?
+    shifts += [last] unless last.nil?
+
+    first_vertex = @hash_vertices[first]
+    last_vertex = @hash_vertices[last]
+    intersection = []
+    if !first_vertex.nil? && !last_vertex.nil?
+      return [] unless first_vertex.nexts.get_shift_ids.include? last
+      intersection = first_vertex.nexts.get_shift_ids.intersection(last_vertex.prev.get_shift_ids)
+    elsif !first_vertex.nil?
+      intersection = first_vertex.nexts.get_shift_ids
+    elsif !last_vertex.nil?
+      intersection = last_vertex.prev.get_shift_ids
+    else
+      return []
+    end
+
+    return [] if intersection.empty?
+
+    specialized = []
+
+    intersection.each do |s|
+      specialized += @hash_vertices[s].specialized.filter { |shift| specializations.include? shift.specialization_id }.map { |shift| shift.id }
+    end
+    vertices = intersection + specialized
+
+
+    shifts += random_combination(vertices, 1) unless vertices.empty?
+
+    shifts
+  end
+
   def patterns_of_params(params)
     Rails.logger.debug "🐲 PATTERNS_OF_PARAMS #{params}"
     paths = []
@@ -46,11 +81,11 @@ class Scheduling::ShiftPatterns
     unless length.nil?
       possible_vertices = @vertices.filter { |vertex|
         (vertex.max_path_length >= length && (contains.empty? || contains.include?(vertex.shift.id) ||
-                vertex.specialized.one? { |s|
-                  # Rails.logger.debug "🦁 FILTERING specializations #{vertex.to_s} #{specializations} #{}"
-                  contains.include?(s.id) && specializations.include?(s.specialization_id)
-                  }
-            )
+            vertex.specialized.one? { |s|
+              # Rails.logger.debug "🦁 FILTERING specializations #{vertex.to_s} #{specializations} #{}"
+              contains.include?(s.id) && specializations.include?(s.specialization_id)
+            }
+        )
         )
 
       }
@@ -76,7 +111,7 @@ class Scheduling::ShiftPatterns
         Rails.logger.debug "⚽️ count times do get sample #{possible_vertices.map { |it| it.shift.id }}"
         sample = SchedulingUtils.get_sample(possible_vertices, false)
 
-        random_path = sample.nil? ? nil : sample.random_path({ :length => length, :contains => contains, :specializations => specializations })
+        random_path = sample.nil? ? nil : sample.random_path({:length => length, :contains => contains, :specializations => specializations})
 
         if random_path.nil?
           return []
@@ -150,13 +185,14 @@ class Scheduling::ShiftPatterns
 
     end
 
-    Rails.logger.debug "😘 hash vertices #{@hash_vertices.map { |k, v| "#{k} => #{v.to_s}"}}"
+    Rails.logger.debug "😘 hash vertices #{@hash_vertices.map { |k, v| "#{k} => #{v.to_s}" }}"
 
     # @hash_vertices = hash_vertices
     @vertices = @hash_vertices.map { |_, v| v }
   end
 
   private
+
   def map_to_paths(shift_templates)
     shift_templates.each do |template|
       @hash_vertices[template.id] = ShiftVertex.new(template)
