@@ -52,19 +52,39 @@ module Scheduling
       schedule.each do |employee_id, shift_ids|
         employee = @employees.find(employee_id)
         templates = shift_ids.map { |id| @to_schedule.find { |template| template.id == id } }
-
+        sample_id = nil
+        if  @shift_duration * shift_ids.length > employee.active_employment_contract.work_load * WEEKLY_WORKING_HOURS
+          sample_id = shift_ids.sample
+        end
         templates.each do |template|
           shift = Shift.from_template(template)
           Rails.logger.debug "🫖 #{employee_id} - template to: #{employee.contracts.active_employment_contracts.first.schedule.shifts.to_a}"
           Rails.logger.debug "🫖 #{employee_id} - template shift: ID -> #{template.id} #{shift.start_time.to_s}, specialization -> #{template.specialization_id || "nil"} "
           shift.schedule_id = employee.contracts.active_employment_contracts.first.schedule_id
           shift.scheduler_type = SCHEDULER_TYPES[:SYSTEM]
+          if template.id == sample_id
+            hours = @shift_duration - (@shift_duration * shift_ids.length - employee.active_employment_contract.work_load * WEEKLY_WORKING_HOURS)
+            shift = assign_shorter_shift(shift, hours)
+          end
           shift.save!
         end
       end
     end
 
     private
+
+    def assign_shorter_shift(shift, duration)
+      Rails.logger.debug "🍷 assign_shorter_shift"
+      sample = rand(2)
+
+      if sample == 0
+        shift.end_time = duration.hours.after(shift.break_minutes.minutes.after(shift.start_time)).to_time.beginning_of_minute
+      else
+        shift.start_time = duration.hours.before(shift.break_minutes.minutes.before(shift.end_time)).to_time.beginning_of_minute
+      end
+
+      shift
+    end
 
     def try_to_improve_solution(solution)
       violations = get_soft_constraint_violations(solution)

@@ -7,16 +7,6 @@ class Employee < User
 
   attr_accessor :last
 
-  #todo remove, test only
-  def self.notify_all
-    NotificationHelpers.send_notification(all.to_a, {
-        notification: {
-            title: "Test",
-            body: "Hey #{DateTime.now}!"
-        }
-    })
-  end
-
   def specializations
     Specialization.joins(:contracts).where(contracts: { employee_id: self.id })
   end
@@ -47,17 +37,13 @@ class Employee < User
     self.contracts.active_agreements.length > 0
   end
 
-  def active_contracts_count
-    self.contracts.active_employment_contracts.length
+  def active_employment_contract
+    self.contracts.active_employment_contracts.first
   end
 
   # cannot plan the employees with contract starting in future...
   scope :with_employment_contract, -> {
     joins(:contracts).merge!(Contract.active_employment_contracts).select("DISTINCT ON (users.id) users.*")
-  }
-
-  scope :to_be_planned, -> (start_date, end_date) {
-    Employee.with_employment_contract.joins(:contracts).merge!(Contract.with_no_shifts_planned_in(start_date, end_date)).select("DISTINCT ON (users.id) users.*")
   }
 
   def as_json(*args)
@@ -70,29 +56,6 @@ class Employee < User
       return true if contract.working_days.include?(date.wday)
     end
     false
-  end
-
-  def get_schedule_for_shift_time(start_time, end_time)
-    day_of_week = start_time.wday
-    can_work_at = can_work_at?(start_time)
-    if can_work_at
-      if active_contracts_count == 1
-        schedule = contracts.first.schedule
-        return schedule if schedule.shifts.planned_between(MINIMUM_BREAK_HOURS.hours.before(start_time), MINIMUM_BREAK_HOURS.hours.after(end_time)).empty?
-      else
-        if active_contracts_count > 0
-          contracts.active_employment_contracts.each do |c|
-            schedule = c.schedule
-            if schedule.contract.working_days.include?(day_of_week)
-              if schedule.shifts.planned_between(MINIMUM_BREAK_HOURS.hours.before(start_time), MINIMUM_BREAK_HOURS.hours.after(end_time)).empty?
-                return schedule
-              end
-            end
-          end
-        end
-      end
-    end
-    nil
   end
 
   private def last_scheduled_shift_helper(date)

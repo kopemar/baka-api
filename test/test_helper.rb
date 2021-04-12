@@ -34,6 +34,21 @@ class ActiveSupport::TestCase
     response.parsed_body.deep_symbolize_keys[:data]
   end
 
+  def generate_long_shift_templates(period, auth_tokens)
+    post "/periods/#{period.id}/templates",
+         params: {
+             working_days: [1, 2, 3, 4, 5, 6, 7],
+             start_time: "08:00",
+             end_time: "20:30",
+             shift_hours: 12,
+             break_minutes: 30,
+             per_day: 1
+         },
+         headers: auth_tokens
+
+    response.parsed_body.deep_symbolize_keys[:data]
+  end
+
   def get_period_as_schedule(period)
     schedule = {}
     Shift.where(shift_template: ShiftTemplate::in_scheduling_period(period.id)).to_a.group_by { |shift|
