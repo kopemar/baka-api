@@ -3,6 +3,7 @@ Rails.application.routes.draw do
   resources :scheduling_period, path: "periods"
   resources :shift_template, path: "templates"
   resources :organization
+  resources :employee
 
   mount_devise_token_auth_for 'User', at: 'auth', :controllers => { sessions: 'users/sessions'}
 
