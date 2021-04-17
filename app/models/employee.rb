@@ -2,7 +2,7 @@ class Employee < User
   validates :first_name, presence: true, allow_blank: false
   validates :last_name, presence: true, allow_blank: false
   validates :birth_date, presence: true, allow_blank: false
-  validate :validate_birth_date
+  validate :validate_birth_date, :validate_username
 
   has_many :contracts
 
@@ -63,6 +63,12 @@ class Employee < User
   def validate_birth_date
     unless self.birth_date.to_date.before?(15.years.ago)
       errors.add(:birth_date, "not old enough")
+    end
+  end
+
+  def validate_username
+    unless self.username.match?("[a-z0-9]+([a-z0-9.]+)+([a-z0-9]+)+", "[A-z0-9]+([A-z0-9.]).([A-z0-9]+)+")
+      errors.add(:username, "username does not match pattern")
     end
   end
 
