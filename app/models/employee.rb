@@ -2,6 +2,7 @@ class Employee < User
   validates :first_name, presence: true, allow_blank: false
   validates :last_name, presence: true, allow_blank: false
   validates :birth_date, presence: true, allow_blank: false
+  validate :validate_birth_date
 
   has_many :contracts
 
@@ -56,6 +57,13 @@ class Employee < User
       return true if contract.working_days.include?(date.wday)
     end
     false
+  end
+
+  # validate whether age is > 15
+  def validate_birth_date
+    unless self.birth_date.to_date.before?(15.years.ago)
+      errors.add(:birth_date, "not old enough")
+    end
   end
 
   private def last_scheduled_shift_helper(date)

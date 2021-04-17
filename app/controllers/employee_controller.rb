@@ -2,20 +2,25 @@ class EmployeeController < ApplicationController
   include DeviseTokenAuth::Concerns::SetUserByToken
 
   before_action :authenticate_user!
-
+  # todo cancan manager
   def create
     params.require([:first_name, :last_name, :username, :username, :birth_date, :password, :email])
     params_hash = params.permit(:first_name, :last_name, :username, :username, :birth_date, :password, :email)
 
     user_by_uid = User.find_by_uid(params[:email])
-    return render :status => :conflict, :json => {:errors => ["Could not create user with this email"], :success => false} unless user_by_uid.nil?
+    return render status: :conflict, json: {errors: ["Could not create user with this email"], success: false} unless user_by_uid.nil?
 
     user_by_username = User.find_by_username(params[:username])
-    return render :status => :conflict, :json => {:errors => ["Could not create user with this username"], :success => false} unless user_by_username.nil?
+    return render status: :conflict, json: {errors: ["Could not create user with this username"], success: false} unless user_by_username.nil?
 
-    employee = Employee.create!(params_hash.merge({organization_id: current_user.organization_id}))
+    employee = Employee.new(params_hash.merge({organization_id: current_user.organization_id, uid: params[:email]}))
 
-    render json: { data: employee }, status: :created
+    if employee.save!
+      e = Employee.find_by_username(params[:username])
+      render json: { data: e, success: true }, status: :created
+    else
+      render json: { errors: errors, success: false }, status: :unprocessable_entity
+    end
   end
 
   def get_all
