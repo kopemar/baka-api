@@ -55,3 +55,4 @@ gem 'active_record_upsert'
 gem 'redis'
 gem 'sidekiq'
 gem 'sidekiq-cron'
+gem "cancancan", "~> 3.2"
