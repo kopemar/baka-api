@@ -23,11 +23,11 @@ class EmployeeController < ApplicationController
     end
   end
 
-  def get_all
-    render json: Employee.all
+  def index
+    render json: Employee.accessible_by(current_ability)
   end
 
-  def get_by_id
+  def show
     params.require(:id)
     render json: {:data => Employee.where(id: params[:id]).first}
   end

@@ -4,7 +4,7 @@ class ShiftTemplateController < ApplicationController
 
   def create_specialized_template
     params.require([:id, :specialization_id])
-    return render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless current_user.is_manager?
+    return render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless current_user.manager?
 
     parent_template = ShiftTemplate::filter_by_organization(current_user.organization_id).where(id: params[:id]).first
     specialization = Specialization.where(id: params[:specialization_id]).first
@@ -36,7 +36,7 @@ class ShiftTemplateController < ApplicationController
   # todo remove this
   def create
     params.require([:start_time, :end_time, :break_minutes, :priority])
-    render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless current_user.is_manager?
+    render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless current_user.manager?
 
     template = ShiftTemplate.create!(
         start_time: params[:start_time].to_datetime,
@@ -70,7 +70,7 @@ class ShiftTemplateController < ApplicationController
   def get_specializations
     params.require(:id)
 
-    return render :status => :forbidden unless current_user.is_manager?
+    return render :status => :forbidden unless current_user.manager?
 
     template = ShiftTemplate.where(id: params[:id]).first
     return render :status => :not_found if template.nil?

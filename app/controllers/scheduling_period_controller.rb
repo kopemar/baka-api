@@ -59,7 +59,7 @@ class SchedulingPeriodController < ApplicationController
   end
 
   def generate_schedule
-    unless current_user.is_manager?
+    unless current_user.manager?
       return render :status => :forbidden, :json => {:errors => ["Only managers can call this"]}
     end
     permitted = params.permit(:id, priorities: [:no_empty_shifts, :demand_fulfill])
@@ -72,14 +72,14 @@ class SchedulingPeriodController < ApplicationController
     if period.organization_id != current_user.organization_id
       return render :status => :forbidden, :json => {:errors => ["This period is not within your organization."]}
     end
-    unless current_user.is_manager?
+    unless current_user.manager?
       return render :status => :forbidden, :json => {:errors => ["Only managers and higher can access this resource."]}
     end
     render :json => period
   end
 
   def submit
-    unless current_user.is_manager?
+    unless current_user.manager?
       return render :status => :forbidden, :json => {:errors => ["Only managers can call this"]}
     end
     period = SchedulingPeriod.where(id: params[:id]).first

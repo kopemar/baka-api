@@ -4,7 +4,7 @@ class SpecializationsController < ApplicationController
   # GET /specializations
   # Get all speci in scope of manager organization
   def index
-    unless current_user.is_manager?
+    unless current_user.manager?
       return render :status => :forbidden
     end
 
@@ -17,7 +17,7 @@ class SpecializationsController < ApplicationController
   # Create new speci for current users' organization
   def create
     params.require(:name)
-    unless current_user.is_manager?
+    unless current_user.manager?
       return render :status => :forbidden
     end
 
@@ -33,7 +33,7 @@ class SpecializationsController < ApplicationController
   def update
     params.require(:id)
     params.require(:employees)
-    unless current_user.is_manager?
+    unless current_user.manager?
       return render :status => :forbidden
     end
 
@@ -56,7 +56,7 @@ class SpecializationsController < ApplicationController
   def get_possible_contracts
     params.require(:id)
 
-    unless current_user.is_manager?
+    unless current_user.manager?
       return render :status => :forbidden
     end
 
@@ -71,7 +71,7 @@ class SpecializationsController < ApplicationController
   def get_employees
     params.require(:id)
 
-    unless current_user.is_manager?
+    unless current_user.manager?
       return render :status => :forbidden
     end
 

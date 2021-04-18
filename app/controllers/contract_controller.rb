@@ -1,13 +1,28 @@
 class ContractController < ApplicationController
   include DeviseTokenAuth::Concerns::SetUserByToken
 
+  before_action :authenticate_user!#, load_and_authorize_resource
+
   def get_all
     render json: Contract::active_employment_contracts
   end
 
-  before_action :authenticate_user!
+  def create
+    params.require([:start_date, :work_load, :employee_id, :type])
+    params_hash = params.permit(:start_date, :work_load, :employee_id, :type)
 
-  def get_current_user_contracts
-    render json: {:contracts => Contract.where(employee_id: current_user.id)}
+    return render json: { success: false, data: nil }, status: :forbidden if Employee.where(id: params[:employee_id]).accessible_by(current_ability).empty?
+    contract = Contract.new(params_hash)
+
+    Rails.logger.debug "🍬 #{contract}"
+    if contract.save
+      render json: { success: true, data: Contract.find(contract.id)}
+    else
+      render json: { success: false, data: nil }, status: :unprocessable_entity
+    end
+  end
+
+  def index
+    render json: {contracts: Contract.accessible_by(current_ability)}
   end
 end

@@ -19,9 +19,7 @@ class Contract < ApplicationRecord
   end
 
   def create_schedule
-    Rails.logger.debug "🍷 Created Contract #{self.schedule_id}"
     if self.schedule.nil?
-      Rails.logger.debug "🍷 Schedule is created #{self.id}"
       self.schedule_id = Schedule.create!(contract_id: self.id).id
       self.save!
     end
