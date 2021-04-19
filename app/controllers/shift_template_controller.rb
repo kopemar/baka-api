@@ -51,7 +51,7 @@ class ShiftTemplateController < ApplicationController
 
   def update
     params.require(:id)
-    params.permit(:priority)
+    permitted_params = params.permit(:priority)
 
     template = ShiftTemplate.where(id: params[:id]).first
 
@@ -60,8 +60,7 @@ class ShiftTemplateController < ApplicationController
     priority = params[:priority]
 
     unless priority.nil?
-      template.priority = priority
-      template.save!
+      template.update! permitted_params
     end
 
     render :json => template

@@ -26,6 +26,20 @@ class SchedulingPeriodController < ApplicationController
 
     @scheduling_period.update! permitted_params
 
+    if params[:submitted]
+      employees = period.assigned_employees
+      NotificationHelpers.send_notification(
+          employees,
+          {
+              priority: "high",
+              notification: {
+                  body: "New schedule submitted!",
+                  title: "Schedule for #{period.start_date} - #{period.end_date} was submitted"
+              }
+          }
+      )
+    end
+
     render :status => :ok, :json => { data: @scheduling_period }
   end
 
@@ -68,43 +82,9 @@ class SchedulingPeriodController < ApplicationController
   end
 
   def show
-    period = SchedulingPeriod.find(params[:id])
-    if period.organization_id != current_user.organization_id
-      return render :status => :forbidden, :json => {:errors => ["This period is not within your organization."]}
-    end
-    unless current_user.manager?
-      return render :status => :forbidden, :json => {:errors => ["Only managers and higher can access this resource."]}
-    end
+    period = SchedulingPeriod.accessible_by(current_ability).find(params[:id])
+
     render :json => period
-  end
-
-  def submit
-    unless current_user.manager?
-      return render :status => :forbidden, :json => {:errors => ["Only managers can call this"]}
-    end
-    period = SchedulingPeriod.where(id: params[:id]).first
-    if period.nil?
-      return render :status => :not_found, :json => {:errors => ["Schedule period does not exist."]}
-    end
-
-    employees = period.assigned_employees
-
-    period.submitted = true
-    # todo already submitted?
-    period.save!
-
-    NotificationHelpers.send_notification(
-        employees,
-        {
-            priority: "high",
-            notification: {
-                body: "New schedule submitted!",
-                title: "Schedule for #{period.start_date} - #{period.end_date} was submitted"
-            }
-        }
-    )
-
-    render :status => :ok, :json => {:success => true, :data => period}
   end
 
   private
