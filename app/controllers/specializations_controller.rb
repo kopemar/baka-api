@@ -61,10 +61,10 @@ class SpecializationsController < ApplicationController
       return render :status => :forbidden
     end
 
-    @specialization = Specialization.where(id: params[:id])
+    @specialization = Specialization.accessible_by(current_ability, :update).find(params[:id])
     return render :status => :not_found if @specialization.nil?
 
-    employees = Employee.joins(:contracts).where(contracts: Contract.joins(:specializations).where(specializations: {id: params[:id]}))
+    employees = Employee.accessible_by(current_ability).joins(:contracts).where(contracts: Contract.joins(:specializations).where(specializations: {id: params[:id]}))
 
     render :json => {:employees => employees}
   end
