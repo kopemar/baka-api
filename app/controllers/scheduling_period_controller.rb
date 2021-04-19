@@ -44,11 +44,18 @@ class SchedulingPeriodController < ApplicationController
   end
 
   def calculate_shift_times
-    params.require([:start_time, :end_time, :shift_hours, :break_minutes, :per_day])
-    params.permit(:night_shift)
+    params.require([:shift_hours, :break_minutes, :per_day])
+    params.permit(:shift_hours, :break_minutes, :per_day, :night_shift, :is_24_hours, :shift_start, :start_time, :end_time)
+
+    if params[:is_24_hours] == true.to_s
+      params.require(:shift_start)
+    else
+      params.require([:start_time, :end_time])
+    end
 
     render :json => {:times => ShiftTimesCalcService.call(params)}
   rescue ShiftTimesCalcService::ShiftServiceError => e
+    Rails.logger.debug "Reason: #{e}"
     render :status => :bad_request, :json => {:errors => [e.message]}
   end
 
