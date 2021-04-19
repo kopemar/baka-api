@@ -7,8 +7,8 @@ class ShiftTimesCalcService < ApplicationService
 
   # result is deterministic, that's why IDs should be valid anytime & can be used in API...
   def call
-    night_shift = @params[:night_shift] == true.to_s
-    is_24_hours = @params[:is_24_hours] == true.to_s
+    night_shift = @params[:night_shift] == true || @params[:night_shift] == true.to_s
+    is_24_hours = @params[:is_24_hours] == true || @params[:is_24_hours] == true.to_s
 
     if night_shift && is_24_hours
       start_time = @params[:shift_start].to_time.beginning_of_minute
@@ -32,7 +32,7 @@ class ShiftTimesCalcService < ApplicationService
 
     array = Array.new
 
-    raise ShiftServiceError.new("Select 24h mode instead") unless hours_in_day < 24 || @params[:is_24_hours] == true.to_s
+    raise ShiftServiceError.new("Select 24h mode instead") unless hours_in_day < 24 || is_24_hours
     raise ShiftServiceError.new("Working hours in the day can not be covered.") unless shift_duration*per_day >= hours_in_day
     raise ShiftServiceError.new("Too many shifts at one time") if shift_duration == hours_in_day && per_day > 1
     raise ShiftServiceError.new("Shift is too long.") unless shift_duration <= hours_in_day

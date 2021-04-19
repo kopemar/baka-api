@@ -61,7 +61,7 @@ class SchedulingPeriodController < ApplicationController
 
   def generate_shift_templates
     params.require([:start_time, :end_time, :shift_hours, :break_minutes, :per_day])
-    params.permit(:night_shift)
+    params.permit(:night_shift, :is_24_hours)
     render :status => :created, :json => { :data => ShiftTemplateGenerator.call(params) }
   end
 

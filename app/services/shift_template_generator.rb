@@ -18,20 +18,26 @@ class ShiftTemplateGenerator < ApplicationService
 
       Rails.logger.debug "😻 excluded #{excluded}"
 
-      period = SchedulingPeriod.where(id: scheduling_period_id).first
+      period = SchedulingPeriod.find(scheduling_period_id)
 
       ShiftTemplate::in_scheduling_period(period.id).where(is_employment_contract: true).delete_all
 
-      Rails.logger.debug "🙀 Scheduling PERIOD: #{period.start_date}"
+      period.generate_scheduling_units_in(working_days)
 
-      units = period.generate_scheduling_units_in(working_days)
       template_times = ShiftTimesCalcService.call(@params)
       templates = Array.new
-
+      units = period.scheduling_units.to_a
       working_days.each do |day|
-        unit = units.select { |u| u.start_time.to_date == (day - 1).days.after(period.start_date) }.first
+        unit = units.find { |u| u.start_time.to_date == (day - 1).days.after(period.start_date) }
         template_times.each { |time|
-          templates.push(unit.create_shift_template(time[:start_time], time[:end_time], @params[:break_minutes].to_i)) if excluded[day.to_s].nil? || !excluded[day.to_s].include?(time[:id].to_i) }
+          end_time = time[:end_time].to_datetime
+          Rails.logger.debug "🙀 Shift template: #{time} #{end_time.to_datetime.before?(time[:start_time].to_datetime)}"
+          # hotfix to make 24-hours working day work
+          if end_time.to_time.before?(time[:start_time].to_time) && @params[:is_24_hours] == true
+            Rails.logger.debug "🌚🌚"
+            end_time = 1.day.after(end_time)
+          end
+          templates.push(unit.create_shift_template(time[:start_time].to_datetime, end_time, @params[:break_minutes].to_i)) if excluded[day.to_s].nil? || !excluded[day.to_s].include?(time[:id].to_i) }
       end
       return templates
     end

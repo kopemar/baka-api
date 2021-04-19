@@ -33,8 +33,8 @@ class ShiftTemplate < ApplicationRecord
   end
 
   def validate_time
-    unless self.start_time.before?(self.end_time)
-      errors.add("Start time has to be before end time")
+    unless self.start_time.to_datetime.before?(self.end_time.to_datetime)
+      errors.add("Start time has to be before end time #{self.start_time} #{self.end_time}")
     end
   end
 

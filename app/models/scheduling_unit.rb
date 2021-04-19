@@ -14,10 +14,11 @@ class SchedulingUnit < ApplicationRecord
 
   # generates shift templates for employment contract employees
   def create_shift_template(start_time, end_time, break_minutes, is_excluded = false)
+    Rails.logger.debug "🌚 #{start_time}, #{end_time}"
     st = start_time.hour.hours.after(start_time.min.minutes.after(self.start_time.to_date))
     en = end_time.hour.hours.after(end_time.min.minutes.after(self.start_time.to_date))
-    if start_time.to_time > end_time.to_time
-      en = end_time.hour.hours.after(self.start_time.to_date)
+    if en.before?(st)
+      en = 1.day.after(end_time.hour.hours.after(self.end_time.to_date))
     end
     ShiftTemplate.create!(
         start_time: st,
