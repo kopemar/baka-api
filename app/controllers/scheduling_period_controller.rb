@@ -7,14 +7,14 @@ class SchedulingPeriodController < ApplicationController
   def index
     unless params[:from].nil?
       return render json: {
-          :periods => @collection = SchedulingPeriod.where(organization_id: current_user.organization_id).where("end_date >= ?", params[:from]).paginate(page: params[:page], per_page: params[:per_page].nil? ? 30 : params[:per_page]),
+          :periods => @collection = SchedulingPeriod.accessible_by(current_ability).where("end_date >= ?", params[:from]).paginate(page: params[:page], per_page: params[:per_page].nil? ? 30 : params[:per_page]),
           :current_page => @collection.current_page,
           :total_pages => @collection.total_pages,
           :has_next => @collection.next_page.present?
       }
     end
     render json: {
-        :periods => @collection = SchedulingPeriod.where(organization_id: current_user.organization_id).paginate(page: params[:page], per_page: params[:per_page].nil? ? 30 : params[:per_page]),
+        :periods => @collection = SchedulingPeriod.accessible_by(current_ability).paginate(page: params[:page], per_page: params[:per_page].nil? ? 30 : params[:per_page]),
         :current_page => @collection.current_page,
         :total_pages => @collection.total_pages,
         :has_next => @collection.next_page.present?
@@ -22,7 +22,7 @@ class SchedulingPeriodController < ApplicationController
   end
 
   def update
-    @scheduling_period = SchedulingPeriod::filter_by_organization(current_user.organization_id).find(params[:id])
+    @scheduling_period = SchedulingPeriod.accessible_by(current_ability, :update).find(params[:id])
 
     @scheduling_period.update! permitted_params
 
@@ -64,7 +64,7 @@ class SchedulingPeriodController < ApplicationController
     end
     permitted = params.permit(:id, priorities: [:no_empty_shifts, :demand_fulfill])
     result = Scheduling::Scheduling.new(permitted).call
-    render :json => {:errors => ["No errors, just test message"], :success => true, :violations => result}
+    render :json => { :success => true, :violations => result }
   end
 
   def show
