@@ -13,10 +13,14 @@ class Ability
         can :read, Employee, :id => Employee.where(organization_id: user.organization_id).map(&:id)
         can :update, SchedulingPeriod, :organization_id => user.organization_id, :submitted => false
         can :read, SchedulingPeriod, :organization_id => user.organization_id
+        can :read, Specialization, :organization_id => user.organization_id
+        can :create, Specialization
+        can :update, Specialization, :organization_id => user.organization_id
         # can :update, Employee, :organization_id => user.organization_id
       else
         can :read, Contract, :employee_id => user.id
         can :read, Shift, :schedule_id => Contract.where(employee_id: user.id).map(&:schedule_id)
+        can :read, Employee, :id => Employee.where(organization_id: user.organization_id).map(&:id)
       end
     #
     # The first argument to `can` is the action you are giving the user

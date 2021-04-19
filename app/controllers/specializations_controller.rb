@@ -4,11 +4,7 @@ class SpecializationsController < ApplicationController
   # GET /specializations
   # Get all speci in scope of manager organization
   def index
-    unless current_user.manager?
-      return render :status => :forbidden
-    end
-
-    @specializations = Specialization.filter(filtering_params(params)).for_organization(current_user.organization_id)
+    @specializations = Specialization.filter(filtering_params(params)).accessible_by(current_ability)
 
     render :json => {:data => @specializations}
   end
@@ -17,10 +13,6 @@ class SpecializationsController < ApplicationController
   # Create new speci for current users' organization
   def create
     params.require(:name)
-    unless current_user.manager?
-      return render :status => :forbidden
-    end
-
     @specialization = Specialization.new(name: params[:name], organization_id: current_user.organization_id)
 
     if @specialization.save
@@ -31,18 +23,12 @@ class SpecializationsController < ApplicationController
   end
 
   def update
-    params.require(:id)
-    params.require(:employees)
-    unless current_user.manager?
-      return render :status => :forbidden
-    end
+    params.require([:id, :employees])
 
-    @specialization = Specialization.where(id: params[:id])
+    @specialization = Specialization.accessible_by(current_ability, :update).find(params[:id])
     return render :status => :not_found if @specialization.nil?
 
     contracts = Contract.where(id: params[:employees].map(&:to_i))
-
-    Rails.logger.debug "🥵 #{contracts.to_a}"
 
     contracts.each do |c|
       c.specializations.push(@specialization)
@@ -60,7 +46,7 @@ class SpecializationsController < ApplicationController
       return render :status => :forbidden
     end
 
-    @specialization = Specialization.where(id: params[:id])
+    @specialization = Specialization.find(params[:id])
     return render :status => :not_found if @specialization.nil?
 
     contracts = Contract::active_employment_contracts.joins(:employee).where(users: {organization_id: current_user.organization_id}).left_joins(:specializations)
