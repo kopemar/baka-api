@@ -18,6 +18,7 @@ local:
   <<: *default
   host: localhost
   database: baka_api_development
+  port: 5433
 
 test:
   <<: *default
