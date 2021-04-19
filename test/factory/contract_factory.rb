@@ -36,7 +36,6 @@ FactoryBot.define do
   factory :contract, class: EmploymentContract do
     start_date { "2019-01-01" }
     work_load { 1.0 }
-    working_days { [1, 2, 3] }
 
     trait :inactive do
       start_date { "2017-01-01" }
@@ -45,10 +44,6 @@ FactoryBot.define do
 
     trait :active do
       end_date { nil }
-    end
-
-    trait :works_mondays do
-      working_days { [1] }
     end
   end
 
