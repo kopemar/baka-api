@@ -53,9 +53,7 @@ class ShiftTemplateController < ApplicationController
     params.require(:id)
     permitted_params = params.permit(:priority)
 
-    template = ShiftTemplate.where(id: params[:id]).first
-
-    return render :status => :not_found if template.nil?
+    template = ShiftTemplate.find(params[:id])
 
     priority = params[:priority]
 
