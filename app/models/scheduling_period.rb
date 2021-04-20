@@ -1,5 +1,7 @@
 # weeks
 class SchedulingPeriod < ApplicationRecord
+  include Filterable
+
   belongs_to :organization
   has_many :scheduling_units
 
@@ -30,6 +32,10 @@ class SchedulingPeriod < ApplicationRecord
   def is_week?
     true
   end
+
+  scope :filter_by_from, -> (start_date) {
+    where("end_date >= ?", start_date)
+  }
 
   scope :filter_by_organization, -> (organization_id) {
     where(organization_id: organization_id)

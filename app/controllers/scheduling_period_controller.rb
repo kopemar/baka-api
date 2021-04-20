@@ -5,16 +5,8 @@ class SchedulingPeriodController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    unless params[:from].nil?
-      return render json: {
-          :periods => @collection = SchedulingPeriod.accessible_by(current_ability).where("end_date >= ?", params[:from]).paginate(page: params[:page], per_page: params[:per_page].nil? ? 30 : params[:per_page]),
-          :current_page => @collection.current_page,
-          :total_pages => @collection.total_pages,
-          :has_next => @collection.next_page.present?
-      }
-    end
     render json: {
-        :periods => @collection = SchedulingPeriod.accessible_by(current_ability).paginate(page: params[:page], per_page: params[:per_page].nil? ? 30 : params[:per_page]),
+        :periods => @collection = SchedulingPeriod.filter(filtering_params(params)).accessible_by(current_ability).order("id ASC").paginate(page: params[:page], per_page: params[:per_page].nil? ? 30 : params[:per_page]),
         :current_page => @collection.current_page,
         :total_pages => @collection.total_pages,
         :has_next => @collection.next_page.present?
@@ -40,7 +32,7 @@ class SchedulingPeriodController < ApplicationController
       )
     end
 
-    render :status => :ok, :json => { data: @scheduling_period }
+    render :status => :ok, :json => {data: @scheduling_period}
   end
 
   def calculate_shift_times
@@ -62,7 +54,7 @@ class SchedulingPeriodController < ApplicationController
   def generate_shift_templates
     params.require([:start_time, :end_time, :shift_hours, :break_minutes, :per_day])
     params.permit(:night_shift, :is_24_hours)
-    render :status => :created, :json => { :data => ShiftTemplateGenerator.call(params) }
+    render :status => :created, :json => {:data => ShiftTemplateGenerator.call(params)}
   end
 
   def get_unit_dates_for_period
@@ -85,7 +77,7 @@ class SchedulingPeriodController < ApplicationController
     end
     permitted = params.permit(:id, priorities: [:no_empty_shifts, :demand_fulfill])
     result = Scheduling::Scheduling.new(permitted).call
-    render :json => { :success => true, :violations => result }
+    render :json => {:success => true, :violations => result}
   end
 
   def show
@@ -98,6 +90,10 @@ class SchedulingPeriodController < ApplicationController
 
   def permitted_params
     params.permit(:submitted)
+  end
+
+  def filtering_params(params)
+    params.slice(:from)
   end
 
 end
