@@ -55,7 +55,7 @@ class ShiftController < ApplicationController
   end
 
   def get_possible_schedules
-    shift = ShiftTemplate.where(id: params[:id]).first
+    shift = ShiftTemplate.find(params[:id])
     if shift.nil?
       render :status => :not_found, json: {:errors => ["Shift template not found!"]}
     else

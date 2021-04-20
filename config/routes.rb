@@ -3,7 +3,7 @@ Rails.application.routes.draw do
   resources :scheduling_period, path: "periods"
   resources :shift_template, path: "templates"
   resources :organization
-  resources :employee
+  resources :employee, path: "employees"
   resources :contract, path: "contracts"
 
   mount_devise_token_auth_for 'User', at: 'auth', :controllers => { sessions: 'users/sessions'}
@@ -14,6 +14,8 @@ Rails.application.routes.draw do
   get "periods/:id/calculations/schedule", to: "schedule#schedule"
 
   get "employees/:id/shifts", to: "employee#shifts"
+  get "employees/:id/specializations", to: "employee#specializations"
+  get "employees/:id/contracts", to: "employee#contracts"
 
   get "contracts", to: "contract#get_current_user_contracts"
 

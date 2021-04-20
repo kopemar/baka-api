@@ -29,7 +29,19 @@ class EmployeeController < ApplicationController
 
   def show
     params.require(:id)
-    render json: {:data => Employee.where(id: params[:id]).first}
+    render json: {:data => Employee.find(params[:id])}
+  end
+
+  def specializations
+    params.require(:id)
+    employee = Employee.accessible_by(current_ability).find(params[:id])
+    render json: { data: employee.specializations }
+  end
+
+  def contracts
+    params.require(:id)
+    employee = Employee.accessible_by(current_ability).find(params[:id])
+    render json: { data: employee.contracts }
   end
 
   def shifts

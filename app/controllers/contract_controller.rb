@@ -23,6 +23,6 @@ class ContractController < ApplicationController
   end
 
   def index
-    render json: {contracts: Contract.accessible_by(current_ability)}
+    render json: { data: Contract.accessible_by(current_ability) }
   end
 end
