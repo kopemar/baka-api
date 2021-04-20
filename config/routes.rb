@@ -31,7 +31,7 @@ Rails.application.routes.draw do
   post "templates/:id/specialized", to: "shift_template#create_specialized_template"
   get "templates/:id/calculations/specializations", to: "shift_template#get_specializations"
 
-  get "templates/:id/employees", to: "shift_template#get_employees"
+  get "templates/:id/employees", to: "shift_template#employees"
 
   get "periods/:id/units", to: "scheduling_unit#in_period"
 

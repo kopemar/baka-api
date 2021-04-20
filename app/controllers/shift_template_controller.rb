@@ -78,11 +78,11 @@ class ShiftTemplateController < ApplicationController
     render :json => { data: specializations }
   end
 
-  def get_employees
+  def employees
     template = ShiftTemplate.where(id: params["id"]).first
     return render :status => :bad_request, :json => {:errors => ["No ID"]} if template.nil?
 
-    render :json => {:employees => Contract.where(schedule_id: Shift.where(shift_template_id: template.id).map(&:schedule_id)).map(&:employee).as_json(:only => [:id, :first_name, :last_name, :username])}
+    render :json => {:employees => Contract.where(schedule_id: Shift.where(shift_template_id: template.id).map(&:schedule_id)).map(&:employee).as_json(:only => [:id, :first_name, :last_name, :username, :uid])}
   end
 
   def get_unassigned_shifts

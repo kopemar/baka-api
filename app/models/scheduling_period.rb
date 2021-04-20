@@ -34,7 +34,7 @@ class SchedulingPeriod < ApplicationRecord
   end
 
   scope :filter_by_from, -> (start_date) {
-    where("end_date >= ?", start_date)
+    where("end_date >= ?", start_date.to_date)
   }
 
   scope :filter_by_organization, -> (organization_id) {
