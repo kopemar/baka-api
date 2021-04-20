@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_20_055759) do
+ActiveRecord::Schema.define(version: 2021_04_20_150712) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -24,7 +24,7 @@ ActiveRecord::Schema.define(version: 2021_04_20_055759) do
     t.integer "maximum_working_hours"
     t.integer "employee_id"
     t.integer "schedule_id"
-    t.float "work_load", default: 1.0, null: false
+    t.float "work_load", default: 1.0
   end
 
   create_table "contracts_specializations", force: :cascade do |t|

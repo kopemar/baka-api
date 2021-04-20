@@ -34,7 +34,6 @@ class User < ApplicationRecord
     hash.merge({manager: manager?, organization_name: self.organization.name, organization_id: self.organization_id})
   end
 
-  # todo regex
   def validate_username
     unless self.username.match?(/[A-z0-9]+([A-z0-9.]).([A-z0-9]+)+/)
       errors.add(:username, "username does not match pattern")

@@ -8,8 +8,8 @@ class ContractController < ApplicationController
   end
 
   def create
-    params.require([:start_date, :work_load, :employee_id, :type])
-    params_hash = params.permit(:start_date, :work_load, :employee_id, :type)
+    params.require([:start_date, :employee_id, :type])
+    params_hash = params.permit(:start_date, :end_date, :work_load, :employee_id, :type)
 
     return render json: { success: false, data: nil }, status: :forbidden if Employee.where(id: params[:employee_id]).accessible_by(current_ability).empty?
     contract = Contract.new(params_hash)

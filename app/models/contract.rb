@@ -26,7 +26,7 @@ class Contract < ApplicationRecord
   end
 
   def active
-    self.end_date.nil? || (end_date.after?(Date.today) && start_date.before?(Date.today))
+    self.end_date.nil? || (end_date.after?(Date.today) && start_date.before?(1.day.after(Date.today)))
   end
 
   def get_specializations
