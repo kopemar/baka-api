@@ -43,6 +43,9 @@ module Scheduling
 
         Rails.logger.debug "📅 SCHEDULE: #{schedule} "
         assign_shifts(schedule)
+
+        @scheduling_period.update(planned: true)
+
         return get_soft_constraint_violations(schedule)
       end
     end

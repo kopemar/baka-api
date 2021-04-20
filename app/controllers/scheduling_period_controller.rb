@@ -19,7 +19,7 @@ class SchedulingPeriodController < ApplicationController
     @scheduling_period.update! permitted_params
 
     if params[:submitted]
-      employees = period.assigned_employees
+      employees = @scheduling_period.assigned_employees
       NotificationHelpers.send_notification(
           employees,
           {
