@@ -28,7 +28,7 @@ class ShiftTemplateController < ApplicationController
   def index
     params.permit(:unit, :unassigned)
 
-    @templates = ShiftTemplate.filter(filtering_params(params)).filter_by_organization(current_user.organization_id)
+    @templates = ShiftTemplate.filter(filtering_params(params)).accessible_by(current_ability, :read)
 
     render :json => {:data => @templates}
   end
@@ -79,7 +79,9 @@ class ShiftTemplateController < ApplicationController
   end
 
   def employees
-    template = ShiftTemplate.where(id: params["id"]).first
+    params.require(:id)
+    params.permit(:id)
+    template = ShiftTemplate.find(params[:id])
     return render :status => :bad_request, :json => {:errors => ["No ID"]} if template.nil?
 
     render :json => {:employees => Contract.where(schedule_id: Shift.where(shift_template_id: template.id).map(&:schedule_id)).map(&:employee).as_json(:only => [:id, :first_name, :last_name, :username, :uid])}
@@ -116,6 +118,6 @@ class ShiftTemplateController < ApplicationController
   end
 
   def filtering_params(params)
-    params.slice(:unit)
+    params.slice(:unit, :unassigned)
   end
 end

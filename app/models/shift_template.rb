@@ -69,6 +69,10 @@ class ShiftTemplate < ApplicationRecord
   }
 
   scope :filter_by_unassigned, -> (value) {
+    if value == "true" || value
+      Rails.logger.debug "🍄 #{SchedulingPeriod.where(submitted: true).map(&:organization_id)}"
+      ShiftTemplate.where("shift_templates.start_time > ?", DateTime.now).joins(:scheduling_unit).where(scheduling_units: {scheduling_period_id: SchedulingPeriod.where(submitted: true).map(&:id) })
+    end
 
   }
 
