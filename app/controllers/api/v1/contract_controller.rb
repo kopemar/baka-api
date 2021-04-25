@@ -20,7 +20,7 @@ module Api
         if contract.save
           render json: {success: true, data: Contract.find(contract.id)}
         else
-          render json: {success: false, data: nil}, status: :unprocessable_entity
+          render json: {success: false, data: nil, error: "Overlaps with another employment contract"}, status: :unprocessable_entity
         end
       end
 

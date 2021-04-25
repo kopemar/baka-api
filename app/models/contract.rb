@@ -1,5 +1,6 @@
 class Contract < ApplicationRecord
   validates :schedule_id, uniqueness: true
+  validate :validate_date
   belongs_to :employee, optional: true
   after_create :create_schedule
 
@@ -15,6 +16,12 @@ class Contract < ApplicationRecord
       3
     else
       0
+    end
+  end
+
+  def validate_date
+    if !self.end_date.nil? && self.end_date.before?(self.start_date)
+      errors.add(:end_date, "before start date")
     end
   end
 
