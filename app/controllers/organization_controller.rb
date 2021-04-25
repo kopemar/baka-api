@@ -21,6 +21,9 @@ class OrganizationController < ApplicationController
 
     Manager.create!(organization_id: organization.id, username: params[:username], password: params[:password], uid: params[:email], email: params[:email], first_name: params[:first_name], last_name: params[:last_name])
 
+    3.times do |i|
+      SchedulingPeriod.create!(organization: organization, start_date: i.weeks.after(Date.today.monday), end_date: i.weeks.after(Date.today.sunday))
+    end
     render :json => {:data => organization, :success => true}, :status => :created
   end
 end
