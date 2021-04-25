@@ -12,7 +12,7 @@ class ActiveSupport::TestCase
   # todo stack overflow credit
   def auth_tokens_for_user(user)
     # The argument 'user' should be a hash that includes the params 'username' and 'password'.
-    post '/auth/sign_in/',
+    post '/api/v1/auth/sign_in/',
          params: {username: user[:username], password: ""},
          as: :json
     # The three categories below are the ones you need as authentication headers.
@@ -60,7 +60,7 @@ class ActiveSupport::TestCase
   end
 
   def generate_more_shift_templates(period, auth_tokens)
-    post "/periods/#{period.id}/templates",
+    post "/api/v1/periods/#{period.id}/templates",
          params: {
              working_days: [1, 2, 3, 4, 5, 6, 7],
              start_time: "08:00",

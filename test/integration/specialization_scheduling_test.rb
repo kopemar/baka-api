@@ -65,7 +65,7 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
     templates = generate_more_shift_templates(@period, @auth_tokens)
 
     templates.each do |template|
-      post "/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
+      post "/api/v1/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
            headers: @auth_tokens
 
       ShiftTemplate.find(template[:id]).update(priority: 0)
@@ -77,10 +77,10 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
     initial_violations = Scheduling::NoEmptyShifts.get_violations_hash(ShiftTemplate::in_scheduling_period(@period.id), schedule)
     initial_sanction = initial_violations[:sanction]
 
-    Scheduling::Scheduling.new({ id: @period.id, priorities: { :no_empty_shifts => 10} }).call
+    Scheduling::Scheduling.new({ id: @period.id, priorities: { :specialized_preferred => 10, :no_empty_shifts => 10} }).call
 
     schedule = get_period_as_schedule(@period)
-    violations = Scheduling::NoEmptyShifts.get_violations_hash(ShiftTemplate::in_scheduling_period(@period.id), schedule)
+    violations = Scheduling::SpecializedPreferred.get_violations_hash(ShiftTemplate::in_scheduling_period(@period.id), schedule)
     sanction = violations[:sanction]
     Rails.logger.debug "INITIAL: #{initial_sanction}, SANCTION: #{sanction}"
     assert initial_sanction > sanction || sanction == 0
