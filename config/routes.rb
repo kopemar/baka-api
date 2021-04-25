@@ -2,52 +2,58 @@ Rails.application.routes.draw do
   mount Rswag::Ui::Engine => '/api-docs'
   mount Rswag::Api::Engine => '/api-docs'
 
-  resources :specializations
-  resources :scheduling_period, path: "periods"
-  resources :shift_template, path: "templates"
-  resources :organization
-  resources :employee, path: "employees"
-  resources :contract, path: "contracts"
+  mount_devise_token_auth_for 'User', at: 'api/v1/auth'
 
-  mount_devise_token_auth_for 'User', at: 'auth', :controllers => { sessions: 'users/sessions'}
+  namespace :api do
+    namespace :v1 do
+      resources :specializations
+      resources :scheduling_period, path: "periods"
+      resources :shift_template, path: "templates"
+      resources :organization
+      resources :employee, path: "employees"
+      resources :contract, path: "contracts"
 
-  get "specializations/:id/calculations/contracts", to: "specializations#get_possible_contracts"
-  get "specializations/:id/employees", to: "specializations#get_employees"
+      # mount_devise_token_auth_for 'User', at: 'auth', :controllers => { sessions: 'users/sessions'}
 
-  get "periods/:id/calculations/schedule", to: "schedule#schedule"
+      get "specializations/:id/calculations/contracts", to: "specializations#get_possible_contracts"
+      get "specializations/:id/employees", to: "specializations#get_employees"
 
-  get "employees/:id/shifts", to: "employee#shifts"
-  get "employees/:id/specializations", to: "employee#specializations"
-  get "employees/:id/contracts", to: "employee#contracts"
+      get "periods/:id/calculations/schedule", to: "schedule#schedule"
 
-  get "contracts", to: "contract#get_current_user_contracts"
+      get "employees/:id/shifts", to: "employee#shifts"
+      get "employees/:id/specializations", to: "employee#specializations"
+      get "employees/:id/contracts", to: "employee#contracts"
 
-  get "shifts", to: "shift#get_shifts"
-  get "shift/:id/schedules", to: "shift#get_possible_schedules"
+      get "contracts", to: "contract#get_current_user_contracts"
 
-  post "shifts", to: "shift#assign_shift"
+      get "shifts", to: "shift#get_shifts"
+      get "shift/:id/schedules", to: "shift#get_possible_schedules"
 
-  delete "shift/:id/schedule", to: "shift#remove_from_schedule"
+      post "shifts", to: "shift#assign_shift"
 
-  get "organization/:id/employees", to: "organization#get_employees"
+      delete "shift/:id/schedule", to: "shift#remove_from_schedule"
 
-  post "templates/:id/specialized", to: "shift_template#create_specialized_template"
-  get "templates/:id/calculations/specializations", to: "shift_template#get_specializations"
+      get "organization/:id/employees", to: "organization#get_employees"
 
-  get "templates/:id/employees", to: "shift_template#employees"
+      post "templates/:id/specialized", to: "shift_template#create_specialized_template"
+      get "templates/:id/calculations/specializations", to: "shift_template#get_specializations"
 
-  get "periods/:id/units", to: "scheduling_unit#in_period"
+      get "templates/:id/employees", to: "shift_template#employees"
 
-  get "periods/:id/calculations/shift-times", to: "scheduling_period#calculate_shift_times"
+      get "periods/:id/units", to: "scheduling_unit#in_period"
 
-  get "periods/:id/calculations/period-days", to: "scheduling_period#get_unit_dates_for_period"
+      get "periods/:id/calculations/shift-times", to: "scheduling_period#calculate_shift_times"
 
-  # todo deprecate this
-  post "periods/:id/shift-templates", to: "scheduling_period#generate_shift_templates"
+      get "periods/:id/calculations/period-days", to: "scheduling_period#get_unit_dates_for_period"
 
-  post "periods/:id/templates", to: "scheduling_period#generate_shift_templates"
+      # todo deprecate this
+      post "periods/:id/shift-templates", to: "scheduling_period#generate_shift_templates"
 
-  post "periods/:id/calculations/generate-schedule", to: "scheduling_period#generate_schedule"
+      post "periods/:id/templates", to: "scheduling_period#generate_shift_templates"
 
-  post "users/fcm-token", to: "user#save_fcm_token"
+      post "periods/:id/calculations/generate-schedule", to: "scheduling_period#generate_schedule"
+
+      post "users/fcm-token", to: "user#save_fcm_token"
+    end
+  end
 end
