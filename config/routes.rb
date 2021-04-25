@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Api::Engine => '/api-docs'
+
   resources :specializations
   resources :scheduling_period, path: "periods"
   resources :shift_template, path: "templates"
