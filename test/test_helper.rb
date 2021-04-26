@@ -20,7 +20,7 @@ class ActiveSupport::TestCase
   end
 
   def generate_shift_templates(period, auth_tokens)
-    post "/periods/#{period.id}/templates",
+    post "/api/v1/periods/#{period.id}/templates",
          params: {
              working_days: [1, 2, 3, 4, 5],
              start_time: "08:00",
@@ -35,7 +35,7 @@ class ActiveSupport::TestCase
   end
 
   def generate_long_shift_templates(period, auth_tokens)
-    post "/periods/#{period.id}/templates",
+    post "/api/v1/periods/#{period.id}/templates",
          params: {
              working_days: [1, 2, 3, 4, 5, 6, 7],
              start_time: "08:00",

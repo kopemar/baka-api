@@ -18,7 +18,7 @@ module Api
         @specialization = Specialization.new(name: params[:name], organization_id: current_user.organization_id)
 
         if @specialization.save
-          render json: @specialization, status: :created, location: @specialization
+          render json: @specialization, status: :created#, json: @specialization
         else
           render json: @specialization.errors, status: :unprocessable_entity
         end

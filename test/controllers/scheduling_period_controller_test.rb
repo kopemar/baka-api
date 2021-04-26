@@ -7,7 +7,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
   end
 
   def generate_shift_templates(period, auth_tokens)
-    post "/periods/#{period.id}/shift-templates",
+    post "/api/v1/periods/#{period.id}/shift-templates",
          params: {
              working_days: [1, 2, 3, 4, 5],
              start_time: "08:00",
@@ -25,7 +25,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     @auth_tokens = auth_tokens_for_user(user)
     p @auth_tokens
 
-    get "/periods/1/calculations/shift-times",
+    get "/api/v1/periods/1/calculations/shift-times",
         params: {
             start_time: "08:00",
             end_time: "17:30",
@@ -43,7 +43,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     @auth_tokens = auth_tokens_for_user(user)
     p @auth_tokens
 
-    get "/periods/1/calculations/shift-times",
+    get "/api/v1/periods/1/calculations/shift-times",
         params: {
             start_time: "08:00",
             end_time: "16:30",
@@ -61,7 +61,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     @auth_tokens = auth_tokens_for_user(user)
     p @auth_tokens
 
-    get "/periods/1/calculations/shift-times",
+    get "/api/v1/periods/1/calculations/shift-times",
         params: {
             start_time: "08:00",
             end_time: "17:01",
@@ -78,7 +78,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     user = FactoryBot.create(:employee, organization: org)
     @auth_tokens = auth_tokens_for_user(user)
 
-    get "/periods/1/calculations/shift-times",
+    get "/api/v1/periods/1/calculations/shift-times",
         params: {
             start_time: "08:00",
             end_time: "16:30",
@@ -97,7 +97,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     org = generate_organization
     user = FactoryBot.create(:employee, organization: org)
     @auth_tokens = auth_tokens_for_user(user)
-    get "/periods/1/calculations/shift-times",
+    get "/api/v1/periods/1/calculations/shift-times",
         params: {
             start_time: "08:00",
             end_time: "18:30",
@@ -123,7 +123,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     org = generate_organization
     user = FactoryBot.create(:employee, organization: org)
     @auth_tokens = auth_tokens_for_user(user)
-    get "/periods/1/calculations/shift-times",
+    get "/api/v1/periods/1/calculations/shift-times",
         params: {
             start_time: "08:00",
             end_time: "18:30",
@@ -149,7 +149,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     org = generate_organization
     user = FactoryBot.create(:employee, organization: org)
     @auth_tokens = auth_tokens_for_user(user)
-    get "/periods/1/calculations/shift-times",
+    get "/api/v1/periods/1/calculations/shift-times",
         params: {
             start_time: "08:00",
             end_time: "18:30",
@@ -191,7 +191,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
     @auth_tokens = auth_tokens_for_user(user)
 
-    get "/periods/1/calculations/shift-times",
+    get "/api/v1/periods/1/calculations/shift-times",
         params: {
             params: {
                 shift_hours: 8,
@@ -213,7 +213,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
     period = FactoryBot.create(:scheduling_period, organization: org)
 
     2.times do
-      post "/periods/#{period.id}/shift-templates",
+      post "/api/v1/periods/#{period.id}/shift-templates",
           params: {
               working_days: [1, 2, 3, 4, 5],
               start_time: "08:00",
@@ -251,7 +251,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
     period = FactoryBot.create(:scheduling_period, organization: org)
 
-    post "/periods/#{period.id}/shift-templates",
+    post "/api/v1/periods/#{period.id}/shift-templates",
          params: {
              working_days: [1, 2, 3, 4, 5],
              start_time: "08:00",
@@ -291,7 +291,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
     period = FactoryBot.create(:scheduling_period, organization: org)
 
-    get "/periods/#{period.id}/calculations/period-days",
+    get "/api/v1/periods/#{period.id}/calculations/period-days",
         headers: @auth_tokens
 
     parsed_response = response.parsed_body
@@ -320,7 +320,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
     generate_shift_templates(period, @auth_tokens)
 
-    post "/periods/#{period.id}/calculations/generate-schedule",
+    post "/api/v1/periods/#{period.id}/calculations/generate-schedule",
          headers: @auth_tokens
     assert_response(:success)
 

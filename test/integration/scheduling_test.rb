@@ -3,7 +3,7 @@ require 'test_helper'
 class SchedulingTest < ActionDispatch::IntegrationTest
   def auth_tokens_for_user(user)
     # The argument 'user' should be a hash that includes the params 'email' and 'password'.
-    post '/auth/sign_in/',
+    post '/api/v1/auth/sign_in/',
          params: {username: user[:username], password: ""},
          as: :json
     # The three categories below are the ones you need as authentication headers.
@@ -12,7 +12,7 @@ class SchedulingTest < ActionDispatch::IntegrationTest
 
   def generate_period(auth_tokens, org)
     period = FactoryBot.create(:scheduling_period, organization: org)
-    post "/periods/#{period.id}/shift-templates",
+    post "/api/v1/periods/#{period.id}/shift-templates",
          params: {
              working_days: [1, 2, 3, 4, 5],
              start_time: "08:00",
@@ -53,7 +53,7 @@ class SchedulingTest < ActionDispatch::IntegrationTest
     assert_equal 4, templates.length
 
     5.times do |i|
-      post "/periods/#{period.id}/calculations/generate-schedule",
+      post "/api/v1/periods/#{period.id}/calculations/generate-schedule",
            headers: @auth_tokens,
            params: {
                :priorities => {
@@ -94,7 +94,7 @@ class SchedulingTest < ActionDispatch::IntegrationTest
 
     assert_equal 6, templates.length
 
-    post "/periods/#{period.id}/calculations/generate-schedule",
+    post "/api/v1/periods/#{period.id}/calculations/generate-schedule",
          headers: @auth_tokens
 
     assert_response(:success)
@@ -125,7 +125,7 @@ class SchedulingTest < ActionDispatch::IntegrationTest
 
     assert_equal 35, templates.length
 
-    post "/periods/#{period.id}/calculations/generate-schedule",
+    post "/api/v1/periods/#{period.id}/calculations/generate-schedule",
          headers: @auth_tokens
 
     assert_response(:success)
@@ -156,7 +156,7 @@ class SchedulingTest < ActionDispatch::IntegrationTest
 
     assert_equal 21, templates.length
 
-    post "/periods/#{period.id}/calculations/generate-schedule",
+    post "/api/v1/periods/#{period.id}/calculations/generate-schedule",
          headers: @auth_tokens
 
     assert_response(:success)

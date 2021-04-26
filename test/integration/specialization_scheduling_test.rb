@@ -102,7 +102,7 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
     templates = generate_more_shift_templates(@period, @auth_tokens)
 
     templates.sample(10).each do |template|
-          post "/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
+          post "/api/v1/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
                headers: @auth_tokens
           # ShiftTemplate.find(template[:id]).update(priority: 0)
         end
@@ -136,7 +136,7 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
   #   assert_equal 5, templates.length
   #
   #   templates.each do |template|
-  #     post "/templates/#{template[:id]}/specialized?specialization_id=#{specialization.id}",
+  #     post "/api/v1/templates/#{template[:id]}/specialized?specialization_id=#{specialization.id}",
   #          headers: @auth_tokens
   #
   #     this_template = ShiftTemplate.where(id: template[:id]).first
@@ -171,10 +171,10 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
   #   assert_equal 5, templates.length
   #
   #   templates.each do |template|
-  #     post "/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
+  #     post "/api/v1/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
   #          headers: @auth_tokens
   #
-  #     post "/templates/#{template[:id]}/specialized?specialization_id=#{s2.id}",
+  #     post "/api/v1/templates/#{template[:id]}/specialized?specialization_id=#{s2.id}",
   #          headers: @auth_tokens
   #
   #     this_template = ShiftTemplate.where(id: template[:id]).first
@@ -231,10 +231,10 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
   #   assert_equal 5, templates.length
   #
   #   templates.each do |template|
-  #     post "/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
+  #     post "/api/v1/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
   #          headers: @auth_tokens
   #
-  #     post "/templates/#{template[:id]}/specialized?specialization_id=#{s2.id}",
+  #     post "/api/v1/templates/#{template[:id]}/specialized?specialization_id=#{s2.id}",
   #          headers: @auth_tokens
   #
   #     this_template = ShiftTemplate.where(id: template[:id]).first
@@ -321,7 +321,7 @@ class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
   #   12.times do
   #     template = templates.sample
   #
-  #     post "/templates/#{template[:id]}/specialized?specialization_id=#{specializations.sample.id}",
+  #     post "/api/v1/templates/#{template[:id]}/specialized?specialization_id=#{specializations.sample.id}",
   #          headers: @auth_tokens
   #   end
   #

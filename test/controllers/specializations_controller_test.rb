@@ -11,7 +11,7 @@ class SpecializationsControllerTest < ActionDispatch::IntegrationTest
     # Signed in as manager. Adds new specialization.
     m1_tokens = @auth_tokens
     n1 = "Clown"
-    post "/specializations", params: {name: n1}, headers: m1_tokens
+    post "/api/v1/specializations", params: {name: n1}, headers: m1_tokens
     assert_response 201
 
     # Sign in as another user.
@@ -21,10 +21,10 @@ class SpecializationsControllerTest < ActionDispatch::IntegrationTest
 
     # Add another specialization
     n2 = "Cook"
-    post "/specializations", params: {name: n2}, headers: m2_tokens
+    post "/api/v1/specializations", params: {name: n2}, headers: m2_tokens
     assert_response 201
 
-    get "/specializations", headers: @auth_tokens
+    get "/api/v1/specializations", headers: @auth_tokens
     assert_response :success
 
     m1_response = response.parsed_body.deep_symbolize_keys[:data]
@@ -33,7 +33,7 @@ class SpecializationsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil m1_response.filter { |item| item[:name] == n1 }.first
     assert_nil m1_response.filter { |item| item[:name] == n2 }.first
 
-    get "/specializations", headers: m2_tokens
+    get "/api/v1/specializations", headers: m2_tokens
     assert_response :success
 
     m2_response = response.parsed_body.deep_symbolize_keys[:data]
@@ -49,9 +49,9 @@ class SpecializationsControllerTest < ActionDispatch::IntegrationTest
     m1_tokens = @auth_tokens
 
     n1 = "Clown"
-    post "/specializations", params: {name: n1}, headers: m1_tokens
+    post "/api/v1/specializations", params: {name: n1}, headers: m1_tokens
 
-    get "/specializations", headers: m1_tokens
+    get "/api/v1/specializations", headers: m1_tokens
 
     m1_specialization_id = response.parsed_body.deep_symbolize_keys[:data].first[:id]
 
@@ -59,9 +59,9 @@ class SpecializationsControllerTest < ActionDispatch::IntegrationTest
     e2 = employee_active_contract(@org)
 
     contracts = Contract.where(employee_id: [e1.id]).to_a
-    patch "/specializations/#{m1_specialization_id}", params: {employees: contracts.map(&:id)}, headers: m1_tokens
+    patch "/api/v1/specializations/#{m1_specialization_id}", params: {employees: contracts.map(&:id)}, headers: m1_tokens
 
-    get "/specializations/#{m1_specialization_id}/calculations/contracts", headers: m1_tokens
+    get "/api/v1/specializations/#{m1_specialization_id}/calculations/contracts", headers: m1_tokens
     Rails.logger.debug response.parsed_body.deep_symbolize_keys
 
     assert_not_empty response.parsed_body.deep_symbolize_keys[:data]
