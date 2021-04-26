@@ -7,14 +7,6 @@ module Scheduling
 
       def try_to_improve
         Rails.logger.info "📦 Improve empty shifts"
-        # Nema smysl to menit u tech, ktery maji presne jednoho zamestnance
-        exclude = utilization.filter { |_, v| v == 1 }.map { |k, _| k }.to_set
-
-        # vyberu nekteryho ze zamestnancu, kterej ma smysl dle predchoziho (tedy nema ani jednu smenu, na ktery je sam)
-        employees = solution.filter { |_, v| !v.to_set.intersect?(exclude) }.map { |k, _| k }
-
-        # pokud nemam zadnyho takovyho zamestnance, tak vezmu vsechny a nahodnyho z nich
-        employees = solution.map { |k, _| k } if employees.empty?
 
         # vyberu vsechny prazdny smeny
         shifts_to_assign = violations.map { |k, _| k }

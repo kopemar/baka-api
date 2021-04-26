@@ -11,7 +11,7 @@ class NoEmptyShiftsTest < ActionDispatch::IntegrationTest
   end
 
   test "1A-NoEmptyShifts" do
-    10.times do
+    20.times do
       employee_active_contract(@org)
     end
 
@@ -19,14 +19,18 @@ class NoEmptyShiftsTest < ActionDispatch::IntegrationTest
 
     Scheduling::Scheduling.new({ id: @period.id, priorities: {} }).call
 
+    ShiftTemplate::in_scheduling_period(@period.id).to_a.each do |shift|
+      shift.update!(priority: [1, 2, 3, 4, 5].sample)
+    end
+
     schedule = get_period_as_schedule(@period)
-    initial_violations = Scheduling::NoEmptyShifts.get_violations_hash(ShiftTemplate::in_scheduling_period(@period.id), schedule)
+    initial_violations = Scheduling::DemandFulfill.get_violations_hash(ShiftTemplate::in_scheduling_period(@period.id), schedule)
     initial_sanction = initial_violations[:sanction]
 
-    Scheduling::Scheduling.new({ id: @period.id, priorities: { :no_empty_shifts => 10} }).call
+    Scheduling::Scheduling.new({ id: @period.id, priorities: { :demand_fulfill => 10} }).call
 
     schedule = get_period_as_schedule(@period)
-    violations = Scheduling::NoEmptyShifts.get_violations_hash(ShiftTemplate::in_scheduling_period(@period.id), schedule)
+    violations = Scheduling::DemandFulfill.get_violations_hash(ShiftTemplate::in_scheduling_period(@period.id), schedule)
     sanction = violations[:sanction]
     Rails.logger.debug "INITIAL: #{initial_sanction}, SANCTION: #{sanction}"
     assert initial_sanction > sanction || sanction == 0

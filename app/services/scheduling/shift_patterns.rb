@@ -11,11 +11,31 @@ class Scheduling::ShiftPatterns
     @max_length
   end
 
+  def try_to_swap_element(path, which, possible)
+    Rails.logger.debug "try_to_swap_element"
+    vertices = path.map { |id| @hash_vertices[id]}.delete_if { |s| s.shift.id == which }
+    possible.each do |p|
+      prev_for_shift = vertices.filter { |v| v.nexts.get_shift_ids.include?(p) }
+      next_for_shift = vertices.filter { |v| v.prev.get_shift_ids.include?(p) }
+
+      length = next_for_shift.length + prev_for_shift.length
+
+      if length < path.length - 1
+        Rails.logger.debug "try_to_swap_element 🍺 too short"
+      elsif length == path.length - 1
+        return (prev_for_shift + next_for_shift).get_shift_ids + [p]
+      else
+        return (prev_for_shift + next_for_shift).get_shift_ids.sample(path.length - 1) + [p]
+      end
+    end
+    []
+  end
+
   def try_to_swap(path, new_shift)
     vertices = path.map { |id| @hash_vertices[id]}
     prev_for_shift = vertices.filter { |v| v.nexts.get_shift_ids.include?(new_shift) }
     next_for_shift = vertices.filter { |v| v.prev.get_shift_ids.include?(new_shift) }
-    length = next_for_shift.length + prev_for_shift.length #next_for_shift.length + prev_for_shift.length
+    length = next_for_shift.length + prev_for_shift.length
     if length < path.length - 1
       Rails.logger.debug "🍺 too short"
       return []

@@ -12,6 +12,21 @@ class Scheduling::ScheduleStatistics
     return hash
   end
 
+  def self.get_shift_employees(shifts, schedule)
+    Rails.logger.debug "🏵 #{shifts}"
+    hash = Hash.new
+    shifts.each do |shift|
+
+      hash[shift.id] = []
+    end
+    schedule.each do |employee, value|
+      value.each do |shift|
+        hash[shift].push employee
+      end
+    end
+    return hash
+  end
+
   def self.get_shift_count(work_load, shift_duration, patterns)
     [((work_load * WEEKLY_WORKING_HOURS).to_d / shift_duration).ceil, patterns.max_length].min
   end
