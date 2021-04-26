@@ -17,25 +17,12 @@ class Employee < User
     self.last ||= last_scheduled_shift_helper(date)
   end
 
-  def get_possible_working_days(start_date, end_date)
-    logger.debug "Possible_working_days #{start_date}, #{end_date}"
-    working_days = Set.new
-    start_date_wday = start_date.wday
-    contracts.active_employment_contracts.each do |contract|
-      contract_days = contract.working_days
-      (end_date - start_date).to_i.times do |i|
-        day = ((start_date_wday + i - 1) % 7) + 1
-        result = contract_days.include?(day)
-        if result
-          working_days.add(i.days.after(start_date))
-        end
-      end
-    end
-    working_days
-  end
-
   def has_agreement?
     self.contracts.active_agreements.length > 0
+  end
+
+  def is_underage?
+    18.years.before(Date.today).before?(self.birth_date)
   end
 
   def active_employment_contract
