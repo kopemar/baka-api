@@ -18,7 +18,7 @@ class SpecializedPreferredTest < ActionDispatch::IntegrationTest
 
     original_templates = ShiftTemplate::in_scheduling_period(period.id).to_a
     original_templates.each do |template|
-      post "/api/v1/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
+      post "/templates/#{template[:id]}/specialized?specialization_id=#{s1.id}",
            headers: @auth_tokens
     end
 
@@ -47,13 +47,13 @@ class SpecializedPreferredTest < ActionDispatch::IntegrationTest
     period = FactoryBot.create(:scheduling_period, organization: @org)
     templates = generate_more_shift_templates(period, @auth_tokens)
 
-    8.times do
+    16.times do
       e = employee_active_contract(@org)
       e.contracts.first.specializations.push(s1)
       e.save!
     end
 
-    8.times do
+    16.times do
       e = employee_active_contract(@org)
       e.contracts.first.specializations.push(s2)
       e.save!
