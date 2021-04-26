@@ -15,8 +15,8 @@ class Scheduling::ShiftPatterns
     Rails.logger.debug "try_to_swap_element"
     vertices = path.map { |id| @hash_vertices[id]}.delete_if { |s| s.shift.id == which }
     possible.each do |p|
-      prev_for_shift = vertices.filter { |v| v.nexts.get_shift_ids.include?(p) }
-      next_for_shift = vertices.filter { |v| v.prev.get_shift_ids.include?(p) }
+      prev_for_shift = vertices.filter { |v| v.nexts.get_shift_ids.include?(p) || v.nexts.map { |s| s.specialized }.any? { |s| s.map(&:id).include?(p) } }
+      next_for_shift = vertices.filter { |v| v.prev.get_shift_ids.include?(p) || v.prev.map { |s| s.specialized }.any? { |s| s.map(&:id).include?(p) } }
 
       length = next_for_shift.length + prev_for_shift.length
 
