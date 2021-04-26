@@ -11,6 +11,21 @@ class Scheduling::ShiftPatterns
     @max_length
   end
 
+  def try_to_swap(path, new_shift)
+    vertices = path.map { |id| @hash_vertices[id]}
+    prev_for_shift = vertices.filter { |v| v.nexts.get_shift_ids.include?(new_shift) }
+    next_for_shift = vertices.filter { |v| v.prev.get_shift_ids.include?(new_shift) }
+    length = next_for_shift.length + prev_for_shift.length #next_for_shift.length + prev_for_shift.length
+    if length < path.length - 1
+      Rails.logger.debug "🍺 too short"
+      return []
+    elsif length == path.length - 1
+      return (prev_for_shift + next_for_shift).get_shift_ids + [new_shift]
+    else
+      return (prev_for_shift + next_for_shift).get_shift_ids.sample(path.length - 1) + [new_shift]
+    end
+  end
+
   def try_to_specialize(path, specializations)
     new_path = []
     path.each_with_index do |id, index|

@@ -72,7 +72,7 @@ module Api
       end
 
       def generate_schedule
-        unless current_api_v1_user.manager?
+        unless current_user.manager?
           return render :status => :forbidden, :json => {:errors => ["Only managers can call this"]}
         end
         permitted = params.permit(:id, priorities: [:no_empty_shifts, :demand_fulfill])

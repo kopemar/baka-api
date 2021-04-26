@@ -28,47 +28,52 @@ module Scheduling
         employees = params[:assigned_employees]
         shifts = params[:shifts]
 
-        remaining_shifts = shifts.map(&:clone).to_set
-        division_factor = 2
-
-        employees.length.times do
-          minimum = [remaining_shifts.length, 5].min
-          combination_count = (minimum.to_d / division_factor).ceil
-
-          found_any = analyze_combinations(remaining_shifts, combination_count, solution, employees)
-
-          division_factor = found_any ? 2 : division_factor + 1
-
-          break if remaining_shifts.empty?
-          Rails.logger.debug "🤥 Remaining: #{remaining_shifts}"
+        shifts.each do |shift|
+          @recent_employees = []
+          unless manage_swap shift, false
+            manage_swap shift, true
+          end
         end
       end
 
-      private def analyze_combinations(remaining_shifts, combination_count, solution, employees)
-        Rails.logger.debug "🐱 employee groups: #{employee_groups}"
-        remaining_shifts.to_a.reverse.combination(combination_count).to_a.each do |slice|
-          employee = employees.last # -> vzit delku podle toho posledniho
-          specializations = employee_groups.filter { |_, v| v.map(&:id).include? employee }.keys.first[:specializations]
-
-          length = 5
-          length = solution[employee].length unless employee.nil?
-          slice = slice.sample(length) if slice.length > length
-
-          makes_sense = templates.filter { |s| slice.include?(s.id) }.all? { |s| (specializations + [nil] ).include?(s.specialization_id) }
-
-          Rails.logger.debug "🐱 makes_sense: #{makes_sense} / ?"
-          patterns = makes_sense ? @patterns.patterns_of_params({:contains => slice, :length => length, :specializations => specializations }) : []
-
-          # Rails.logger.debug "🤥 COMBINED #{patterns} (slice: #{slice})"
-
-          unless patterns.empty? || employees.empty?
-            Rails.logger.debug "🐸🤥 for #{employees.last} COMBINED #{patterns.first}"
-            solution[employees.pop] = patterns.first
-            remaining_shifts = remaining_shifts.subtract(patterns.first.to_set)
-            return true
+      private def manage_swap(shift, exclude)
+        success = false
+        3.times do
+          employee = solution.keys.filter { |e| exclude || !@recent_employees.include?(e) }.sample
+          swap = analyze_combinations(shift, solution, employee)
+          if !swap.empty? && (!exclude || is_second_better?(solution[employee], swap))
+            solution[employee] = swap
+            update_queue employee
+            success = true
+            break
           end
         end
-        false
+        success
+      end
+
+      private def is_second_better?(first, second)
+        first.map { |f| utilization[f] }.count { |_, v| v == 0 } > second.map { |f| utilization[f] }.count { |_, v| v == 0 }
+      end
+
+      private def update_queue(element)
+        @recent_employees.push element
+        @recent_employees.unshift if @recent_employees.length > 3
+      end
+
+      private def analyze_combinations(shift, solution, employee)
+        Rails.logger.debug "🐱 employee groups: #{employee}"
+
+        specializations = employee_groups.filter { |_, v| v.map(&:id).include? employee }.keys.first[:specializations]
+
+        template = templates.find { |s| s.id == shift }
+        swap = []
+        makes_sense = template.specialization_id.nil? || specializations.include?(template.specialization_id)
+        Rails.logger.debug "🥇 makes_sense: #{makes_sense}"
+        if makes_sense
+          swap = @patterns.try_to_swap(solution[employee], shift)
+          Rails.logger.debug "🍍 try_to_swap for #{employee} and add #{shift} result: #{swap}"
+        end
+        swap
       end
 
     end
