@@ -3,7 +3,7 @@ require 'test_helper'
 class SubmitScheduleTest < ActionDispatch::IntegrationTest
   def auth_tokens_for_user(user)
     # The argument 'user' should be a hash that includes the params 'email' and 'password'.
-    post '/auth/sign_in/',
+    post '/api/v1/auth/sign_in/',
          params: {username: user[:username], password: ""},
          as: :json
     # The three categories below are the ones you need as authentication headers.
