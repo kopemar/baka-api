@@ -17,13 +17,12 @@ module Scheduling
       end
 
       private def assign_empty_shifts(solution, params)
-        employees = params[:assigned_employees]
         shifts = params[:shifts]
 
         shifts.each do |shift|
           @recent_employees = []
-          unless manage_swap shift, false
-            manage_swap shift, true
+          unless employees.empty? || manage_swap(shift, false)
+            manage_swap(shift, true)
           end
         end
       end

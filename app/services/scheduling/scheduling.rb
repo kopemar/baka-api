@@ -177,7 +177,7 @@ module Scheduling
       @employee_groups = employee_array.group_by { |employee|
         active_contract = employee.contracts.active_employment_contracts.first
         { work_load: active_contract.work_load, specializations: active_contract.specializations.map(&:id) }
-      }
+      } || {  }
 
       Rails.logger.debug "🤫 employee groups #{@employee_groups}"
 

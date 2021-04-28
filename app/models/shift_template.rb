@@ -38,8 +38,8 @@ class ShiftTemplate < ApplicationRecord
     end
   end
 
-  def can_be_user_assigned?
-    !is_employment_contract
+  def can_be_user_assigned?(contract)
+    (!is_employment_contract || scheduling_unit.scheduling_period.submitted) && (!contract.type == "AgreementToCompleteAJob" || contract.hours_per_year(self.start_time.year.to_i) < 300)
   end
 
   scope :planned_between, -> (start_date, end_date) {
@@ -53,8 +53,6 @@ class ShiftTemplate < ApplicationRecord
   scope :planned_after, -> (start_time) {
     where("start_time >= ? ", start_time)
   }
-
-  scope :can_be_user_scheduled, -> { where(is_employment_contract: false).or(joins(:scheduling_unit).where(scheduling_units: {scheduling_period: SchedulingPeriod.where(submitted: true) })) }
 
   scope :to_be_auto_scheduled, -> { where(is_employment_contract: true) }
 
@@ -71,7 +69,7 @@ class ShiftTemplate < ApplicationRecord
   scope :filter_by_unassigned, -> (value) {
     if value == "true" || value
       Rails.logger.debug "🍄 #{SchedulingPeriod.where(submitted: true).map(&:organization_id)}"
-      ShiftTemplate.where("shift_templates.start_time > ?", DateTime.now).joins(:scheduling_unit).where(scheduling_units: {scheduling_period_id: SchedulingPeriod.where(submitted: true).map(&:id) })
+      ShiftTemplate.where("shift_templates.start_time > ?", DateTime.now).joins(:scheduling_unit).where(scheduling_units: {scheduling_period_id: SchedulingPeriod.where(submitted: true).map(&:id)})
     end
 
   }

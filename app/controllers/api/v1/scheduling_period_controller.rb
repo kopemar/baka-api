@@ -26,7 +26,7 @@ module Api
                   priority: "high",
                   notification: {
                       body: "New schedule submitted!",
-                      title: "Schedule for #{period.start_date} - #{period.end_date} was submitted"
+                      title: "Schedule for #{@scheduling_period.start_date} - #{@scheduling_period.end_date} was submitted"
                   }
               }
           )

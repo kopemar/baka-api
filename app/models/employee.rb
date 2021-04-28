@@ -1,4 +1,6 @@
 class Employee < User
+  include Filterable
+
   validates :first_name, presence: true, allow_blank: false
   validates :last_name, presence: true, allow_blank: false
   validates :birth_date, presence: true, allow_blank: false
@@ -39,19 +41,21 @@ class Employee < User
     hash.merge!(agreement: has_agreement?)
   end
 
-  def can_work_at?(date)
-    contracts.active_employment_contracts.each do |contract|
-      return true if contract.working_days.include?(date.wday)
-    end
-    false
-  end
-
   # validate whether age is > 15
   def validate_birth_date
     unless self.birth_date.to_date.before?(15.years.ago)
       errors.add(:birth_date, "not old enough")
     end
   end
+
+  scope :filter_by_working_now,  -> (value) {
+    shifts = Shift.where("start_time < ? AND end_time > ?", DateTime::now, DateTime::now).map(&:schedule_id)
+    if value
+      Employee.joins(:contracts).where(contracts: {
+          id: Contract.joins(:schedule).where(schedule_id: shifts)
+      } )
+    end
+  }
 
   private def last_scheduled_shift_helper(date)
     shifts = Set.new

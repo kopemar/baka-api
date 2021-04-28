@@ -26,7 +26,8 @@ module Api
       end
 
       def index
-        render json: Employee.accessible_by(current_ability)
+        employees = Employee.filter(shift_filtering_params(params)).accessible_by(current_ability)
+        render json: {data: employees }
       end
 
       def show
@@ -59,7 +60,7 @@ module Api
 
       # A list of the param names that can be used for filtering the S list
       def shift_filtering_params(params)
-        params.slice(:upcoming)
+        params.slice(:upcoming, :working_now)
       end
     end
   end

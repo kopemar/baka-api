@@ -29,7 +29,7 @@ module Api
         elsif Schedule.where(id: params[:schedule_id]).nil?
           render :status => :not_found, :json => {:errors => ["Schedule not found"]}
         else
-          assignment = SelfAssignShiftService.call(params, current_api_v1_user)
+          assignment = SelfAssignShiftService.call(params, current_user)
           if !assignment.nil?
             render :json => assignment
           else
@@ -61,7 +61,7 @@ module Api
         if shift.nil?
           render :status => :not_found, json: {:errors => ["Shift template not found!"]}
         else
-          schedules = Schedule.where(id: Contract::active_agreements::where(employee_id: current_api_v1_user.id).map { |c| c.schedule_id })
+          schedules = Schedule.where(id: Contract::active_agreements::where(employee_id: current_user.id).map { |c| c.schedule_id })
           render json: {:schedules => schedules}
         end
       end

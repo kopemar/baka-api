@@ -68,7 +68,7 @@ module Api
 
         employees = Employee.accessible_by(current_ability).joins(:contracts).where(contracts: Contract.joins(:specializations).where(specializations: {id: params[:id]}))
 
-        render :json => {:employees => employees}
+        render :json => {:data => employees}
       end
 
       private
