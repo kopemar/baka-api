@@ -26,8 +26,9 @@ module Api
       end
 
       def index
-        employees = Employee.filter(shift_filtering_params(params)).accessible_by(current_ability)
-        render json: {data: employees }
+        params.permit(:working_now)
+        employees = Employee.filter(filtering_params(params)).accessible_by(current_ability)
+        render json: { data: employees }
       end
 
       def show
@@ -51,7 +52,7 @@ module Api
         params.require(:id)
         params.permit(:upcoming)
 
-        @shifts = Shift.filter(shift_filtering_params(params)).where(schedule: Schedule.where(contract: Contract.where(employee_id: params[:id]))).sort_by(&:start_time)
+        @shifts = Shift.filter(filtering_params(params)).where(schedule: Schedule.where(contract: Contract.where(employee_id: params[:id]))).sort_by(&:start_time)
 
         render json: {:data => @shifts}
       end
@@ -59,8 +60,8 @@ module Api
       private
 
       # A list of the param names that can be used for filtering the S list
-      def shift_filtering_params(params)
-        params.slice(:upcoming, :working_now)
+      def filtering_params(params)
+        params.slice(:working_now, :upcoming)
       end
     end
   end

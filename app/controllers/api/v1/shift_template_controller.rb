@@ -8,8 +8,8 @@ module Api
         params.require([:id, :specialization_id])
         return render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless current_user.manager?
 
-        parent_template = ShiftTemplate::filter_by_organization(current_user.organization_id).where(id: params[:id]).first
-        specialization = Specialization.where(id: params[:specialization_id]).first
+        parent_template = ShiftTemplate::accessible_by(current_ability).find(params[:id])
+        specialization = Specialization.find(params[:specialization_id])
 
         return render :status => :not_found if parent_template.nil? || specialization.nil? || !parent_template.specialization_id.nil?
 
@@ -94,7 +94,7 @@ module Api
         template = ShiftTemplate.find(params[:id])
         return render :status => :bad_request, :json => {:errors => ["No ID"]} if template.nil?
 
-        render :json => {:employees => Contract.where(schedule_id: Shift.where(shift_template_id: template.id).map(&:schedule_id)).map(&:employee).as_json(:only => [:id, :first_name, :last_name, :username, :uid])}
+        render :json => {:data => Contract.where(schedule_id: Shift.where(shift_template_id: template.id).map(&:schedule_id)).map(&:employee).as_json(:only => [:id, :first_name, :last_name, :username, :uid])}
       end
 
       def filtering_params(params)

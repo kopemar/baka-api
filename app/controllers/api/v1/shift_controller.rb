@@ -3,15 +3,11 @@ module Api
     class ShiftController < ApplicationController
       before_action :authenticate_user!
 
-      def get_shifts
+      def index
         params.permit(:past, :upcoming)
 
         # todo - shifts
-        schedule = if params[:unassigned] == true.to_s
-                     get_unassigned_shifts
-                   else
-                     Shift.filter(shift_filtering_params(params)).where(schedule: Schedule.where(contract: Contract.where(employee_id: current_user.id))).submitted.order('start_time')
-                   end
+        schedule = Shift.filter(shift_filtering_params(params)).where(schedule: Schedule.where(contract: Contract.where(employee_id: current_user.id))).submitted.order('start_time')
 
         render json: {
             :shifts => @collection = schedule.paginate(page: params[:page], per_page: params[:per_page].nil? ? 30 : params[:per_page]),
@@ -21,30 +17,44 @@ module Api
         }
       end
 
-      def assign_shift
-        if params[:schedule_id].nil? || params[:template_id].nil?
-          render :status => :bad_request, :json => {:errors => ["schedule_id not defined"]}
-        elsif ShiftTemplate.where(id: params[:template_id]).first.nil?
-          render :status => :not_found, :json => {:errors => ["Template not found"]}
-        elsif Schedule.where(id: params[:schedule_id]).nil?
-          render :status => :not_found, :json => {:errors => ["Schedule not found"]}
-        else
-          assignment = SelfAssignShiftService.call(params, current_user)
-          if !assignment.nil?
-            render :json => assignment
+      def create
+        ActiveRecord::Base.transaction do
+          params.require(:template_id)
+          params.permit(:template_id, :schedule_id, :schedules)
+          @template = ShiftTemplate.accessible_by(current_ability).find(params[:template_id])
+
+          if !params[:schedule_id].nil? && Schedule.find(params[:schedule_id]).nil?
+            render :status => :not_found, :json => {:errors => ["Schedule not found"]}
+          elsif current_user.manager? && !params[:schedules].nil?
+            params.require(:schedules)
+            @shifts = []
+            params[:schedules].to_a.each do |id|
+              @schedule = Schedule.accessible_by(current_ability).find(id)
+              shift = Shift.from_template(@template)
+              shift.schedule_id = @schedule.id
+              shift.scheduler_type = SCHEDULER_TYPES[:MANAGER]
+              shift.save!
+              @shifts.push(shift)
+            end
+            return render :status => :ok, :json => {data: @shifts}
           else
-            render :status => :unprocessable_entity, json: {errors: ["Could not assign shift"]}
+            assignment = SelfAssignShiftService.call(params, current_user)
+            if !assignment.nil?
+              render :json => assignment
+            else
+              render :status => :unprocessable_entity, json: {errors: ["Could not assign shift"]}
+            end
           end
         end
       end
 
-
-      def remove_from_schedule
-        shift = Shift.where(id: params[:id]).first
+      def delete
+        params.permit(:id)
+        shift = Shift.accessible_by(current_ability).find(params[:id])
         errors = Array.new
         if shift.user_scheduled && ((shift.start_time - DateTime::now).to_i / 1.day) > 4
           Shift.delete_by(id: shift.id)
-          return render json: shift
+          return render json: {success: true}
         else
           unless shift.user_scheduled
             errors.push("Not scheduled by this user!")
@@ -60,9 +70,19 @@ module Api
         shift = ShiftTemplate.find(params[:id])
         if shift.nil?
           render :status => :not_found, json: {:errors => ["Shift template not found!"]}
+        elsif current_user.manager?
+          forbidden_ids = Shift.where("shifts.start_time >= ? AND shifts.end_time <= ?", MINIMUM_BREAK_HOURS_UNDERAGE.hours.before(shift.start_time), MINIMUM_BREAK_HOURS_UNDERAGE.hours.after(shift.end_time)).map(&:schedule_id)
+
+          schedules = Schedule
+                          .accessible_by(current_ability)
+                          .where
+                          .not(id: forbidden_ids)
+                          .where(contract_id: Contract.active_employment_contracts.map(&:id))
+                          .as_json(:only => [:id, :first_name, :last_name])
+          render json: {:data => schedules, :success => true }
         else
           schedules = Schedule.where(id: Contract::active_agreements::where(employee_id: current_user.id).map { |c| c.schedule_id })
-          render json: {:schedules => schedules}
+          render json: {:data => schedules}
         end
       end
 

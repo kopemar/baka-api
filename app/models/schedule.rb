@@ -9,6 +9,7 @@ class Schedule < ApplicationRecord
 
   def as_json(*args)
     hash = super(*args)
-    hash.merge!(contract_type: self.contract.type_to_id)
+    employee = contract.employee
+    hash.merge!({ contract_type: self.contract.type_to_id, first_name: employee.first_name, last_name: employee.last_name})
   end
 end

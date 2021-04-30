@@ -27,11 +27,13 @@ module Scheduling
 
         @to_schedule = ShiftTemplate::to_be_auto_scheduled.where(scheduling_unit_id: days.map(&:id))
 
-        # All shifts have the same duration (? todo add to SchedulingPeriod?)
         @shift_duration = @to_schedule.first.duration
+
+        already_scheduled = Employee.joins(:contracts).where(contracts: { schedule_id: Shift::in_scheduling_period(@scheduling_period.id).where(scheduler_type: SCHEDULER_TYPES[:MANAGER]).map(&:schedule_id)}).map(&:id)
 
         @employees = Employee::with_employment_contract
                          .where(organization_id: @scheduling_period.organization_id)
+                         .where.not(id: already_scheduled)
 
         Shift::in_scheduling_period(@scheduling_period.id).where(scheduler_type: SCHEDULER_TYPES[:SYSTEM]).delete_all
 
@@ -179,13 +181,9 @@ module Scheduling
         { work_load: active_contract.work_load, specializations: active_contract.specializations.map(&:id) }
       } || {  }
 
-      Rails.logger.debug "🤫 employee groups #{@employee_groups}"
-
       @patterns = ShiftPatterns.new(@to_schedule)
 
       @employee_groups.each do |key, employees|
-
-        Rails.logger.debug "🥶 key #{key}"
         shift_count = ScheduleStatistics.get_shift_count(key[:work_load], @shift_duration, @patterns)
         Rails.logger.debug "========= shift_count #{shift_count} ==========="
         tmp_patterns = @patterns.patterns_of_params({length: shift_count, count: employees.length, specializations: (key[:specializations] || []) })

@@ -49,12 +49,16 @@ class Employee < User
   end
 
   scope :filter_by_working_now,  -> (value) {
-    shifts = Shift.where("start_time < ? AND end_time > ?", DateTime::now, DateTime::now).map(&:schedule_id)
-    if value
+    if value == true.to_s || value == true
+      shifts = Shift.where("start_time < ? AND end_time > ?", DateTime::now, DateTime::now).map(&:schedule_id)
+      Rails.logger.debug "🎂 working_now filter #{value}"
       Employee.joins(:contracts).where(contracts: {
           id: Contract.joins(:schedule).where(schedule_id: shifts)
       } )
+    else
+      all
     end
+
   }
 
   private def last_scheduled_shift_helper(date)
