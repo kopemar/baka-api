@@ -39,7 +39,7 @@ class ShiftTemplate < ApplicationRecord
   end
 
   def can_be_user_assigned?(contract)
-    (!is_employment_contract || scheduling_unit.scheduling_period.submitted) && (!contract.type == "AgreementToCompleteAJob" || contract.hours_per_year(self.start_time.year.to_i) < 300)
+    (!is_employment_contract || scheduling_unit.scheduling_period.submitted) && (!contract.type == "AgreementToCompleteAJob" || contract.hours_per_year(self.start_time.year.to_i) < 300) && (!contract.type == "AgreementToPerformAJob" || (contract.hours_per_52_weeks(self.start_time).to_d / 52) < WEEKLY_WORKING_HOURS / 2)
   end
 
   scope :planned_between, -> (start_date, end_date) {

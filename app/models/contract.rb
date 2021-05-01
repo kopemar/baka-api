@@ -44,6 +44,10 @@ class Contract < ApplicationRecord
     Shift.where(schedule: Schedule.joins(:contract).where(contract_id: self.id))::planned_between("#{year}-01-01", "#{year}-12-31").sum('shifts.duration')
   end
 
+  def hours_per_52_weeks(date = Date.today)
+    Shift.where(schedule: Schedule.joins(:contract).where(contract_id: self.id))::planned_between(52.weeks.before(date), date).sum('shifts.duration')
+  end
+
   scope :active_employment_contracts, -> { where(type: "EmploymentContract")
                                                .where("end_date >= ? OR end_date IS NULL", Date::today)
                                                .where("start_date <= ?", Date::today)
@@ -60,6 +64,11 @@ class Contract < ApplicationRecord
 
   def as_json(*args)
     hash = super(*args)
-    hash.merge(active: self.active).merge( { first_name: self.employee.first_name, last_name: self.employee.last_name, }).merge!(type: type_to_id)
+    hash = hash.merge(active: self.active).merge( { first_name: self.employee.first_name, last_name: self.employee.last_name, }).merge!(type: type_to_id)
+    if self.type == "AgreementToCompleteAJob"
+      hours = [{ year: Date.today.year.to_i, hours: hours_per_year }]
+      hash = hash.merge({ hours: hours })
+    end
+    hash
   end
 end

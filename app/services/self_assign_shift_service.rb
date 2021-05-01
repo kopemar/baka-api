@@ -16,6 +16,7 @@ class SelfAssignShiftService < ApplicationService
         shift = Shift.from_template(template)
         shift.schedule_id = contract.schedule_id
         shift.user_scheduled = true
+        shift.scheduler_type = SCHEDULER_TYPES[:EMPLOYEE]
         if shift.save!
           return shift
         end

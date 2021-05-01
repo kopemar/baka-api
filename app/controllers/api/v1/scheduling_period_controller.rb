@@ -35,6 +35,12 @@ module Api
         render :status => :ok, :json => {data: @scheduling_period}
       end
 
+      def upcoming
+        @scheduling_period = SchedulingPeriod.find_by_start_date(3.weeks.from_now.monday)
+        Rails.logger.debug "🥇 scheduling_period: #{@scheduling_period} #{3.weeks.from_now.monday}"
+        render :status => :ok, :json => @scheduling_period
+      end
+
       def calculate_shift_times
         params.require([:shift_hours, :break_minutes, :per_day])
         params.permit(:shift_hours, :break_minutes, :per_day, :night_shift, :is_24_hours, :shift_start, :start_time, :end_time)

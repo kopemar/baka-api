@@ -6,6 +6,7 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      get "periods/upcoming", to: "scheduling_period#upcoming"
       resources :specializations
       resources :scheduling_period, path: "periods"
       resources :shift_template, path: "templates"

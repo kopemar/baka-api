@@ -3,7 +3,7 @@ class ScheduleWorker
 
   def perform(*args)
     Organization.all.to_a.each do |org|
-      start_date = 4.weeks.from_now.monday.to_date
+      start_date = 5.weeks.from_now.monday.to_date
       end_date =  6.days.after(start_date).to_date
 
       SchedulingPeriod.where("start_date < ?", 3.weeks.from_now.to_date).where("end_date > ?", 3.weeks.from_now.to_date).where(submitted: false).to_a.each do |period|

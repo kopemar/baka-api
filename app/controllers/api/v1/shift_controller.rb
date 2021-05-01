@@ -48,9 +48,9 @@ module Api
         end
       end
 
-      def delete
+      def destroy
         params.permit(:id)
-        shift = Shift.accessible_by(current_ability).find(params[:id])
+        shift = Shift.accessible_by(current_ability, :destroy).find(params[:id].to_i)
         errors = Array.new
         if shift.user_scheduled && ((shift.start_time - DateTime::now).to_i / 1.day) > 4
           Shift.delete_by(id: shift.id)
