@@ -30,7 +30,7 @@ module Api
       def index
         params.permit(:unit, :unassigned)
 
-        @templates = ShiftTemplate.filter(filtering_params(params)).accessible_by(current_ability, :read)
+        @templates = ShiftTemplate.filter(filtering_params(params)).accessible_by(current_ability, :read).order("start_time")
 
         if params[:unassigned] && !current_user.manager?
           exclude = Shift::for_user(current_user).map { |d| "shift_templates.end_time >= '#{12.hours.before(d.start_time)}' AND shift_templates.start_time <= '#{12.hours.after(d.end_time)}'" }.join(" OR ")
@@ -93,8 +93,25 @@ module Api
         params.permit(:id)
         template = ShiftTemplate.find(params[:id])
         return render :status => :bad_request, :json => {:errors => ["No ID"]} if template.nil?
-
-        render :json => {:data => Contract.where(schedule_id: Shift.where(shift_template_id: template.id).map(&:schedule_id)).map(&:employee).as_json(:only => [:id, :first_name, :last_name, :username, :uid])}
+        shifts = Shift.where(shift_template_id: template.id)
+        contracts = Contract.where(schedule_id: shifts.map(&:schedule_id))
+        @collection = contracts.paginate(page: params[:page], per_page: params[:per_page].nil? ? 15 : params[:per_page])
+          render :json => {
+            data: @collection.map { |contract|
+              employee = contract.employee
+              {
+                id: employee.id,
+                first_name: employee.first_name,
+                last_name: employee.last_name,
+                username: employee.username,
+                uid: employee.uid,
+                shift_id: shifts.find_by(schedule_id: contract.schedule_id).id
+            } },
+            current_page: @collection.current_page,
+            total_pages: @collection.total_pages,
+            has_next: @collection.next_page.present?,
+            records: contracts.length
+        }
       end
 
       def filtering_params(params)

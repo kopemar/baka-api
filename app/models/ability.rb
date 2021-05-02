@@ -16,6 +16,7 @@ class Ability
       can :manage, Specialization, :organization_id => user.organization_id
       can :read, ShiftTemplate, :scheduling_unit_id => SchedulingUnit.joins(:scheduling_period).where(scheduling_periods: {organization_id: user.organization_id})
       can :read, Schedule, :id => Contract.where(employee_id: Employee.where(organization_id: user.organization_id).map(&:id)).map(&:schedule_id)
+      can :destroy, Shift, :schedule_id => Contract.where(employee_id: Employee.where(organization_id: user.organization_id).map(&:id)).map(&:schedule_id), :shift_template_id => ShiftTemplate.joins(:scheduling_unit).where(scheduling_unit_id: SchedulingUnit.joins(:scheduling_period).where(scheduling_periods: { organization_id: user.organization_id, submitted: false }).map(&:id)).map(&:id)
       # can :update, Employee, :organization_id => user.organization_id
     else
       can :read, SchedulingPeriod, :submitted => true
@@ -24,7 +25,7 @@ class Ability
       can :read, Employee, :id => Employee.where(organization_id: user.organization_id).map(&:id)
       can :read, ShiftTemplate, :scheduling_unit_id => SchedulingUnit.joins(:scheduling_period).where(scheduling_periods: {organization_id: user.organization_id})
       can :read, Shift, :schedule_id => Contract.where(employee_id: user.id).map(&:schedule_id), :shift_template => ShiftTemplate.joins(:scheduling_unit).where(scheduling_unit_id: SchedulingUnit.joins(:scheduling_period).where(scheduling_periods: {organization_id: user.organization_id, submitted: true}).map(&:id))
-      can :destroy, Shift, :schedule_id => Contract.where(employee_id: user.id).map(&:schedule_id), :scheduler_type => SCHEDULER_TYPES[:EMPLOYEE]
+      can :destroy, Shift, :id => Shift.where("schedule_id = ? AND start_time > ?", Contract.where(employee_id: user.id).map(&:schedule_id), 4.days.from_now).map(&:id), :scheduler_type => SCHEDULER_TYPES[:EMPLOYEE]
     end
     #
     # The first argument to `can` is the action you are giving the user

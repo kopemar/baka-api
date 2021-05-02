@@ -26,9 +26,16 @@ module Api
       end
 
       def index
-        params.permit(:working_now)
-        employees = Employee.filter(filtering_params(params)).accessible_by(current_ability)
-        render json: { data: employees }
+        params.permit(:working_now, :page, :per_page)
+        employees = Employee.filter(filtering_params(params)).accessible_by(current_ability).order("last_name")
+
+        render json: {
+            data: @collection = employees.paginate(page: params[:page], per_page: params[:per_page].nil? ? 15 : params[:per_page]),
+            current_page: @collection.current_page,
+            total_pages: @collection.total_pages,
+            has_next: @collection.next_page.present?,
+            records: employees.length
+        }
       end
 
       def show

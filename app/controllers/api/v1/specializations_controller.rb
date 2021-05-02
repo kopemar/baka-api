@@ -18,7 +18,7 @@ module Api
         @specialization = Specialization.new(name: params[:name], organization_id: current_user.organization_id)
 
         if @specialization.save
-          render json: @specialization, status: :created#, json: @specialization
+          render json: @specialization, status: :created #, json: @specialization
         else
           render json: @specialization.errors, status: :unprocessable_entity
         end
@@ -68,7 +68,13 @@ module Api
 
         employees = Employee.accessible_by(current_ability).joins(:contracts).where(contracts: Contract.joins(:specializations).where(specializations: {id: params[:id]}))
 
-        render :json => {:data => employees}
+        render :json => {
+            data: @collection = employees.paginate(page: params[:page], per_page: params[:per_page].nil? ? 15 : params[:per_page]),
+            current_page: @collection.current_page,
+            total_pages: @collection.total_pages,
+            has_next: @collection.next_page.present?,
+            records: employees.length
+        }
       end
 
       private

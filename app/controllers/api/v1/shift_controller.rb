@@ -6,7 +6,6 @@ module Api
       def index
         params.permit(:past, :upcoming)
 
-        # todo - shifts
         schedule = Shift.filter(shift_filtering_params(params)).where(schedule: Schedule.where(contract: Contract.where(employee_id: current_user.id))).submitted.order('start_time')
 
         render json: {
@@ -51,19 +50,8 @@ module Api
       def destroy
         params.permit(:id)
         shift = Shift.accessible_by(current_ability, :destroy).find(params[:id].to_i)
-        errors = Array.new
-        if shift.user_scheduled && ((shift.start_time - DateTime::now).to_i / 1.day) > 4
-          Shift.delete_by(id: shift.id)
-          return render json: {success: true}
-        else
-          unless shift.user_scheduled
-            errors.push("Not scheduled by this user!")
-          end
-          unless ((shift.start_time - DateTime::now).to_i / 1.day) > 4
-            errors.push("Starts in less than 4 days!")
-          end
-        end
-        render :status => :unprocessable_entity, :json => {:errors => errors}
+        Shift.delete_by(id: shift.id)
+        return render json: {success: true}
       end
 
       def get_possible_schedules

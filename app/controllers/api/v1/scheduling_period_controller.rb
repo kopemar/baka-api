@@ -36,9 +36,14 @@ module Api
       end
 
       def upcoming
-        @scheduling_period = SchedulingPeriod.find_by_start_date(3.weeks.from_now.monday)
+        @scheduling_period = SchedulingPeriod::where(start_date: 3.weeks.from_now.monday).where(organization_id: current_user.organization_id).first
+        if @scheduling_period.nil?
+          return render status: :not_found
+        end
         Rails.logger.debug "🥇 scheduling_period: #{@scheduling_period} #{3.weeks.from_now.monday}"
-        render :status => :ok, :json => @scheduling_period
+        days_left = ((@scheduling_period.start_date.midnight - 2.weeks.from_now.midnight).to_i / 1.day).to_i
+        units_exit = !@scheduling_period.scheduling_units.empty?
+        render :status => :ok, :json => @scheduling_period.as_json.merge!({ days_left: days_left, units_exist: units_exit })
       end
 
       def calculate_shift_times
