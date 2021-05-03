@@ -5,7 +5,7 @@ module Scheduling
         Rails.logger.debug "🐙 #{violations}"
 
         solution.each do |k, v|
-          list = v.map { |s| templates.find { |t| t.id == s } }.filter { |s| !s.nil? }.sort_by { |s| s.start_time }
+          list = v.map { |s| templates.find { |t| t.id == s } }.filter { |s| !s.nil?}.sort_by { |s| s.start_time }
           free_hours = ScheduleHelpers.difference_between_shifts(period, list)
           max_two = free_hours.max(2)
           max_index = free_hours.index(max_two.max)

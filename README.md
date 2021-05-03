@@ -1,24 +1,29 @@
-# README
+# Bachelor Thesis Backend
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+A part of bachelor thesis Mobile app for human resource planning at FEE CTU in Prague. 
+## Ruby version
 
-Things you may want to cover:
+2.7.1
 
-* Ruby version
+## Dependencies
 
-* System dependencies
+* Postgres
+* Redis
+* Ruby 2.7.1
+* Ruby on Rails 
 
-* Configuration
+## Running the app
 
-* Database creation
+Obtaining `master.key` might be necessary.
 
-* Database initialization
+```
+docker-compose build && docker-compose up  
+docker-compose run baka_api db:create
+docker-compose run baka_api db:migrate
+```
 
-* How to run the test suite
+## Deployment
 
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+```
+git push heroku master
+```

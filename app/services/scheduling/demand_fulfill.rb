@@ -8,7 +8,7 @@ class Scheduling::DemandFulfill < Constraint
 
     shifts.group_by(&:priority).map { |demand, shift| shift_priority_groups[demand] = shift.map(&:id) }
     Rails.logger.debug "🥸 schedule #{schedule}"
-    total_assignments = schedule.map{ |_, v| v.length }.sum
+    total_assignments = schedule.map{ |_, v| (v || []).length }.sum
     summary_demand = shifts.map(&:priority).sum
     average_demand =  (summary_demand / shifts.filter { |s| s.priority > 0 }.length).to_d
     assignments_per_average = (total_assignments / shifts.filter { |s| s.priority > 0 }.length).round

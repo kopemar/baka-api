@@ -75,13 +75,13 @@ class Scheduling::ShiftVertex
       return nil
     end
 
-    next_params = { :length => length - path.length, :contains => contains, :specializations => specializations }
+    next_params = {:length => length - path.length, :contains => contains, :specializations => specializations}
     Rails.logger.debug "🦚 next_params #{next_params}"
     path += compute_random_path(next_params)
 
     unless specializations.empty?
       path = path.map { |p|
-        if p.specialized.empty?
+        if p.specialized.empty? && !p.priority == 0
           p
         else
           samples = p.specialized.filter { |template| specializations.include? template.specialization_id }
@@ -126,11 +126,12 @@ class Scheduling::ShiftVertex
 
     next_steps = @nexts.union(@prev)
     next_steps = next_steps.filter { |vert|
-
-      Rails.logger.debug "🥨 specialization intersection #{vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations)}"
+      Rails.logger.debug "🥨 specialization intersection #{vert.shift.id} #{vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations)}"
       SchedulingUtils.max_steps_with([self, vert]) >= length &&
-          (vert.shift.priority > 0 || (vert.shift.priority > 0 && specializations.empty?) || (vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations)))
-    } unless max_path_length > length
+          (vert.shift.priority > 0 || (vert.shift.priority > 0 && specializations.empty?) ||
+              (vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations))
+          )
+    }
 
     Rails.logger.debug "🫑 next_steps #{next_steps.map(&:to_s)}"
 
@@ -165,7 +166,7 @@ class Scheduling::ShiftVertex
   end
 
   def to_s
-    "🍺 shift #{@shift.id} [max_path_length: #{max_path_length}]  [prev=> #{@prev.map { |prev| prev.shift.id }}, max_prev_count #{max_prev_steps}] [next=> #{@nexts.map { |prev| prev.shift.id }}, max_next_count #{max_next_steps}], [specialized #{specialized.map { |v| v.id}}]"
+    "🍺 shift #{@shift.id} [max_path_length: #{max_path_length}]  [prev=> #{@prev.map { |prev| prev.shift.id }}, max_prev_count #{max_prev_steps}] [next=> #{@nexts.map { |prev| prev.shift.id }}, max_next_count #{max_next_steps}], [specialized #{specialized.map { |v| v.id }}]"
   end
 
 end
@@ -184,6 +185,6 @@ class Array
   end
 
   def intersect?(other)
-    ! self.to_set.intersection(other.to_set).empty?
+    !self.to_set.intersection(other.to_set).empty?
   end
 end

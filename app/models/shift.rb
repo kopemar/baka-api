@@ -4,7 +4,7 @@ class Shift < ApplicationRecord
   validates :start_time, :end_time,
             :overlap => {:exclude_edges => %w[start_time end_time],
                          :scope => "schedule_id"}
-  validate :validate_specialization
+  validate :validate_specialization, :validate_priority
 
   # validates_presence_of :schedule_id
 
@@ -21,6 +21,13 @@ class Shift < ApplicationRecord
     template_specialization = self.shift_template.specialization
     unless template_specialization.nil?
       errors.add("Could not save shift #{shift_template_id} with this specialization #{template_specialization.id}, must be: #{self.schedule.contract.specializations.map(&:id)}") unless self.schedule.contract.specializations.map(&:id).include? template_specialization.id
+    end
+  end
+
+  def validate_priority
+    template_prio = self.shift_template.priority
+    unless template_prio > 0
+      errors.add("Could not save shift #{shift_template_id} with this priority #{template_prio}")
     end
   end
 
@@ -63,4 +70,11 @@ class Shift < ApplicationRecord
   scope :for_user, -> (user) {
     Shift.where(schedule: Schedule.where(contract: Contract.where(employee_id: user.id)))
   }
+
+  def as_json(*args)
+    hash = super.as_json(*args)
+    specialization = self.shift_template.specialization
+    hash = hash.merge({ specialization: specialization.name }) unless specialization.nil?
+    hash
+  end
 end

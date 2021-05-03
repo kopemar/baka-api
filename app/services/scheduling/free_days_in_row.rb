@@ -4,7 +4,7 @@ class Scheduling::FreeDaysInRow < Constraint
   def self.get_violations_hash(shifts, solution, period, value_per_violation = 10)
     shift_list = {}
     solution.each do |k, v|
-      Rails.logger.debug "🦧 shifts: #{v}"
+      Rails.logger.debug "🦧 #{k} -> shifts: #{v}"
       list = v.map { |s| shifts.find { |q| q.id == s } }
       free_hours = ScheduleHelpers.difference_between_shifts(period, list)
       shift_list[k] = free_hours.max

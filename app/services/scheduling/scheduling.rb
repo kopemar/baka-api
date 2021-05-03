@@ -164,7 +164,7 @@ module Scheduling
 
       violations[:specialized_preferred] =  SpecializedPreferred.get_violations_hash(@to_schedule.filter { |s| s.priority > 0 }, solution) unless (@priorities[:specialized_preferred] || 0) == 0
 
-      violations[:free_days] = FreeDaysInRow.get_violations_hash(@to_schedule.filter { |s| s.priority > 0 }, solution, @scheduling_period) unless (@priorities[:free_days] || 0) == 0
+      violations[:free_days] = FreeDaysInRow.get_violations_hash(@to_schedule, solution, @scheduling_period) unless (@priorities[:free_days] || 0) == 0
 
       overall_sanction = violations.map { |_, violation| violation[:sanction] }.reduce(:+)
       violations[:sanction] = overall_sanction
@@ -187,7 +187,7 @@ module Scheduling
         shift_count = ScheduleStatistics.get_shift_count(key[:work_load], @shift_duration, @patterns)
         Rails.logger.debug "========= shift_count #{shift_count} ==========="
         tmp_patterns = @patterns.patterns_of_params({length: shift_count, count: employees.length, specializations: (key[:specializations] || []) })
-        # todo if already assigned
+
         employees.each { |employee|
           schedule[employee.id] = tmp_patterns.sample
         }

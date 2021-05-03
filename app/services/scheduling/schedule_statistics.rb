@@ -28,6 +28,7 @@ class Scheduling::ScheduleStatistics
   end
 
   def self.get_shift_count(work_load, shift_duration, patterns)
+    Rails.logger.debug "⛈ #{patterns.max_length}"
     [((work_load * WEEKLY_WORKING_HOURS).to_d / shift_duration).ceil, patterns.max_length].min
   end
 

@@ -89,7 +89,7 @@ class Scheduling::ShiftPatterns
     intersection.each do |s|
       specialized += @hash_vertices[s].specialized.filter { |shift| specializations.include? shift.specialization_id }.map { |shift| shift.id }
     end
-    vertices = intersection + specialized
+    vertices = (intersection + specialized).filter { |s| @hash_vertices[s].shift.priority > 0}
 
 
     shifts += random_combination(vertices, 1) unless vertices.empty?
@@ -106,9 +106,6 @@ class Scheduling::ShiftPatterns
 
     contains = (params[:contains] || []).sort
 
-    # todo excludes
-    excludes = params[:excludes] || []
-
     if length > get_max_path_length(@hash_vertices)
       return paths
     end
@@ -117,12 +114,10 @@ class Scheduling::ShiftPatterns
       possible_vertices = @vertices.filter { |vertex|
         (vertex.max_path_length >= length && (contains.empty? || contains.include?(vertex.shift.id) ||
             vertex.specialized.one? { |s|
-              # Rails.logger.debug "🦁 FILTERING specializations #{vertex.to_s} #{specializations} #{}"
               contains.include?(s.id) && specializations.include?(s.specialization_id)
             }
         )
         )
-
       }
 
       if !contains.is_a?(Array) || (contains.length > length)
