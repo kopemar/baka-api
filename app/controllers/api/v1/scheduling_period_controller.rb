@@ -86,7 +86,7 @@ module Api
         unless current_user.manager?
           return render :status => :forbidden, :json => {:errors => ["Only managers can call this"]}
         end
-        permitted = params.permit(:id, priorities: [:no_empty_shifts, :demand_fulfill])
+        permitted = params.permit(:id, :iterations, priorities: [:no_empty_shifts, :demand_fulfill, :free_days, :specialized_preferred])
         result = Scheduling::Scheduling.new(permitted).call
         render :json => {:success => true, :violations => result}
       end

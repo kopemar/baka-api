@@ -81,7 +81,7 @@ class Scheduling::ShiftVertex
 
     unless specializations.empty?
       path = path.map { |p|
-        if p.specialized.empty? && !p.priority == 0
+        if p.specialized.empty?
           p
         else
           samples = p.specialized.filter { |template| specializations.include? template.specialization_id }
@@ -126,12 +126,10 @@ class Scheduling::ShiftVertex
 
     next_steps = @nexts.union(@prev)
     next_steps = next_steps.filter { |vert|
-      Rails.logger.debug "🥨 specialization intersection #{vert.shift.id} #{vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations)}"
+      Rails.logger.debug "🥨 specialization intersection #{vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations)}"
       SchedulingUtils.max_steps_with([self, vert]) >= length &&
-          (vert.shift.priority > 0 || (vert.shift.priority > 0 && specializations.empty?) ||
-              (vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations))
-          )
-    }
+          (vert.shift.priority > 0 || (vert.shift.priority > 0 && specializations.empty?) || (vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations)))
+    } unless max_path_length > length
 
     Rails.logger.debug "🫑 next_steps #{next_steps.map(&:to_s)}"
 

@@ -14,6 +14,8 @@ module Scheduling
           :free_days => 100
       }
 
+      @iterations = params[:iterations] || 2
+
       @scheduling_period = SchedulingPeriod.where(id: period_id).first
       raise SchedulingError.new("Invalid ID of scheduling period") if @scheduling_period.nil?
     end
@@ -41,7 +43,9 @@ module Scheduling
         # violations = get_soft_constraint_violations(schedule)
 
         Rails.logger.debug "📊 IMPROVE SOLUTION "
-        schedule = try_to_improve_solution(schedule)
+        @iterations.times do
+          schedule = try_to_improve_solution(schedule)
+        end
 
         Rails.logger.debug "📅 SCHEDULE: #{schedule} "
         assign_shifts(schedule)

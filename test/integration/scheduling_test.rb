@@ -160,8 +160,8 @@ class SchedulingTest < ActionDispatch::IntegrationTest
         {
             :id => @period.id,
             :working_days => [1, 2, 3, 4, 5, 6, 7],
-            :start_time => "08:00",
-            :end_time => "17:30",
+            :start_time => "09:00",
+            :end_time => "18:00",
             :shift_hours => 8,
             :break_minutes => 30,
             :per_day => 2
@@ -170,7 +170,7 @@ class SchedulingTest < ActionDispatch::IntegrationTest
 
     @templates = ShiftTemplate.joins(:scheduling_unit).where(scheduling_units: { scheduling_period_id: @period.id }).order("start_time")
 
-    generate_templates_1b
+    # generate_templates_1b
 
     Scheduling::Scheduling.new({ id: @period.id, priorities: priorities }).call
 
