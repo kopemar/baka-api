@@ -3,7 +3,7 @@ require 'test_helper'
 class SpecializationsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @org = generate_organization
-    user = FactoryBot.create(:manager, organization: @org)
+    user = FactoryBot.create(:manager, org: @org)
     @auth_tokens = auth_tokens_for_user(user)
   end
 
@@ -16,7 +16,7 @@ class SpecializationsControllerTest < ActionDispatch::IntegrationTest
 
     # Sign in as another user.
     org = Organization.create!(name: "Testers Inc.")
-    user = FactoryBot.create(:manager, organization: org)
+    user = FactoryBot.create(:manager, org: org)
     m2_tokens = auth_tokens_for_user(user)
 
     # Add another specialization

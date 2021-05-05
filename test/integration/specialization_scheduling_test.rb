@@ -3,9 +3,9 @@ require 'test_helper'
 class SpecializationSchedulingTest < ActionDispatch::IntegrationTest
   def setup
     @org = generate_organization
-    @manager = FactoryBot.create(:manager, organization: @org)
+    @manager = FactoryBot.create(:manager, org: @org)
     @auth_tokens = auth_tokens_for_user(@manager)
-    @period = FactoryBot.create(:scheduling_period, organization: @org)
+    @period = FactoryBot.create(:scheduling_period, org: @org)
   end
 
   # test "20 Empty Shifts Fix the solution" do

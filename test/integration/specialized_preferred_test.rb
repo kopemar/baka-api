@@ -3,16 +3,16 @@ require 'test_helper'
 class SpecializedPreferredTest < ActionDispatch::IntegrationTest
   def setup
     @org = generate_organization
-    @manager = FactoryBot.create(:manager, organization: @org)
+    @manager = FactoryBot.create(:manager, org: @org)
     @auth_tokens = auth_tokens_for_user(@manager)
   end
 
 
   test "Specialized Preferred Violations" do
 
-    s1 = Specialization.create(name: "s1", organization: @org)
+    s1 = Specialization.create(name: "s1", org: @org)
 
-    period = FactoryBot.create(:scheduling_period, organization: @org)
+    period = FactoryBot.create(:scheduling_period, org: @org)
 
     templates = generate_shift_templates(period, @auth_tokens)
 
@@ -44,7 +44,7 @@ class SpecializedPreferredTest < ActionDispatch::IntegrationTest
     s1 = Specialization.create(name: "Clown", organization_id: @org.id)
     s2 = Specialization.create(name: "Cook", organization_id: @org.id)
 
-    period = FactoryBot.create(:scheduling_period, organization: @org)
+    period = FactoryBot.create(:scheduling_period, org: @org)
     templates = generate_more_shift_templates(period, @auth_tokens)
 
     16.times do
@@ -119,7 +119,7 @@ class SpecializedPreferredTest < ActionDispatch::IntegrationTest
   test "Specialized Preferred Improve - only specialized" do
     s1 = Specialization.create(name: "Clown", organization_id: @org.id)
 
-    period = FactoryBot.create(:scheduling_period, organization: @org)
+    period = FactoryBot.create(:scheduling_period, org: @org)
     templates = generate_shift_templates(period, @auth_tokens)
 
     5.times do

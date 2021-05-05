@@ -13,13 +13,13 @@ class SubmitScheduleTest < ActionDispatch::IntegrationTest
   test "Submit schedule" do
     org = generate_organization
 
-    manager = FactoryBot.create(:manager, organization: org)
+    manager = FactoryBot.create(:manager, org: org)
     manager_tokens = auth_tokens_for_user(manager)
 
     employee = employee_active_contract(org)
     employee_tokens = auth_tokens_for_user(employee)
 
-    period = FactoryBot.create(:scheduling_period, organization: org)
+    period = FactoryBot.create(:scheduling_period, org: org)
 
     get "/shifts", headers: employee_tokens
     assert_response(:success)

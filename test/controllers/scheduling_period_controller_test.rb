@@ -3,7 +3,7 @@ require 'test_helper'
 class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   def generate_scheduling_period(org)
-    FactoryBot.create(:scheduling_period, organization: org)
+    FactoryBot.create(:scheduling_period, org: org)
   end
 
   def generate_shift_templates(period, auth_tokens)
@@ -21,7 +21,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   test "Computations - create shift - too short time" do
     org = generate_organization
-    user = FactoryBot.create(:employee, organization: org)
+    user = FactoryBot.create(:employee, org: org)
     @auth_tokens = auth_tokens_for_user(user)
     p @auth_tokens
 
@@ -39,7 +39,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   test "Computations - create shift - too long time" do
     org = generate_organization
-    user = FactoryBot.create(:employee, organization: org)
+    user = FactoryBot.create(:employee, org: org)
     @auth_tokens = auth_tokens_for_user(user)
     p @auth_tokens
 
@@ -57,7 +57,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   test "Computations - create shift - too long more shifts" do
     org = generate_organization
-    user = FactoryBot.create(:employee, organization: org)
+    user = FactoryBot.create(:employee, org: org)
     @auth_tokens = auth_tokens_for_user(user)
     p @auth_tokens
 
@@ -75,7 +75,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   test "Computations - create one shift" do
     org = generate_organization
-    user = FactoryBot.create(:employee, organization: org)
+    user = FactoryBot.create(:employee, org: org)
     @auth_tokens = auth_tokens_for_user(user)
 
     get "/api/v1/periods/1/calculations/shift-times",
@@ -95,7 +95,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   test "Computations - create two shifts" do
     org = generate_organization
-    user = FactoryBot.create(:employee, organization: org)
+    user = FactoryBot.create(:employee, org: org)
     @auth_tokens = auth_tokens_for_user(user)
     get "/api/v1/periods/1/calculations/shift-times",
         params: {
@@ -121,7 +121,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   test "Computations - create three shifts" do
     org = generate_organization
-    user = FactoryBot.create(:employee, organization: org)
+    user = FactoryBot.create(:employee, org: org)
     @auth_tokens = auth_tokens_for_user(user)
     get "/api/v1/periods/1/calculations/shift-times",
         params: {
@@ -147,7 +147,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   test "Computations - create more shifts" do
     org = generate_organization
-    user = FactoryBot.create(:employee, organization: org)
+    user = FactoryBot.create(:employee, org: org)
     @auth_tokens = auth_tokens_for_user(user)
     get "/api/v1/periods/1/calculations/shift-times",
         params: {
@@ -187,7 +187,7 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   test "Computations - params missing" do
     org = generate_organization
-    user = FactoryBot.create(:employee, organization: org)
+    user = FactoryBot.create(:employee, org: org)
 
     @auth_tokens = auth_tokens_for_user(user)
 
@@ -207,10 +207,10 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   test "Scheduling templates gen" do
     org = generate_organization
-    user = FactoryBot.create(:employee, organization: org)
+    user = FactoryBot.create(:employee, org: org)
     @auth_tokens = auth_tokens_for_user(user)
 
-    period = FactoryBot.create(:scheduling_period, organization: org)
+    period = FactoryBot.create(:scheduling_period, org: org)
 
     2.times do
       post "/api/v1/periods/#{period.id}/shift-templates",
@@ -246,10 +246,10 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   test "Scheduling templates gen - exclude" do
     org = generate_organization
-    user = FactoryBot.create(:employee, organization: org)
+    user = FactoryBot.create(:employee, org: org)
     @auth_tokens = auth_tokens_for_user(user)
 
-    period = FactoryBot.create(:scheduling_period, organization: org)
+    period = FactoryBot.create(:scheduling_period, org: org)
 
     post "/api/v1/periods/#{period.id}/shift-templates",
          params: {
@@ -286,10 +286,10 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   test "Scheduling period days" do
     org = generate_organization
-    user = FactoryBot.create(:employee, organization: org)
+    user = FactoryBot.create(:employee, org: org)
     @auth_tokens = auth_tokens_for_user(user)
 
-    period = FactoryBot.create(:scheduling_period, organization: org)
+    period = FactoryBot.create(:scheduling_period, org: org)
 
     get "/api/v1/periods/#{period.id}/calculations/period-days",
         headers: @auth_tokens
@@ -309,10 +309,10 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
 
   test "Generate schedule" do
     org = generate_organization
-    user = FactoryBot.create(:manager, organization: org)
+    user = FactoryBot.create(:manager, org: org)
     @auth_tokens = auth_tokens_for_user(user)
 
-    period = FactoryBot.create(:scheduling_period, organization: org)
+    period = FactoryBot.create(:scheduling_period, org: org)
 
     employee = employee_active_contract(org)
 
