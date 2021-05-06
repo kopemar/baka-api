@@ -20,7 +20,7 @@ class Scheduling::ScheduleStatistics
       hash[shift.id] = []
     end
     schedule.each do |employee, value|
-      value.each do |shift|
+      (value || []).each do |shift|
         hash[shift].push employee
       end
     end

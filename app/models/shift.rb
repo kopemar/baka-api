@@ -27,7 +27,7 @@ class Shift < ApplicationRecord
   def validate_priority
     template_prio = self.shift_template.priority
     unless template_prio > 0
-      errors.add("Could not save shift #{shift_template_id} with this priority #{template_prio}")
+      errors.add(:demand, "Could not save shift #{shift_template_id} with this priority #{template_prio}")
     end
   end
 

@@ -54,8 +54,101 @@ class TemplatesFactory
     end
   end
 
+  def self.generate_templates_1d(templates, s1, s2, s3, org)
+    templates.each_with_index do |t, index|
+      #t.update(priority: 0)
+      if TestDataD.demand_1.include? index
+        t.update(priority: 1)
+      end
 
+      if TestDataD.specialization_s1.include? index
+        priority = 2
+        if TestDataD.specialization_s1_demand_3.include? index
+          priority = 3
+        end
+        create_specialized_template(t, s1, priority, org)
+      end
+      if TestDataD.specialization_s2.include? index
+        priority = 2
+        if TestDataD.specialization_s2_demand_1.include? index
+          priority = 1
+        end
+        create_specialized_template(t, s2, priority, org)
+      end
 
+      if TestDataD.specialization_s3.include? index
+        priority =  TestDataD.specialization_s3_demand_3.include?(index) ? 3 : 2
+        create_specialized_template(t, s3, priority, org)
+      end
+    end
+  end
+
+  def self.generate_templates_1c(templates, s1, s2, s3, s4, org)
+    templates.each_with_index do |t, index|
+      #t.update(priority: 0)
+
+      if TestDataC.specialization_s1.include? index
+        priority = 2
+        if TestDataC.specialization_s1_demand_3.include? index
+          priority = 3
+        end
+        create_specialized_template(t, s1, priority, org)
+      end
+      if TestDataC.specialization_s2.include? index
+        priority = 2
+        if TestDataC.specialization_s2_demand_1.include? index
+          priority = 1
+        end
+        create_specialized_template(t, s2, priority, org)
+      end
+
+      if TestDataC.specialization_s3.include? index
+        priority =  TestDataC.specialization_s3_demand_3.include?(index) ? 3 : 2
+        create_specialized_template(t, s3, priority, org)
+      end
+
+      if TestDataC.specialization_s4.include? index
+        priority = 1
+        create_specialized_template(t, s4, priority, org)
+      end
+    end
+  end
+
+  def self.generate_templates_1e(templates, s1, s2, org)
+    templates.each_with_index do |t, _|
+      create_specialized_template(t, s1, 2, org)
+      create_specialized_template(t, s2, 2, org)
+    end
+  end
+
+  def self.generate_templates_1f(templates, s1, s2, s3, org)
+    templates.each_with_index do |t, index|
+      t.update(priority: 1)
+      if TestDataF.specialization_s1.include? index
+        priority = 1
+        create_specialized_template(t, s1, priority, org)
+      end
+
+      if TestDataF.specialization_s2.include? index
+        priority = 1
+        create_specialized_template(t, s2, priority, org)
+      end
+
+      if TestDataF.specialization_s3.include? index
+        priority = 1
+        create_specialized_template(t, s3, priority, org)
+      end
+    end
+  end
+
+  def self.generate_templates_1g(templates, s1, s2, s3, org)
+    templates.each_with_index do |t, index|
+      t.update(priority: 2)
+      create_specialized_template(t, s1, 2, org)
+      create_specialized_template(t, s2, 2, org)
+      create_specialized_template(t, s3, 2, org)
+    end
+  end
 
   def self.create_specialized_template(parent_template, specialization, priority, org)
     ShiftTemplate.create!(

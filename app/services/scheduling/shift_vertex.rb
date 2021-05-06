@@ -79,6 +79,7 @@ class Scheduling::ShiftVertex
     Rails.logger.debug "🦚 next_params #{next_params}"
     path += compute_random_path(next_params)
 
+    "🦚 random path #{path.get_shift_ids}"
     unless specializations.empty?
       path = path.map { |p|
         if p.specialized.empty?
@@ -117,7 +118,9 @@ class Scheduling::ShiftVertex
 
     path.push(self)
 
-    contained_vertices = @nexts.map(&:clone).filter { |p| contains.include? p.shift.id } + @prev.map(&:clone).filter { |p| contains.include? p.shift.id }
+    contained_vertices = @nexts.map(&:clone).filter { |p|
+      contains.include? p.shift.id } + @prev.map(&:clone).filter { |p|
+      contains.include? p.shift.id }
 
     # do not execute if no contains requirements are given
     unless contains.empty?
@@ -125,8 +128,8 @@ class Scheduling::ShiftVertex
     end
 
     next_steps = @nexts.union(@prev)
+    Rails.logger.debug "🦦 [ShiftVertex] get_rnd_next #{next_steps.map(&:to_s)}"
     next_steps = next_steps.filter { |vert|
-      Rails.logger.debug "🥨 specialization intersection #{vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations)}"
       SchedulingUtils.max_steps_with([self, vert]) >= length &&
           (vert.shift.priority > 0 || (vert.shift.priority > 0 && specializations.empty?) || (vert.specialized.filter { |s| s.priority > 0 }.map(&:specialization_id).intersect?(specializations)))
     } unless max_path_length > length
@@ -134,7 +137,7 @@ class Scheduling::ShiftVertex
     Rails.logger.debug "🫑 next_steps #{next_steps.map(&:to_s)}"
 
     path.each do |p|
-      next_steps = next_steps.to_set.intersection(p.nexts.to_set.union(p.prev.to_set)).to_a
+      next_steps = next_steps.to_set.intersection(p.nexts.to_set.union(p.prev.to_set)).filter { |x| SchedulingUtils.max_steps_with([x, p]) >= length }.to_a
     end
 
     length.times do
