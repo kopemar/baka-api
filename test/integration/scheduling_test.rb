@@ -118,40 +118,8 @@ class SchedulingTest < ActionDispatch::IntegrationTest
     with_priorities_c({:no_empty_shifts => 30, :demand_fulfill => 40, :specialized_preferred => 20, :free_days => 10})
   end
 
-  test "D R1 – RANDOM Algorithm Test " do
-    with_priorities_d({})
-  end
-
-  test "D R2 – SPECIALIZED ONLY Algorithm Test " do
-    with_priorities_d({:specialized_preferred => 10})
-  end
-
-  test "D R3 Algorithm Test " do
-    with_priorities_d({:no_empty_shifts => 10})
-  end
-
-  test "D R4 Algorithm Test " do
-    with_priorities_d({:demand_fulfill => 10})
-  end
-
-  test "D R5 Algorithm Test " do
-    with_priorities_d({:free_days => 10})
-  end
-
-  test "D R6 Algorithm Test " do
-    with_priorities_d({:free_days => 10, :demand_fulfill => 10, :no_empty_shifts => 10, :specialized_preferred => 10})
-  end
-
-  test "D R7 Algorithm Test " do
-    with_priorities_d({:no_empty_shifts => 20, :demand_fulfill => 20, :specialized_preferred => 10, :free_days => 10})
-  end
-
-  test "D R8 Algorithm Test " do
-    with_priorities_d({:no_empty_shifts => 20, :demand_fulfill => 10, :specialized_preferred => 20, :free_days => 10})
-  end
-
-  test "D R9 Algorithm Test " do
-    with_priorities_d({:no_empty_shifts => 30, :demand_fulfill => 40, :specialized_preferred => 20, :free_days => 10})
+  test "D Algorithm Test " do
+    with_priorities_d
   end
 
   test "E Algorithm Test " do
@@ -329,7 +297,7 @@ class SchedulingTest < ActionDispatch::IntegrationTest
     end
   end
 
-  def with_priorities_d(priorities)
+  def with_priorities_d
     @org = generate_organization
     @s1 = Specialization.create(name: "ABC", organization_id: @org.id)
     @s2 = Specialization.create(name: "DEF", organization_id: @org.id)
@@ -358,24 +326,25 @@ class SchedulingTest < ActionDispatch::IntegrationTest
 
     TemplatesFactory.generate_templates_1d(@templates, @s1, @s2, @s3, @org)
 
-    5.times do |i|
-      Scheduling::Scheduling.new({id: @period.id, priorities: priorities, iterations: i}).call
+    priorities.each do |priority|
+      5.times do |i|
+        Scheduling::Scheduling.new({id: @period.id, priorities: priority, iterations: i}).call
 
-      schedule = {}
-      Shift.where(shift_template: ShiftTemplate::in_scheduling_period(@period.id)).to_a.group_by { |shift|
-        shift.schedule_id
-      }.each { |k, v|
-        schedule[k] = v.map(&:shift_template_id)
-      }
+        schedule = {}
+        Shift.where(shift_template: ShiftTemplate::in_scheduling_period(@period.id)).to_a.group_by { |shift|
+          shift.schedule_id
+        }.each { |k, v|
+          schedule[k] = v.map(&:shift_template_id)
+        }
 
-      result = evaluate_solution(schedule)
-      Rails.logger.debug @templates
+        result = evaluate_solution(schedule)
+        Rails.logger.debug @templates
 
-      open('d-data.csv', 'a') do |f|
-        f << "#{i},#{priorities[:no_empty_shifts] || 0},#{priorities[:demand_fulfill] || 0},#{priorities[:specialized_preferred] || 0},#{priorities[:free_days] || 0},#{result[:no_empty_shifts][:sanction]},#{result[:demand_fulfill][:sanction]},#{result[:specialized_preferred][:sanction]},#{result[:free_days][:sanction]}\n"
+        open('d-data.csv', 'a') do |f|
+          f << "#{i},#{priority[:no_empty_shifts] || 0},#{priority[:demand_fulfill] || 0},#{priority[:specialized_preferred] || 0},#{priority[:free_days] || 0},#{result[:no_empty_shifts][:sanction]},#{result[:demand_fulfill][:sanction]},#{result[:specialized_preferred][:sanction]},#{result[:free_days][:sanction]}\n"
+        end
       end
     end
-
   end
 
   def with_priorities_e
