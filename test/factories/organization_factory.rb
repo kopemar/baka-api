@@ -248,7 +248,29 @@ class OrganizationFactory
     end
   end
 
-  def self.generate_employees_1h
+  def self.generate_employees_1h(s1, s2, organization)
+    @org = organization
+    5.times do
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(s1)
+      e.contracts.first.specializations.push(s2)
+      e.save!
+    end
 
+    6.times do
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(s1)
+      e.save!
+    end
+
+    6.times do
+      e = employee_active_contract(@org)
+      e.contracts.first.specializations.push(s2)
+      e.save!
+    end
+
+    8.times do
+      e = employee_active_contract(@org)
+    end
   end
 end

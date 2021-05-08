@@ -93,7 +93,6 @@ module Api
 
       def show
         period = SchedulingPeriod.accessible_by(current_ability).find(params[:id])
-
         render :json => period
       end
 

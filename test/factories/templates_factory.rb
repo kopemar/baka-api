@@ -150,6 +150,33 @@ class TemplatesFactory
     end
   end
 
+  def self.generate_templates_1h(templates, s1, s2, org)
+    templates.each_with_index do |t, index|
+      t.update(priority: 1)
+      priority = 3
+      if TestDataH.specialization_1_demand_1.include? index
+        priority = 1
+      elsif TestDataH.specialization_1_demand_2.include? index
+        priority = 2
+      elsif TestDataH.specialization_1_demand_4.include? index
+        priority = 4
+      end
+      create_specialized_template(t, s1, priority, org)
+      unless TestDataH.specialization_2_no_demand.include? index
+        priority = 3
+        if TestDataH.specialization_2_demand_1.include? index
+          priority = 1
+        elsif TestDataH.specialization_2_demand_2.include? index
+          priority = 2
+        elsif TestDataH.specialization_2_demand_4.include? index
+          priority = 4
+        end
+        create_specialized_template(t, s2, priority, org)
+      end
+
+    end
+  end
+
   def self.create_specialized_template(parent_template, specialization, priority, org)
     ShiftTemplate.create!(
         start_time: parent_template.start_time,
