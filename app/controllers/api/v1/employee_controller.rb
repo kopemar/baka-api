@@ -4,7 +4,7 @@ module Api
       include DeviseTokenAuth::Concerns::SetUserByToken
 
       before_action :authenticate_user!
-      # todo cancan manager
+
       def create
         params.require([:first_name, :last_name, :username, :username, :birth_date, :password, :email])
         params_hash = params.permit(:first_name, :last_name, :username, :username, :birth_date, :password, :email)

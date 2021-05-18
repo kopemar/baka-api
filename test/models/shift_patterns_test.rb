@@ -2,7 +2,6 @@ require 'test_helper'
 
 class ShiftPatternsTest < ActiveSupport::TestCase
 
-  # todo move to utils
   def shift_difference_hours(first, other)
     (other.start_time - first.end_time).to_d / 1.hour
   end

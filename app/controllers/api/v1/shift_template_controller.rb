@@ -43,7 +43,6 @@ module Api
         render :json => {:data => @templates}
       end
 
-      # todo remove this
       def create
         params.require([:start_time, :end_time, :break_minutes, :priority])
         render :status => :forbidden, :json => {:errors => ["Forbidden"]} unless current_user.manager?

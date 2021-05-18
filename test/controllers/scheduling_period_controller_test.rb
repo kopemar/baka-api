@@ -200,7 +200,6 @@ class SchedulingPeriodControllerTest < ActionDispatch::IntegrationTest
             }
         },
         headers: @auth_tokens
-    # todo what should be here?
   rescue ActionController::ParameterMissing
     assert_response(200)
   end

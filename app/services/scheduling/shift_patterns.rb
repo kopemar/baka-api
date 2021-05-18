@@ -192,7 +192,6 @@ class Scheduling::ShiftPatterns
     hash = Hash.new
     @paths = []
 
-    # todo make global here
     @hash_vertices = Hash.new
 
     hash[:start] = @shift_templates.sort_by { |s| s.start_time }.map(&:id)
@@ -242,7 +241,6 @@ class Scheduling::ShiftPatterns
     end
   end
 
-  # todo refactor this
   def random_combination(path, length)
     set = Set.new
     path_clone = path.clone

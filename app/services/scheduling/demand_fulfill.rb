@@ -15,8 +15,6 @@ class Scheduling::DemandFulfill < Constraint
 
     average = get_assignments_per_demand(average_demand, assignments_per_average)
 
-    # todo shift time rounding
-
     utilization = ScheduleStatistics.get_shifts_utilization(shifts.map(&:id), schedule)
 
     hash[:violations] = get_violating_shifts(utilization, average, shift_priority_groups)

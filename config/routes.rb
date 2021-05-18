@@ -47,7 +47,6 @@ Rails.application.routes.draw do
 
       get "periods/:id/calculate-period-days", to: "scheduling_period#get_unit_dates_for_period"
 
-      # todo deprecate this
       post "periods/:id/shift-templates", to: "scheduling_period#generate_shift_templates"
 
       post "periods/:id/templates", to: "scheduling_period#generate_shift_templates"
